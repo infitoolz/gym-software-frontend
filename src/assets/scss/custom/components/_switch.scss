@@ -1,0 +1,116 @@
+/****************
+ 07 SWITCH
+*****************/
+.switch {
+	position: relative;
+	display: inline-block;
+    min-width: 56px;
+	width: 56px;
+	height: 30px;
+	border-radius: 3px;
+	overflow: hidden;
+	input {
+		opacity: 0;
+		width: 0;
+		height: 0;
+		&:checked  {
+			+ label{			
+				&::before{			
+					transform: translateX(26px);
+				}
+			}
+		}	
+		&:disabled{
+			+ label{
+				opacity: 0.5;
+			}
+		}
+	}
+	label {
+		position: absolute;
+		cursor: pointer;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;	
+		transition: 0.4s;
+        margin-left: 0;
+		&:before {
+			position: absolute;
+			content: "";
+			height: 24px;
+			width: 24px;
+            top: 0;
+			left: 3px;
+			bottom: 0;
+            margin: auto;		
+			transition: 0.4s;
+			border-radius: 3px;
+		}	
+	}
+	&.round{
+		border-radius:34px;
+		label{
+			&:before{
+				border-radius:50%;
+			}
+		}
+	}
+	&.with-icon{
+		input{
+			&:checked  {
+				+ label{			
+					&::before{			
+						content: "\f00c" ;
+					}
+				}
+			}
+		}
+		label{
+			&::before{
+				font-size:12px;
+				content: "\f00d";
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-family: $font-awesome;
+			}
+		}
+	}
+}
+@each  $color , $value  in $theme-colors {   
+	.switch-#{$color}{	
+		input {		
+			&:checked  {
+				+ label{
+					background-color: $value;				
+				}
+			}			
+		}
+		label {		
+			background-color: var(--#{$prefix}bodybg-color);			
+			&:before {			
+				background-color: var(--#{$prefix}body-bg);			
+			}		
+		}
+	  }
+	.outline-#{$color}{
+		border: 1px solid $value;
+		input {		
+			&:checked  {
+				+ label{				
+					&::before{
+						background-color: $value;
+						transform: translateX(25px);
+					}
+				}
+			}			
+		}
+		label {				
+			&:before {			
+				background-color: var(--#{$prefix}bodybg-color);
+				bottom: 3px;			
+			}		
+		}
+	}
+}

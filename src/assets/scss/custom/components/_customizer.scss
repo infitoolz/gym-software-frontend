@@ -1,0 +1,84 @@
+/*********************
+  20 CUSTOMIZER START
+********************/
+.customizer-action{
+  position: fixed;
+  top: 42%;
+  inset-inline-end: 0;
+  background-color: var(--#{$prefix}body-bg);
+  padding: 12px;   
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  z-index: 5;
+  box-shadow: 0 0 20px 5px rgba($black,0.05);
+  transition: all 0.3s ease-in;
+  i{
+    font-size: 22px;
+    color: currentColor;
+    transition: all 0.3s ease-in;
+    animation: settingrotate 2.2s linear infinite;
+    display: inline-block;
+  } 
+  &:hover{
+    background-color: $theme-primary;
+    i{
+      color: $white;
+    }
+  }
+}
+.theme-cutomizer{    
+  z-index: 9999;   
+  width: 332px !important;
+  .customizer-body{
+    padding: 20px;
+    .cutomize-group{
+        margin-bottom:20px;       
+    }
+    .customizer-title{
+      font-size: 16px;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .customizeoption-list{     
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      li{
+        border: 1px solid var(--#{$prefix}border-color);
+        padding: 18px;
+        border-radius: 5px;
+        text-transform: capitalize;
+        display: inline-block;
+        cursor: pointer;
+        color: $font-light;
+        font-size: 16px;
+        transition: all 0.5s ease;   
+        width: calc(50% - 5px);
+        text-align: center;                  
+        svg{
+            width: 26px;
+            height: 26px;
+            vertical-align: middle;
+            display: block;
+            margin: auto;
+            margin-bottom: 5px;
+        }       
+        &.active-mode{
+          color: $white;
+          background-color: $theme-primary;
+          border-color: $theme-primary;
+        } 
+      }
+    }   
+  }  
+}
+@keyframes settingrotate {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,42 @@
+/*********************
+  10 CARD START
+**********************/
+.card{   
+    border-radius: 17px;
+    border: none ;   
+    margin-bottom: 1.6em;
+    box-shadow: 0px 9px 20px rgba($black,0.07);
+    .card-title{
+        margin-bottom: 0;    
+    }
+    .setting-card{
+      a{
+        color: $black;
+      }
+      .codeCopy{
+        width: 24px;
+        height: auto;
+      }
+    }
+    .card-header{
+        background-color: transparent;
+        padding: 25px;
+        padding-bottom: 0;       
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        h4{                                            
+            text-transform: capitalize;
+        }
+        select{
+            background-color: var(--#{$prefix}bodybg-color);
+            border: none;
+            padding: 8px;
+            border-radius: 10px;
+            outline: none;
+        }
+    }
+    .card-body{
+        padding:25px;
+    }   
+}

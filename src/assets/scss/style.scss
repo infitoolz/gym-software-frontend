@@ -1,0 +1,242 @@
+@charset "UTF-8";
+
+/*** 01 VARIABLES ***/
+/*** 02 TYPOGRAPHY ***/
+/*** 03 COMMON ***/
+/*** 04 BUTTON ***/
+/*** 05 FORM ***/
+/*** 06 BADGE ***/
+/*** 07 SWITCH ***/
+/*** 08 ALERTS ***/
+/*** 09 PAGINATION ***/
+/*** 10 CARD ***/
+/*** 11 TAB ***/
+/*** 12 TABLE ***/
+/*** 13 HEADER ***/
+/*** 14 FOOTER ***/
+/*** 15 DROPDOWN ***/
+/*** 16 MODAL ***/
+/*** 17 SIDEBAR ***/
+/*** 18 PROGRESSBAR ***/
+/*** 19 DROPZON ***/
+/*** 20 CUSTOMIZER ***/
+/*** 21 CALENDAR-APP ***/
+/*** 22 AUTHENTICATION ***/
+/*** 23 WORKOUT ***/
+/*** 24 DIATE ***/
+/*** 25 GAOL ***/
+/*** 26 DASHBOARD ***/
+/*** 27 RESPONSIVE ***/
+
+
+@import 'custom/variables';
+
+
+// Components
+@import 'custom/components/typography';
+@import 'custom/components/common';
+@import 'custom/components/button';
+@import 'custom/components/form';
+@import 'custom/components/badge';
+@import 'custom/components/switch';
+@import 'custom/components/alerts';
+@import 'custom/components/pagination';
+@import 'custom/components/card';
+@import 'custom/components/tab';
+@import 'custom/components/table';
+@import 'custom/components/header';
+@import 'custom/components/footer';
+@import 'custom/components/dropdown';
+@import 'custom/components/modal';
+@import 'custom/components/sidebar';
+@import 'custom/components/progress';
+@import 'custom/components/dropzon';
+@import 'custom/components/customizer';
+@import 'custom/components/error';
+
+// Application
+@import 'custom/pages/calendar-app';
+
+// Pages
+@import 'custom/pages/authentication';
+@import 'custom/pages/workout';
+@import 'custom/pages/diate';
+@import 'custom/pages/onboding';
+@import 'custom/pages/goal';
+
+// dashboard
+@import 'custom/dashboard/dashboard';
+@import 'custom/responsive';
+@import 'custom/pages/landing';
+@import 'custom/responsive-fixes';
+
+/* Unified management pages layout */
+.users-page-wrapper,
+.branch-page-wrapper,
+.designation-page-wrapper,
+.department-page-wrapper,
+.team-page-wrapper,
+.head-office-page-wrapper,
+.role-permissions-page-wrapper,
+.diet-plan-page {
+  margin-top: 90px;
+  margin-left: 245px;
+  margin-right: 24px;
+  width: auto;
+  min-height: calc(100vh - 90px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+  transition: margin-left 0.5s ease;
+}
+
+.users-page-wrapper .content,
+.branch-page-wrapper .content,
+.designation-page-wrapper .content,
+.department-page-wrapper .content,
+.team-page-wrapper .content,
+.head-office-page-wrapper .content,
+.role-permissions-page-wrapper .content,
+.diet-plan-page .content {
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Better cards and table spacing */
+.branch-page-wrapper .card,
+.users-page-wrapper .card,
+.designation-page-wrapper .card,
+.department-page-wrapper .card,
+.team-page-wrapper .card,
+.head-office-page-wrapper .card,
+.role-permissions-page-wrapper .card,
+.diet-plan-page .card {
+  border-radius: 14px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 2px 10px rgba(16, 24, 40, 0.04);
+}
+
+.branch-page-wrapper .table-responsive,
+.users-page-wrapper .table-responsive,
+.designation-page-wrapper .table-responsive,
+.department-page-wrapper .table-responsive,
+.team-page-wrapper .table-responsive,
+.head-office-page-wrapper .table-responsive,
+.role-permissions-page-wrapper .table-responsive,
+.diet-plan-page .table-responsive {
+  overflow-x: auto;
+}
+
+/* Stats cards */
+.branch-page-wrapper .row .card .card-body,
+.users-page-wrapper .row .card .card-body,
+.designation-page-wrapper .row .card .card-body,
+.department-page-wrapper .row .card .card-body,
+.team-page-wrapper .row .card .card-body,
+.head-office-page-wrapper .row .card .card-body,
+.role-permissions-page-wrapper .row .card .card-body {
+  padding: 28px 18px;
+}
+
+.role-permissions-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.role-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #dde3ea;
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+
+  small {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    border-radius: 999px;
+    background: #f2f4f7;
+    color: #667085;
+    font-size: 12px;
+  }
+
+  &:hover {
+    border-color: #b8c2cc;
+    background: #f8fafc;
+  }
+
+  &.active {
+    border-color: $theme-primary;
+    background: rgba($theme-primary, 0.08);
+    color: $theme-primary;
+
+    small {
+      background: $theme-primary;
+      color: #fff;
+    }
+  }
+}
+
+.role-visible-count {
+  white-space: nowrap;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #475467;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Mobile / tablet */
+@media (max-width: 991.98px) {
+  .users-page-wrapper,
+  .branch-page-wrapper,
+  .designation-page-wrapper,
+  .department-page-wrapper,
+  .team-page-wrapper,
+  .head-office-page-wrapper,
+  .role-permissions-page-wrapper,
+  .diet-plan-page {
+    margin-top: 84px;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+  }
+
+  .users-page-wrapper .content,
+  .branch-page-wrapper .content,
+  .designation-page-wrapper .content,
+  .department-page-wrapper .content,
+  .team-page-wrapper .content,
+  .head-office-page-wrapper .content,
+  .role-permissions-page-wrapper .content,
+  .diet-plan-page .content {
+    padding: 16px;
+  }
+
+  .role-permissions-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .role-visible-count {
+    width: fit-content;
+  }
+}

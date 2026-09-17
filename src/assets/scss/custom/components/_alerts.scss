@@ -1,0 +1,33 @@
+/*******************
+  08 ALERT START
+********************/
+@each  $color , $value  in $theme-colors {
+    .alert-#{$color}{
+        background-color: $value; 
+        color: $white;     
+        border-color: $value;
+        .alert-link{
+            color: $white;     
+        }
+    }
+
+    .alert-#{$color}-outline{
+        color: $value ;    
+        border: 1px solid $value;           
+    }
+}
+.alert-light{
+    color: $font-light;
+    .alert-link{
+        color: $font-light;     
+    }
+}
+.alert-light-outline{
+    color: $font-light;
+}
+.card.alerts{   
+    .card-title-desc{    
+        margin-bottom: 24px;
+        font-size: 14px;
+    }   
+}

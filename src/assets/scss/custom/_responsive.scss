@@ -1,0 +1,644 @@
+/*************
+27 RESPONSVIE
+**************/
+@media screen and (min-width:768px) {
+    // Sidebar is now always a 72px icon rail — these rules ensure header/footer/content
+    // are always offset by 72px regardless of the sidebar mode.
+    .codex-header {
+        margin-left: 72px;
+        width: calc(100% - 72px);
+    }
+    .codex-footer {
+        margin-left: 72px;
+        width: calc(100% - 72px);
+    }
+    .themebody-wrap {
+        margin-left: 72px;
+    }
+    .users-page-wrapper,
+    .branch-page-wrapper,
+    .designation-page-wrapper,
+    .department-page-wrapper,
+    .team-page-wrapper,
+    .head-office-page-wrapper,
+    .role-permissions-page-wrapper,
+    .diet-plan-page {
+        margin-left: 72px;
+    }
+    [data-bs-sidebar=horizontal] {
+        .codex-header {
+            width: 100%;
+            margin-left: unset;
+            position: fixed;
+            z-index: 7;
+            .codex-brand {
+                display: flex;
+            }
+            .header-contian {
+                max-width: 1600px;
+                margin: auto;
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+        }
+        .codex-sidebar {
+            width: 100%;
+            position: fixed;
+            top: 73px;
+            height: auto;
+            background-color: $theme-primary;
+
+            .codex-brand {
+                display: none;
+            }
+
+            .sidebarpro-sec {
+                display: none;
+            }
+
+            .menu-preve,
+            .menu-next {
+                display: flex;
+            }
+        }
+        .codex-menuwrapper {
+            overflow: hidden;
+            height: auto;
+            margin-top: 0;
+            padding: 0 45px;
+        }
+
+        .codex-menu {
+            display: flex;
+            white-space: nowrap;
+            margin-top: 0;
+            padding-bottom: 0;
+            overflow: visible !important;
+            width: 100%;
+            position: relative;
+            transition: left 0.3s ease;
+            >li {
+                display: inline-block;
+
+                >a {
+                    color: $white;
+
+                    >i.fa {
+                        margin-left: 15px;
+                        transform: rotate(90deg);
+                    }
+                }
+            }
+
+            .submenu-list {
+                display: none;
+            }
+
+            li {
+                .submenu-list {
+                    display: block !important;
+                    position: fixed;
+                    top: 108px;
+                    opacity: 0;
+                    visibility: hidden;
+                    background-color: var(--#{$prefix}body-bg);
+                    padding-left: 0;
+                    box-shadow: 0px 9px 20px rgba($black, 0.07);
+                    border-radius: 5px;
+
+                    a {
+                        padding: 10px 25px;
+                    }
+
+                    li {
+                        &:nth-child(n+2) {
+                            border-top: 1px solid var(--#{$prefix}border-color);
+                        }
+
+                        &::before {
+                            display: none;
+                        }
+
+                        &::after {
+                            display: none;
+                        }
+                    }
+                }
+
+                &:hover {
+                    .submenu-list {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+                .mega-menu{
+                    display: flex !important;
+                    max-width: 290px;
+                    width: 100%;
+                    flex-wrap: wrap;
+                    li{
+                        width: 50%;
+                    }
+                }
+            }
+
+            .cdxmenu-title {
+                display: none;
+            }
+        }
+
+        .themebody-wrap {
+            max-width: 1600px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 145px;
+        }
+
+        .codex-footer {
+            width: 100%;
+            margin-left: unset;
+        }
+    }
+}
+@media screen and (max-width:767px) {
+    .themebody-wrap {
+        margin-left: unset;
+    }
+
+    .users-page-wrapper,
+    .branch-page-wrapper,
+    .designation-page-wrapper,
+    .department-page-wrapper,
+    .team-page-wrapper,
+    .head-office-page-wrapper,
+    .role-permissions-page-wrapper,
+    .diet-plan-page {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .codex-footer {
+        width: 100%;
+        margin-left: unset;
+    }
+
+    // Hide the icon rail off-screen on mobile — mobile uses the bottom nav instead,
+    // but the sidebar can be toggled open via the FAB button.
+    .sidebar-rail {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        &.mobile-open {
+            transform: translateX(0);
+        }
+    }
+    .sidebar-flyout-panel {
+        display: none;
+    }
+
+    /*header*/
+    .codex-header {
+        width: 100%;
+        margin-left: unset;
+    }
+}
+@media screen and (max-width:991px) {
+
+    /* header */
+    .themebody-wrap {
+        margin-top: 90px;
+    }
+
+    .codex-header {
+        padding: 15px;
+
+        .input-group {
+            position: relative;
+            width: auto;
+
+            .input-group-text {
+                padding: 0;
+                width: 35px;
+                height: 35px;
+                border-radius: 10px !important;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 0 5px 2px rgba($black, 0.05);
+
+                i {
+                    color: initial;
+                    font-size: 18px;
+                }
+            }
+
+            .form-control {
+                position: absolute;
+                top: 100%;
+                inset-inline-start: 0;
+                border-radius: 5px !important;
+                opacity: 0;
+                visibility: hidden;
+                width: 0;
+                transition: all 0.5s ease;
+
+                &.active {
+                    opacity: 1;
+                    visibility: visible;
+                    width: 229px;
+                }
+            }
+        }
+
+        .nav-profile {
+            img {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        .navicon-wrap {
+            width: 35px;
+            height: 35px;
+
+            i {
+                font-size: 18px;
+            }
+        }
+    }
+
+    // Workout Filter
+    .filte-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 320px;
+        height: 100%;
+        overflow: auto;
+        background-color: $white;
+        z-index: 4;
+        padding: 15px;
+        transform: translateX(-100%);
+        transition: all 0.3s ease;
+
+        &.active {
+            transform: translateX(0);
+        }
+
+        .close-filter {
+            padding: 15px;
+            border-bottom: 1px solid var(--#{$prefix}border-color) ;
+            text-transform: capitalize;
+            margin: -15px -15px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            i {
+                font-size: 24px;
+            }
+        }
+
+        .workoutfilter-sidebar {
+            box-shadow: none;
+
+            .card-body {
+                padding: 0;
+            }
+        }
+    }
+
+    // onboding step
+    .onboding-list {
+        li {
+            label {
+                img {
+                    width: 32px;
+                }
+            }
+        }
+    }
+
+    .warmup-list {
+        li {
+            .img-wrap {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    }
+}
+
+@media screen and (max-width:767px) {
+
+    /* sidebar css */
+    .codex-sidebar {
+        .logo-gridwrap {
+            margin-bottom: 5px;
+        }
+    }
+
+    .codex-content {
+        padding-bottom: 96px;
+    }
+
+    .fit-mobile-nav {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 35;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(14px);
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .fit-mobile-nav-inner {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) 72px repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        align-items: end;
+    }
+
+    .fit-mobile-nav-item {
+        border: 0;
+        background: transparent;
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        padding: 8px 4px 2px;
+        color: #475569;
+        cursor: pointer;
+        font-weight: 700;
+        min-width: 0;
+    }
+
+    .fit-mobile-nav-item.active {
+        color: #1e70b7;
+    }
+
+    .fit-mobile-nav-icon {
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        flex: 0 0 auto;
+    }
+
+    .fit-mobile-nav-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .fit-mobile-nav-label {
+        font-size: 11px;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .fit-mobile-fab {
+        width: 62px;
+        height: 62px;
+        border-radius: 999px;
+        border: 0;
+        background: linear-gradient(135deg, #1e70b7, #1d4ed8);
+        color: #ffffff;
+        box-shadow: 0 18px 55px rgba(2, 132, 199, 0.35);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-20px);
+        cursor: pointer;
+        padding: 0;
+    }
+
+    .fit-mobile-fab-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .header-menu {
+        margin-left: 10px;
+    }
+
+    .theme-body {
+        padding-left: unset;
+        padding-right: unset;
+    }
+
+    // calenar
+    .fc-theme-standard {
+        th {
+            .fc-scrollgrid-sync-inner {
+                padding: 5px;
+            }
+        }
+    }
+
+    // diet 
+    .arrow-style1{
+        margin-left: unset;
+        margin-right: unset;
+        .testimonial-grid{
+            margin-left: unset;
+            margin-right: unset;
+        }
+    }
+    .dite-grid {
+        display: grid;
+
+        .img-wrap {
+            max-width: 100%;
+            max-height: unset;
+        }
+
+        .dite-detail {
+            width: auto;
+        }
+
+        .food-vitamin {
+            min-width: 100%;
+        }
+
+        .helthscor-list {
+            gap: 5px;
+        }
+    }
+}
+
+@media screen and (max-width:575px) {
+
+    /*common*/
+    .btn {
+        font-size: 14px;
+
+        &.btn-md {
+            padding: 10px 15px;
+        }
+    }
+
+    .container,
+    .custom-container {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .card {
+        .card-body {
+            padding: 15px;
+        }
+    }
+
+    /*header*/
+    .codex-header {
+        .nav-profile {
+            img {
+                width: 34px;
+                height: 34px;
+            }
+
+            .media {
+                .media-body {
+                    display: none;
+                }
+            }
+        }
+
+        .nav-iconlist {
+            position: relative;
+
+            >li {
+                position: unset;
+
+                &:nth-child(n+2) {
+                    margin-left: 8px;
+                }
+            }
+        }
+
+        .form-group {
+            margin-left: 8px;
+
+            .input-group-text {
+                width: 34px;
+                height: 34px;
+            }
+        }
+
+        .navicon-wrap {
+            width: 34px;
+            height: 34px;
+        }
+    }
+
+    /*loader*/
+    .codex-loader {
+        .loder-item {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+            margin: 5px;
+        }
+    }
+
+    // calendar
+    .fc {
+        .fc-toolbar {
+            display: grid;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+        }
+    }
+
+    .events-list {
+        gap: 5px;
+
+        li {
+            font-size: 12px;
+            padding: 5px 8px;
+            border-radius: 5px;
+        }
+    }   
+    .smalldatepicker .ui-datepicker td  {   
+        .ui-datepicker {
+            td {
+                span,a{
+                    padding: 8px;
+                }
+            }
+        }
+    }
+
+    .fc {
+        .fc-button-group {
+
+            .fc-timeGridWeek-button,
+            .fc-dayGridMonth-button {
+                display: none;
+            }
+
+            button {
+                padding: 6px 5px;
+                line-height: 1;
+            }
+        }
+    }
+
+    .goals-page {
+
+        .select-week,
+        .select-status {
+            min-width: 100%;
+        }
+
+        .select-status {
+            margin: 15px 0;
+        }
+    }
+
+    .category-list {
+        gap: 10px;
+
+        li {
+            min-width: calc(50% - 10px);
+        }
+    }
+}
+@media screen and (max-width:390px) {
+
+    /*header*/
+    .codex-header {
+        .form-group {
+            .input-group-text {
+                width: 34px;
+                height: 34px;
+
+                i {
+                    font-size: 16px;
+                }
+            }
+        }
+
+        .nav-iconlist {
+            >li {
+                &:nth-child(n+2) {
+                    margin-left: 8px;
+                }
+            }
+        }
+
+        .nav-profile {
+            img {
+                width: 34px;
+                height: 34px;
+            }
+        }
+    }
+}

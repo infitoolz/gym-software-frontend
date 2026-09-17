@@ -1,0 +1,17 @@
+/********************
+ 18 PROGRESSBAR START
+*********************/
+.progress{
+    &.sm{
+        height: 10px;
+    }
+}
+@each  $color , $value  in $theme-colors {
+      .progress-#{$color}{
+          background-color: rgba($value,0.1) !important;            
+          .progress-bar{
+            background-color: rgba($value,1) !important;  
+            transition:none !important;
+          }                                        
+      }
+  }

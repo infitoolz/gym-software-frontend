@@ -1,0 +1,72 @@
+.onbodying-main {
+    .form-step {
+        display: none;
+        flex-direction: column;
+    }
+    .form-step.active {
+        display: flex;
+    }    
+    .step-preve,
+    .step-skip {
+        cursor: pointer;
+    }
+    .createtraining-card {
+        border-radius: 30px;
+        padding: 40px;
+        background-color: $white;
+        text-align: center;
+    }
+
+    .nav-tabs{
+        width: fit-content;
+        margin: auto;        
+        border-bottom: none;
+        margin-bottom: 30px;       
+        .nav-link{
+            color: currentColor;
+            border-radius: 10px;
+            border: none;
+            padding: 10px 38px;
+        }
+    }
+}
+
+
+.onbodying-bg {
+    background-color: rgba($theme-primary, 0.3);
+}
+
+.onboding-imgwrap {
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: rgba($theme-primary, 0.3);
+}
+
+.onboding-list {
+    li {
+        label {
+            border-radius: 10px;
+            padding: 15px;
+            width: 100%;
+            background-color: $white;
+            border: 2px solid $white;
+            font-size: 18px;
+            img {
+                width: 35px;
+                height: auto;
+                margin-right: 15px;
+            }
+        }
+        input {
+            &:checked {
+                ~label {
+                    border-color: $theme-primary;
+                    background-color: lighten($theme-primary, 55%);
+                }
+            }
+        }
+        &:nth-child(n+2) {
+            margin-top: 15px;
+        }
+    }
+}

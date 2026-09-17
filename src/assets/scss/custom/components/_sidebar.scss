@@ -1,0 +1,406 @@
+/****************
+  17 SIDEBAR START
+*****************/
+
+// ── CSS custom properties (augment per-flyout colors) ────────────────────────
+.sidebar-flyout-panel {
+  --flyout-from: #6366f1;
+  --flyout-to:   #8b5cf6;
+}
+
+// ── Narrow Icon Rail ─────────────────────────────────────────────────────────
+.sidebar-rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 72px;
+  height: 100vh;
+  background-color: var(--#{$prefix}sidebar-bg);
+  border-right: 1px solid var(--#{$prefix}sidebarborder-color);
+  box-shadow: 4px 0 24px rgba($black, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+
+  // Logo
+  .rail-logo {
+    flex-shrink: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--#{$prefix}sidebarborder-color);
+    img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      border-radius: 10px;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      &:hover { transform: scale(1.12) rotate(-4deg); }
+    }
+  }
+
+  // Scrollable nav
+  .rail-nav {
+    flex: 1 1 auto;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 0 8px;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .rail-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  // Each icon pill
+  .sidebar-rail-item {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--#{$prefix}sidebar-link);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.2s ease;
+
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .rail-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      svg { width: 21px; height: 21px; stroke-width: 1.7; }
+    }
+
+    // Small chevron for submenu items
+    .rail-chevron {
+      position: absolute;
+      right: 4px;
+      bottom: 4px;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.3;
+      transition: opacity 0.2s ease;
+      svg { width: 10px; height: 10px; }
+    }
+
+    // Hover state
+    &:hover {
+      background-color: var(--#{$prefix}sidebar-linkactive);
+      color: $theme-primary;
+      transform: scale(1.08);
+      .rail-chevron { opacity: 0.7; }
+    }
+
+    // Active (current route)
+    &.active {
+      background: linear-gradient(135deg, $theme-primary, darken($theme-primary, 12%));
+      color: $white;
+      box-shadow: 0 6px 20px rgba($theme-primary, 0.35);
+      transform: scale(1.05);
+      .rail-chevron { opacity: 0.8; }
+    }
+
+    // Flyout open — highlighted but not fully active
+    &.flyout-open:not(.active) {
+      background: rgba($theme-primary, 0.1);
+      color: $theme-primary;
+      .rail-chevron { opacity: 0.8; }
+    }
+
+    // Native tooltip via title attribute
+    &[title]:hover::after {
+      content: attr(title);
+      position: fixed;
+      left: 80px;
+      padding: 5px 12px;
+      background: var(--#{$prefix}sidebar-bg);
+      color: var(--#{$prefix}sidebar-link);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba($black, 0.12);
+      border: 1px solid var(--#{$prefix}sidebarborder-color);
+      z-index: 9999;
+      pointer-events: none;
+    }
+  }
+
+  // Premium upgrade icon
+  .rail-upgrade {
+    flex-shrink: 0;
+    padding: 8px 0 16px;
+    display: flex;
+    justify-content: center;
+    a {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      color: $white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 6px 20px rgba(#f59e0b, 0.4);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+      svg { width: 20px; height: 20px; }
+      &:hover {
+        transform: scale(1.12);
+        box-shadow: 0 10px 28px rgba(#ef4444, 0.45);
+      }
+    }
+  }
+}
+
+// ── Flyout Submenu Panel ──────────────────────────────────────────────────────
+.sidebar-flyout-panel {
+  position: fixed;
+  top: 0;
+  left: 72px;
+  width: 236px;
+  height: 100vh;
+  background-color: var(--#{$prefix}sidebar-bg);
+  border-right: 1px solid var(--#{$prefix}sidebarborder-color);
+  box-shadow: 8px 0 40px rgba($black, 0.12);
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+  animation: flyoutSlide 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  overflow: hidden;
+
+  // ── Gradient header ─────────────────────────────────────────────────────
+  .flyout-panel-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 16px 16px;
+    background: linear-gradient(135deg, var(--flyout-from) 0%, var(--flyout-to) 100%);
+    position: relative;
+    overflow: hidden;
+
+    // Decorative blurred circle
+    &::before {
+      content: "";
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba($white, 0.12);
+    }
+    &::after {
+      content: "";
+      position: absolute;
+      right: 20px;
+      bottom: -30px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba($white, 0.08);
+    }
+  }
+
+  .flyout-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .flyout-header-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba($white, 0.9);
+    box-shadow: 0 0 8px rgba($white, 0.7);
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  .flyout-panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: $white;
+    position: relative;
+    z-index: 1;
+  }
+
+  .flyout-panel-close {
+    position: relative;
+    z-index: 1;
+    background: rgba($white, 0.15);
+    border: 1px solid rgba($white, 0.25);
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: $white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.18s ease, transform 0.18s ease;
+    &:hover {
+      background: rgba($white, 0.3);
+      transform: scale(1.1);
+    }
+  }
+
+  // ── Scrollable items list ────────────────────────────────────────────────
+  .flyout-panel-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 10px 10px 16px;
+    margin: 0;
+    list-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($black, 0.1) transparent;
+    &::-webkit-scrollbar { width: 3px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba($black, 0.1); border-radius: 2px; }
+  }
+
+  .flyout-item-wrap {
+    animation: itemFadeIn 0.3s ease both;
+  }
+
+  // Each flyout link row
+  .flyout-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px 9px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--#{$prefix}sidebar-link);
+    transition:
+      background-color 0.18s ease,
+      color 0.18s ease,
+      transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+      box-shadow 0.18s ease;
+    margin-bottom: 2px;
+
+    .flyout-item-arrow {
+      margin-left: auto;
+      opacity: 0;
+      color: var(--flyout-from);
+      transform: translateX(-4px);
+      transition: opacity 0.18s ease, transform 0.2s ease;
+      display: flex;
+      align-items: center;
+    }
+
+    &:hover {
+      background-color: var(--#{$prefix}sidebar-linkactive);
+      color: var(--#{$prefix}sidebar-linkactivefont);
+      transform: translateX(4px);
+      .flyout-item-arrow {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    &.active {
+      background: linear-gradient(135deg, var(--flyout-from) 0%, var(--flyout-to) 100%);
+      color: $white;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+      .flyout-item-icon { background: rgba($white, 0.2) !important; }
+      .flyout-item-label { font-weight: 600; }
+      .flyout-item-arrow { opacity: 1; color: rgba($white, 0.8); transform: translateX(0); }
+    }
+  }
+
+  // Icon bubble
+  .flyout-item-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, 0.1); // safe fallback
+    background: color-mix(in srgb, var(--item-color, #6366f1) 14%, transparent);
+    color: var(--item-color, #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+    svg { width: 16px; height: 16px; stroke-width: 1.8; }
+    .flyout-item:hover & { transform: scale(1.12); background: color-mix(in srgb, var(--item-color, #6366f1) 22%, transparent); }
+  }
+
+  .flyout-item-label {
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.2;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// ── Backdrop ─────────────────────────────────────────────────────────────────
+.flyout-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 98;
+  background: transparent;
+}
+
+// ── Body layout ───────────────────────────────────────────────────────────────
+.themebody-wrap { margin-left: 72px; }
+.body-layear {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100vh;
+  z-index: 5;
+  background-color: rgba($black, 0.2);
+}
+
+// ── Animations ────────────────────────────────────────────────────────────────
+@keyframes flyoutSlide {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes itemFadeIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.8); }
+}

@@ -1,0 +1,106 @@
+/*******************
+  04 BUTTON START
+*******************/
+.btn{
+  border-radius:5px;
+  padding:10px 15px;
+  line-height: 1;
+  &.btn-md{
+    padding:10px 15px;
+  }
+}
+@each  $color , $value  in $theme-colors {
+    .btn-#{$color}{
+        color: $white;    
+        background-color: $value !important;   
+        border-color: $value !important;      
+        &:hover{
+          color: $white;
+          background-color: rgba($value,0.9) !important;      
+        }          
+
+      &.btn_rounded{
+        border-radius: 30px;
+      }
+
+      &.dropdown-toggle-split{
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      ~{
+        .or-icon {
+          position: relative;
+          display: inline-block;
+          width:5px;
+          &:before {
+            position: absolute;
+            content: 'or';
+            top: 50%;
+            left: 50%;
+            transform:translate(-50%,-50%);
+            width:25px;
+            height:25px;
+            border-radius:50%;
+            display: flex;
+            align-items:center;
+            justify-content: center;            
+            background-color:$theme-dark; 
+            color:$white; 
+            z-index:9;
+            font-size: 13px;
+          }
+        
+          &.sm{
+            &:before{
+              width:20px;
+              height:20px;
+              font-size: 11px;
+            }
+          }
+          &.lg {
+            &:before{
+              width:30px;
+              height:30px;
+              font-size: 17px;
+            }
+          }
+        }	
+        
+      }
+    }    
+    .btn.btn-outline-#{$color}{    
+        background-color:transparent !important;                  
+        border-radius:5px;
+        border:1px solid $value !important;
+        color: $value !important;
+        &:hover,
+        &:focus,
+        &:active{
+          outline-color:$value !important;
+          background-color: $value !important;
+          color:$white !important;          
+        }       
+    }
+    .btn-#{$color}{      
+      background-color: $value;
+      color: $white;  
+      border-radius:5px;  
+    }
+}
+.btn-light{
+    color: $font-light !important;
+    background-color: var(--#{$prefix}bodybg-color) !important;
+    &:hover{
+        color: $font-light !important;
+        background-color: var(--#{$prefix}bodybg-color) !important;
+    }
+}
+.btn-outline-light{
+    color: currentColor !important;
+    border: 1px solid $border-color !important;
+}
+.element-buttons{ 
+  .btn{
+    margin:3px 0;
+  }
+}

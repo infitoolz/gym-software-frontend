@@ -1,0 +1,330 @@
+/*********************
+  24 LANDING PAGE
+**********************/
+.py-70{
+    padding-top: 70px;
+    padding-bottom: 70px;
+}
+.pt-70{
+    padding-top: 70px;
+}
+.pb-70{
+    padding-bottom: 70px;
+}
+.landing-wrap{
+    .btn{
+        padding: 12px 30px;
+    }
+}
+.landing-title{
+    text-align: center;
+    margin-bottom: 20px;
+    h2{
+        font-size: 32px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        background: linear-gradient(47deg, $theme-primary 45%, $theme-secondary 53.71%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: all 0.5s ease;
+    }
+    p{
+        font-size: 16px;
+    }
+}
+.landing-header{
+    padding: 18px 0;   
+    background-color: $white;
+    z-index: 2;
+    position: relative;
+    &.sticky{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 2;
+        animation: fadeInDown 1s ease;
+    }
+}
+.menu-list {
+    li{
+        display: inline-block;
+        a{           
+            font-size: 16px;
+        }
+        +li{
+            margin-left: 40px;
+        }
+    }
+}
+.hero-sec {
+    background-color: $sidebar-bg;
+    background-size: cover;
+    background-position: center;
+    color: $white;
+    height: calc(100vh - 75px);
+    position: relative;
+    .hero-contain{            
+        text-align: center;
+        padding-top: 120px;
+        h2{           
+            font-size: 32px;
+            background: linear-gradient(92deg, $theme-primary 2.7%, $theme-secondary 53.71%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        p{           
+            margin-bottom: 25px;
+        }
+    }
+    .demo-card,
+    .activity-card,
+    .calories-card,
+    .heartrate-card,
+    .progress-card,
+    .runing-card,
+    .sleeping-card,
+    .steps-card,
+    .water-card,
+    .weightlosss-card{
+        position: absolute;
+    }   
+    .demo-card {       
+        left: 0;
+        right: 0;
+        bottom: 0;
+        margin: auto;
+        z-index: 1;       
+        width: 45%;
+    }
+    .progress-card {
+        left: 4%;
+        bottom: 11%;
+        width: 25%;
+        animation: custombounce 5s infinite ease-in-out;
+    }
+    .sleeping-card {
+        left: 15px;
+        bottom: 50%;
+        width: 20%;
+        animation: custompulse 4s infinite ease-in-out;
+    }
+    .heartrate-card {
+        left: 17%;
+        top: 15%;
+        width: 10%;
+        animation: custompulse 2.5s infinite ease-in-out;
+    }
+    .calories-card {
+        left: 3%;
+        top: 11%;
+        width: 10%;
+        animation: custombounce 2.5s infinite ease-in-out;
+    }
+    .activity-card {
+        right: 15px;
+        bottom: 35%;
+        width: 25%;
+        animation: custompulse 5s infinite ease-in-out;
+    }
+    .weightlosss-card {
+        right: 15px;
+        bottom: 40px;
+        width: 25%;
+        animation: custompulse 3s infinite ease-in-out;
+    }
+    .steps-card {
+        right: 4%;
+        top: 40px;
+        width: 10%;
+        animation: custombounce 3s infinite ease-in-out;
+    }
+    .runing-card {
+        right: 65px;
+        bottom: 20%;
+        width: 25%;
+        animation: custombounce 3s infinite ease-in-out;
+    }
+    .water-card {
+        right: 18%;
+        top: 10%;
+        width: 10%;
+        animation: custompulse 3s infinite ease-in-out;
+    }
+
+}
+@keyframes custombounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes custompulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.freamwork-grid{
+    background-color: $white;
+    padding: 30px 20px;
+    border-radius: 10px;
+    text-align: center;
+    .icon-wrap{
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;        
+        margin: auto;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        img{
+            width: auto;
+            height: 55px;
+        }       
+    }
+}
+.feature-grid{
+    background-color: $white;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    height: 100%;
+    .icon-wrap{
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: $theme-primary;
+        margin: auto;
+        border-radius: 50%;
+        margin-bottom: 10px;
+        svg{
+            color: $white;
+            width: 22px;
+            height: 22px;
+        }       
+    }
+    &:hover{
+        background-color: $theme-primary;
+        .icon-wrap{
+            background-color: $white;
+            svg{
+                color: $theme-primary;
+            }
+        }
+        h5,p{
+            color: $white;
+        }
+    }
+}
+.demo-grid{    
+    background-color: $white;
+    border-radius: 10px;
+    text-align: center;      
+    .img-wrap{
+        border-radius: 10px;
+        overflow: hidden;
+        border: 4px solid var(--#{$prefix}border-color);
+        transition:  all 0.3s ease;
+        img{
+            width: 100%;
+            transition:  all 0.3s ease;
+        }
+    }   
+    .demo-detail{
+        padding-top:15px;
+        .demo-title{
+            font-size: 18px;;
+        }
+    }
+    &:hover{
+        .img-wrap{           
+            img{
+                transform: scale(1.02);
+            }
+        }
+    }
+}
+.landing-footer{   
+    text-align: center;
+    background-color: $sidebar-bg;
+    position: relative;
+    padding-top: 80px;
+    padding-bottom: 80px;
+    border-top-left-radius: 100px;
+    border-top-right-radius: 100px;
+}
+
+
+@media screen and (max-width: 1199px) {
+    .menu-list{
+        background-color: $white;
+        padding: 20px;
+        box-shadow: 0 0 20px rgba($black, 0.10);
+        li{
+            display: block;
+            a{
+                display: block;
+                padding: 10px 0;
+            }
+            + li{
+                margin-left: 0;
+            }
+        }
+    }
+    .landing-header{
+        .navbar-collapse{
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 2;
+        }
+    }
+    .landing-footer{
+        border-radius: 0;
+    }
+    .hero-card{
+        display: none;
+    }
+    .hero-sec{
+        height: calc(100vh - 70px);
+        display: flex;
+        align-items: center;
+        .hero-contain{
+            padding-bottom: 70px;
+            padding-top: 70px;
+        }
+    }
+}
+@media (max-width:991px){
+    .py-70{
+        padding-top: 40px;
+        padding-bottom: 40px;
+    }
+    .pt-70{
+        padding-top: 40px;
+    }
+    .pb-70{
+        padding-bottom: 40px;
+    }
+    .landing-title {
+        margin-bottom: 10px;
+        h2{
+            font-size: 24px;
+        }
+    }
+    .hero-sec{
+        height: auto;
+    }
+}

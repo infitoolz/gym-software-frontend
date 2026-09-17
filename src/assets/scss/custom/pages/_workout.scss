@@ -1,0 +1,166 @@
+/************************
+  23 WORKOUT START
+**************************/
+.workout-grid{
+    .img-wrap{
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+        .btn-wishlist{
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 22px;
+            z-index: 1;
+            color: $white;
+            &.selected{
+                color: $theme-danger;
+            }
+        }
+        img{
+            transition:all 0.3s ease-in-out;
+        }
+    }
+    .workout-detail{
+        padding-top: 20px;
+        h6{
+            span{
+                color: $font-light;
+            }
+        }
+    }
+    &:hover{
+        .img-wrap{
+            img{
+                transform: scale(1.08);
+                filter: brightness(0.8);
+            }
+        }
+    }
+}
+.workout-banner{
+    background-position: right;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+.category-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap:24px;
+    li{
+        min-width: calc(33.33% - 16px);
+        a{
+            border: 1px solid var(--#{$prefix}border-color);
+            border-radius: 10px;
+            padding: 15px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3 ease;
+            img{
+                vertical-align: middle;
+                margin-right: 10px;
+            }
+            &:hover{
+                color: $theme-primary;
+                border-color: $theme-primary;
+                background-color: rgb($theme-primary,0.1);
+            }
+        }
+    }
+}
+.goals-card{   
+    .icon-wrap{
+        width: 60px;
+        height: 60px;
+        img{
+            width: 100%;
+            height: 100%;
+        object-fit: contain;
+        }
+    }
+}
+
+.filtertag-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    li{
+        a{
+            padding: 10px 10px;
+            background-color: var(--#{$prefix}bodybg-color);
+            border: 1px solid var(--#{$prefix}border-color);
+            border-radius: 10px;
+            display: block;
+            line-height: 1;
+            &.active{
+                color: $white;
+                background-color: $theme-primary;
+                border-color: $theme-primary;
+            }
+        }
+    }
+}
+.equipment-list{
+    display: flex;      
+    li{
+        width: 100%;
+        a{
+            padding: 10px ;            
+            border: 1px solid var(--#{$prefix}border-color);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            text-align: center;
+            height: 100%;
+            gap: 10px;
+        }
+    }
+    &.equipment-lglist{
+        li{
+            a{
+                padding: 20px 10px;
+                img{
+                    width: auto;
+                    height: 48px;
+                }
+            }
+        }
+    }
+}
+.accordion-primary{
+    .accordion-button{
+        &:not(.collapsed){   
+            color: $white;
+            background-color: $theme-primary;
+            &::after{
+                filter: invert(1);
+            }
+        }
+    }   
+}
+.warmup-list{
+    li{
+        border-radius: 10px;
+        border: 1px solid var(--#{$prefix}border-color);
+        padding: 15px;
+        .img-wrap{
+            width: 57px;
+            height: 57px;
+            border-radius: 10px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            img{
+                width: 100%;
+            }
+        }
+        &:nth-child(n+2){
+            margin-top: 10px;
+        }
+    }
+}

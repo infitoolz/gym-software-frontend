@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Squats",
+    "img": "goal/squats.png",
+    "sets": 4,
+    "reps": 12,
+    "rest": 60,
+    "weight": 60,
+    "calories": 180,
+    "status": "Completed"
+  },
+  {
+    "name": "Dead-lifts",
+    "img": "goal/dead-lifts.png",
+    "sets": 3,
+    "reps": 10,
+    "rest": 60,
+    "weight": 90,
+    "calories": 180,
+    "status": "Completed"
+  },
+  {
+    "name": "Bench Press",
+    "img": "goal/bench-press.png",
+    "sets": 3,
+    "reps": 8,
+    "rest": 60,
+    "weight": 90,
+    "calories": 180,
+    "status": "In Progress"
+  },
+  {
+    "name": "Pull-Ups",
+    "img": "goal/pull-ups.png",
+    "sets": 4,
+    "reps": 8,
+    "rest": 60,
+    "weight": 90,
+    "calories": 180,
+    "status": "Skipped"
+  },
+  {
+    "name": "Plank",
+    "img": "goal/plank.png",
+    "sets": 3,
+    "reps": 60,
+    "rest": 60,
+    "weight": 30,
+    "calories": 180,
+    "status": "Completed"
+  },
+  {
+    "name": "Running",
+    "img": "goal/running.png",
+    "sets": 1,
+    "reps": 30,
+    "rest": 60,
+    "weight": null,
+    "calories": 180,
+    "status": "Completed"
+  },
+  {
+    "name": "Lunges",
+    "img": "goal/lunges.png",
+    "sets": 3,
+    "reps": 15,
+    "rest": 60,
+    "weight": 60,
+    "calories": 180,
+    "status": "Not Started"
+  },
+  {
+    "name": "Shoulder Press",
+    "img": "goal/shoulder-press.png",
+    "sets": 3,
+    "reps": 10,
+    "rest": 60,
+    "weight": 60,
+    "calories": 180,
+    "status": "Not Started"
+  }
+]

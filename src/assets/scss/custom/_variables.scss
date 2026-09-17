@@ -1,0 +1,88 @@
+/*******************
+ 01 VARIABLES
+********************/
+// theme fonts
+$font-primary: "Manrope", sans-serif;
+$font-awesome: 'FontAwesome';
+$font-themify: 'themify';
+
+// theme colors
+$theme-primary: #1AB0B0;
+$theme-secondary: #ff7042;
+$theme-success:#02BC7D;
+$theme-info:#2196F3;
+$theme-warning:#F5BA4A;
+$theme-danger:#F75C7F;
+$theme-light:#f4f4f4;
+$theme-dark:#333333;
+$sidebar-bg:#0d2928;
+
+$theme-colors:(
+    "primary":    $theme-primary,
+    "secondary":  $theme-secondary,
+    "success":    $theme-success,
+    "info":       $theme-info,
+    "warning":    $theme-warning,
+    "danger":     $theme-danger,      
+);
+
+// theme fonts colors
+$black:#051722;
+$white:#ffffff;
+$font-light:#9D9D9D;
+$bg-light:#F5F5F5;
+$codex-font-color:#262626;
+$border-color:#cccccc;
+
+// social icon color
+$fb-color:#385196;
+$twt-color:#00a8ff;
+$insta-color: #e2215d;
+$whp-color:#4aec61;
+
+// dark layout
+$dark-body:#021a1a;
+$dark-card:#092424;
+$extradark-card:#223050;
+$dark-font:#cdc9c9;
+$dark-small-font:#cdc9c9;
+$dark-border:#495057;
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+:root{   
+
+    --#{$prefix}bodybg-color: #{$bg-light};
+    --#{$prefix}border-color: #{$border-color};
+    --#{$prefix}primary-lighten: #{lighten($theme-primary,55%)};
+    
+
+    // Sidebar
+    --#{$prefix}sidebar-bg: #{$white};
+    --#{$prefix}sidebarbg-light: var(--#{$prefix}bodybg-color);
+    --#{$prefix}sidebar-link: currentColor;
+    --#{$prefix}sidebar-linkactivefont: #{$white};
+    --#{$prefix}sidebar-linkactive: #{$theme-primary};
+    --#{$prefix}sidebar-itembefore: currentColor;
+    --#{$prefix}iconnav-color: #{$bg-light};
+    --#{$prefix}sidebarborder-color: #{$border-color};
+}
+[data-bs-theme="dark"]{
+    --#{$prefix}border-color: #{$dark-border};
+    --#{$prefix}body-bg: #{$dark-card};
+    --#{$prefix}bodybg-color: #{$dark-body};
+    --#{$prefix}sidebar-bg: #{$dark-card};
+    --#{$prefix}sidebarbg-light: #{$dark-body};
+    --#{$prefix}iconnav-color: #{$dark-body};
+    --#{$prefix}sidebarborder-color: #{$gray-700};
+    --#{$prefix}primary-lighten:#{$dark-card};
+}
+
+[data-sidebar-theme="dark"]{
+    --#{$prefix}border-color: #{$dark-border};
+    --#{$prefix}sidebar-bg: #{$dark-card};   
+    --#{$prefix}sidebarbg-light: #{$dark-body};
+    --#{$prefix}sidebar-link: #{$gray-300};   
+    --#{$prefix}iconnav-color: #{$dark-body};
+    --#{$prefix}sidebarborder-color: #{$gray-700};
+}

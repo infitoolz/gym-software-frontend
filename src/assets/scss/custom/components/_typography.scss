@@ -1,0 +1,53 @@
+/*******************
+ 02 TYPOGRAPHY
+********************/
+body{
+	font-size: 14px;   
+    font-weight: 500;
+    font-family: $font-primary;
+	background-color: var(--#{$prefix}bodybg-color);
+}
+a{
+  text-decoration: none;
+  color: currentColor;
+  &:hover{
+	color: currentColor;
+  }
+}
+h1,h2,h3,h4,h5,h6,p{
+	margin-bottom: 0;
+}
+ol, ul, dl{
+	margin: 0;
+	padding: 0;
+}
+li{
+	list-style: none;
+}
+ul.liststyle-number{
+    padding-left: 20px;
+    li{
+        list-style-type: auto;
+    }
+}
+h1{	
+	font-size: 34px;
+}
+h2{
+	font-size: 30px;
+}
+h3{
+	font-size: 24px;
+}
+h4{
+	font-size: 20px;
+}
+h5{
+	font-size: 18px;
+}
+h6{
+	font-size: 16px;
+}
+p{
+	color: $font-light;
+}

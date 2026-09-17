@@ -1,0 +1,147 @@
+/*******************
+ 21 CALENDAR START
+*********************/
+.summary-week{
+    .day-selector {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;       
+    }
+  .summary-day {
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .summary-circle {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 4px solid var(--#{$prefix}border-color);
+    margin: 0 auto 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+    color: transparent;
+  }
+  .summary-day.active .summary-circle {
+    background: $theme-success;
+    border-color: $theme-success;
+    color: $white;
+  }
+  .summaryday-label {   
+    font-weight: 700;   
+    margin-bottom: 5px;
+  }
+  .summary-date {
+    font-weight: 700;  
+    margin-top: 5px;
+  }
+}
+.events-list{
+    display: flex;
+    align-items: center;
+    gap:10px;
+    flex-wrap: wrap;
+    li{
+        padding: 10px 12px;
+        border-radius: 10px;
+        white-space: nowrap;
+        img{
+            vertical-align: middle;
+            max-width: 20px;
+            max-height: 20px;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            margin-right: 2px;
+        }
+    }
+}
+.fc-v-event,
+.fc-h-event {
+    border: none;
+    background-color: rgb($theme-primary,0.3);
+    .fc-event-main{
+        color: currentColor;
+        padding: 10px 7px;
+    }
+}
+.fc .fc-timegrid-slot{
+    height: auto;
+    padding: 20px;
+}
+.fc-theme-standard th{   
+    border: none;
+    .fc-scrollgrid-sync-inner{
+        padding: 10px;
+        .fc-col-header-cell-cushion {
+            padding: 10px 7px; 
+            background-color: var(--#{$prefix}bodybg-color);
+            border-radius: 10px;
+            display: block;
+            text-decoration: none;
+        }
+    }
+}
+.fc .fc-timegrid .fc-daygrid-body{
+    display: none !important;
+}
+.fc .fc-button-group{
+    gap: 10px;   
+}
+.fc-header-toolbar{
+    .btn-light{
+        box-shadow: none !important;
+        &:focus,
+        &.fc-button-active{
+            color: $white !important;
+            background-color: $theme-primary !important;
+        }
+    }
+}
+.react-datepicker{
+    width: 100%;
+    &.inline-datepicker{
+        box-shadow: none;
+        .react-datepicker__month-container{
+            box-shadow: none;
+            padding:0;
+        }
+        .react-datepicker__day-names{
+            margin-top: 15px;
+        }
+        .react-datepicker__navigation--previous{
+            left: 0;
+        }
+        .react-datepicker__navigation--next{
+            right: 0;
+        }
+    }
+}
+.react-datepicker__month-container{
+    width: 100%;
+}
+.trainer-grid{
+    padding: 20px;
+    background-color: var(--#{$prefix}body-bg);
+    border-radius: 10px;    
+    margin-left: 15px;
+    margin-right: 15px;
+    box-shadow: 0px 9px 20px rgba($black,0.07);
+    .img-wrap{
+        position: relative;
+        .icon-avtar{
+            width: fit-content;
+            height: fit-content;
+            border: 4px solid $white;
+            border-radius: 10px;
+            position: absolute;
+            left: 15px;
+            bottom: -20px;
+        }
+    }
+    .trainer-detail{
+        padding-top: 30px;
+    }
+}

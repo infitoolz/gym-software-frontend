@@ -1,0 +1,399 @@
+/*************************************************
+ 28 RESPONSIVE FIXES (global safety net)
+ -------------------------------------------------
+ Cross-cutting rules that keep every page usable on
+ all devices. Loaded last so it can override page
+ styles. Keep additions here conservative and global;
+ page-specific tweaks belong in each page's partial.
+**************************************************/
+
+@keyframes sidebar-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 1. Never allow a stray fixed-width element to create
+      a horizontal scrollbar on the whole document. */
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* 2. Fluid media. max-width:100% only constrains
+      elements that would otherwise overflow their
+      container, so fixed-size avatars/icons are safe. */
+img,
+video,
+canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Keep object-fit images (avatars, thumbnails) honoring
+   their explicit height instead of collapsing to auto. */
+img[width][height],
+img[style*="height"] {
+    height: auto;
+}
+img.img-fluid {
+    height: auto;
+}
+
+/* 3. Bootstrap grid: allow columns to wrap and never
+      force overflow from negative gutters. */
+.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+.row > [class*="col"] {
+    min-width: 0; /* lets flex/grid children shrink instead of overflow */
+}
+
+/* 4. Tables always scroll horizontally inside their
+      wrapper instead of stretching the page. */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* 4b. Inside a horizontal-scroll wrapper the table must grow to its
+       full content width and scroll, NOT shrink columns until text
+       wraps or overflows into the next cell. `width: max-content`
+       sizes the table to the sum of its columns; `min-width: 100%`
+       still fills the card on wide screens. */
+.table-responsive > table,
+.table-responsive > .table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+.table-responsive > table th,
+.table-responsive > table td,
+.table-responsive > .table th,
+.table-responsive > .table td {
+    white-space: nowrap;
+    /* keep clear separation so adjacent columns never visually collide */
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+/* 5. Dropdown menus (notifications, profile, filters)
+      must never exceed the viewport on small screens. */
+.dropdown-menu {
+    max-width: calc(100vw - 24px);
+}
+
+/* 6. Long words / URLs shouldn't blow out narrow cards. */
+.card-body,
+.breadcrumb,
+.modal-body {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* Click-outside backdrop for the off-canvas sidebar.
+   Only active on tablet/mobile, where the sidebar overlaps
+   content; on desktop the sidebar is part of the layout so the
+   backdrop stays hidden. Sits below the sidebar (z-index 6) and
+   above the header (z-index 4). */
+.sidebar-backdrop {
+    display: none;
+}
+
+/* ---------------------------------------------------------
+   Tablet & below (sidebar is off-canvas, content full width)
+   --------------------------------------------------------- */
+@media (max-width: 1199.98px) {
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        background-color: rgba(0, 0, 0, 0.35);
+        animation: sidebar-backdrop-in 0.2s ease;
+    }
+
+    /* When the sidebar is slid closed, no backdrop. */
+    body[data-bs-sidebar="compact"] .sidebar-backdrop {
+        display: none;
+    }
+
+    .codex-header,
+    .codex-footer {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* Header search field should flex, not sit at a fixed width. */
+    .codex-header .input-group {
+        width: 100%;
+        max-width: 420px;
+    }
+}
+
+/* ---------------------------------------------------------
+   Phones: leave room for the fixed bottom navigation so the
+   last rows / action buttons are never hidden behind it.
+   --------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .themebody-wrap,
+    .users-page-wrapper,
+    .branch-page-wrapper,
+    .designation-page-wrapper,
+    .department-page-wrapper,
+    .team-page-wrapper,
+    .head-office-page-wrapper,
+    .role-permissions-page-wrapper,
+    .diet-plan-page {
+        padding-bottom: 96px;
+    }
+
+    /* Notification / profile dropdowns: pin to a centered,
+       viewport-fitting sheet instead of overflowing right. */
+    .navnotification-drop,
+    .navprofile-drop {
+        min-width: 0 !important;
+        width: calc(100vw - 24px);
+        max-width: 360px;
+        inset-inline-end: 0;
+    }
+
+    /* Page header rows: stack title and actions, full-width buttons. */
+    .page-header-row,
+    .d-md-flex.justify-content-between {
+        gap: 12px;
+    }
+
+    /* Toolbars / button clusters wrap and breathe. */
+    .d-flex.gap-2,
+    .d-flex.gap-3 {
+        flex-wrap: wrap;
+    }
+
+    /* Modals use the full width on phones. */
+    .modal-dialog:not(.modal-fullscreen) {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}
+
+/* ---------------------------------------------------------
+   Floating Wellness Chat (bottom-right, every logged-in page)
+   --------------------------------------------------------- */
+@keyframes floating-chatbot-pop {
+    from { opacity: 0; transform: translateY(24px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes floating-chatbot-bubble-in {
+    0%   { opacity: 0; transform: scale(0.3) translateY(20px); }
+    60%  { opacity: 1; transform: scale(1.08) translateY(0); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Gentle attention pulse on the closed bubble. */
+@keyframes floating-chatbot-pulse {
+    0%   { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(var(--bs-primary-rgb, 43, 179, 163), 0.55); }
+    70%  { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 0 0 16px rgba(var(--bs-primary-rgb, 43, 179, 163), 0); }
+    100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 0 0 0 rgba(var(--bs-primary-rgb, 43, 179, 163), 0); }
+}
+
+/* Soft up-and-down float so the bubble feels alive. */
+@keyframes floating-chatbot-bob {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -6px; }
+}
+
+/* Animated gradient sweep behind the bubble + header. */
+@keyframes floating-chatbot-sheen {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Heartbeat for the chat icon. */
+@keyframes floating-chatbot-beat {
+    0%, 100% { transform: scale(1); }
+    25%      { transform: scale(1.18); }
+    50%      { transform: scale(0.96); }
+    75%      { transform: scale(1.1); }
+}
+
+.floating-chatbot {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1040; /* above content, below modals (1050+) */
+}
+
+.floating-chatbot-bubble {
+    height: 60px;
+    padding: 0 22px 0 16px;
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(120deg, var(--bs-primary, #2bb3a3), #1f8f82, var(--bs-primary, #2bb3a3));
+    background-size: 200% 200%;
+    animation:
+        floating-chatbot-bubble-in 0.45s cubic-bezier(0.18, 0.89, 0.32, 1.28) both,
+        floating-chatbot-pulse 2.6s ease-in-out 0.8s infinite,
+        floating-chatbot-bob 3.2s ease-in-out 0.8s infinite,
+        floating-chatbot-sheen 6s ease infinite;
+    transition: transform 0.25s ease, padding 0.25s ease;
+
+    &:hover {
+        transform: scale(1.06);
+    }
+
+    .floating-chatbot-bubble-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.22);
+        animation: floating-chatbot-beat 2.6s ease-in-out 0.8s infinite;
+    }
+
+    .floating-chatbot-bubble-label {
+        font-size: 1.02rem;
+        letter-spacing: 0.2px;
+    }
+}
+
+.floating-chatbot-panel {
+    width: 400px;
+    max-width: calc(100vw - 32px);
+    background: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+    transform-origin: bottom right;
+    animation: floating-chatbot-pop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+
+.floating-chatbot-header {
+    background: linear-gradient(120deg, var(--bs-primary, #2bb3a3), #1f8f82, var(--bs-primary, #2bb3a3)) !important;
+    background-size: 200% 200% !important;
+    animation: floating-chatbot-sheen 6s ease infinite;
+    padding-top: 0.7rem !important;
+    padding-bottom: 0.7rem !important;
+}
+
+.floating-chatbot-body {
+    height: 440px;
+    max-height: 62vh;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* Incoming chat bubbles (trainer/member replies) use Bootstrap's .bg-light,
+   which turns near-black in dark mode and hides the dark text. Force a
+   readable WhatsApp-style dark bubble instead. */
+[data-bs-theme="dark"] .chat-bubble-in {
+    background-color: #233138 !important;
+    color: #e9edef !important;
+}
+[data-bs-theme="dark"] .chat-bubble-in .text-muted {
+    color: #aebac1 !important;
+}
+
+/* Respect reduced-motion preferences: drop the looping animations and big
+   movements, keep a subtle fade. */
+@media (prefers-reduced-motion: reduce) {
+    .floating-chatbot-bubble {
+        animation: floating-chatbot-bubble-in 0.2s ease;
+        background: var(--bs-primary, #2bb3a3);
+    }
+    .floating-chatbot-bubble:hover {
+        transform: none;
+    }
+    .floating-chatbot-bubble .floating-chatbot-bubble-icon {
+        animation: none;
+    }
+    .floating-chatbot-header {
+        animation: none;
+    }
+    .floating-chatbot-panel {
+        animation: floating-chatbot-pop 0.15s ease both;
+    }
+}
+
+.floating-chatbot-header {
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
+}
+
+.floating-chatbot-body {
+    height: 360px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* On phones the Wellness Chat lives in the bottom navigation bar instead, so
+   the floating bubble is hidden to avoid overlapping it. */
+@media (max-width: 767.98px) {
+    .floating-chatbot {
+        display: none;
+    }
+
+    /* Wellness Chat fills the viewport (no page scroll) — only the message
+       list scrolls internally. Header + composer stay pinned. The parent
+       .codex-content already reserves 96px for the fixed bottom nav, so the
+       card height only subtracts the app header + breadcrumb + that clearance. */
+    .wellness-chat-page.users-page-wrapper {
+        padding-bottom: 0 !important;
+    }
+    .wellness-chat-page .content {
+        overflow: hidden; /* safety net: never let the page itself scroll */
+    }
+    .wellness-chat-page .wellness-member-chat {
+        display: flex;
+        flex-direction: column;
+        height: calc(100dvh - 220px);
+        margin-bottom: 0;
+    }
+    .wellness-chat-page .wellness-chat-messages {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto !important; /* override the desktop 55vh inline style */
+        overflow-y: auto;
+    }
+}
+
+/* ---------------------------------------------------------
+   Small phones: tighten typography & controls.
+   --------------------------------------------------------- */
+@media (max-width: 575.98px) {
+    h1, .h1 { font-size: 1.6rem; }
+    h2, .h2 { font-size: 1.35rem; }
+    h3, .h3 { font-size: 1.2rem; }
+
+    /* Stat / KPI cards stack to one or two per row cleanly. */
+    .stats-grid > [class*="col"] {
+        margin-bottom: 12px;
+    }
+
+    /* Make primary action buttons in headers full width when wrapped. */
+    .page-actions .btn {
+        flex: 1 1 auto;
+    }
+}
+
+/* ---------------------------------------------------------
+   Dashboard "Quick Actions" tiles — lift + accent on hover.
+   Theme-aware (uses Bootstrap subtle/emphasis utilities).
+   --------------------------------------------------------- */
+.quick-action-tile {
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .1);
+        border-color: var(--bs-primary) !important;
+    }
+}

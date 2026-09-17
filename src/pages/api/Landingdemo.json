@@ -1,0 +1,81 @@
+{
+    "pages": [
+        {
+            "to": "/",
+            "img": "landing/pages/dashboard.png",
+            "title": "Dashboard"
+        },
+        {
+            "to": "/workout-plan",
+            "img": "landing/pages/workout.png",
+            "title": "Workout List"
+        },
+        {
+            "to": "/dietplan",
+            "img": "landing/pages/diet-plan.png",
+            "title": "Diet Plan"
+        },
+        {
+            "to": "/goals",
+            "img": "landing/pages/goals.png",
+            "title": "Workout Goals"
+        },
+        {
+            "to": "/schedule",
+            "img": "landing/pages/my-schedule.png",
+            "title": "Schedule Workout"
+        },
+        {
+            "to": "/progress",
+            "img": "landing/pages/progress.png",
+            "title": "Progress List"
+        },
+        {
+            "to": "/workout-detail",
+            "img": "landing/pages/body-workout.png",
+            "title": "Workout Detail"
+        },
+        {
+            "to": "/exercise-master",
+            "img": "landing/pages/workout-summary.png",
+            "title": "Workout Summary"
+        },
+        {
+            "to": "/workout-plan",
+            "img": "landing/pages/create-workout.png",
+            "title": "Create Workout"
+        }
+    ],
+    "feature": [
+        {
+            "to": "/profile",
+            "img": "landing/pages/remindre.png",
+            "title": "Workout Reminders"
+        },
+        {
+            "to": "/workout-detail",
+            "img": "landing/pages/workout-detail.png",
+            "title": "Workout Detail"
+        },
+        {
+            "to": "/dietplan",
+            "img": "landing/pages/diet-menu.png",
+            "title": "Add Diet Menu"
+        },
+        {
+            "to": "/profile",
+            "img": "landing/pages/profile.png",
+            "title": "Workout Profile"
+        },
+        {
+            "to": "/diet-detail",
+            "img": "landing/pages/diet-details.png",
+            "title": "Diet Detail"
+        },
+        {
+            "to": "/404",
+            "img": "landing/pages/404.png",
+            "title": "404 Page"
+        }
+    ]
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "title": "Strength & Conditioning",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout1.png"
+  },
+  {
+    "title": "Power yoga Flow",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout2.png"
+  },
+  {
+    "title": "High-Intensity Interval",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout3.png"
+  },
+  {
+    "title": "Pilates Reformer Class",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout4.png"
+  },
+  {
+    "title": "Functional Core Training",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout5.png"
+  },
+  {
+    "title": "Calisthenics Strength Training",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout6.png"
+  },
+  {
+    "title": "Yoga for Stress Relief",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout7.png"
+  },
+  {
+    "title": "Body Sculpting Circuit",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout8.png"
+  },
+  {
+    "title": "Strength & Conditioning",
+    "level": "Beginner",
+    "duration": "20 sec",
+    "image": "workout/workout9.png"
+  }
+]

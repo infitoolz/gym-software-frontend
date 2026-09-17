@@ -1,0 +1,25 @@
+/*******************
+  09 PAGINATION START
+********************/
+@each  $color , $value  in $theme-colors {
+    .pagination-#{$color}{
+        .page-item{
+            &.active {
+                .page-link{
+                    background-color: $value;
+                    color: $white;
+                    border-color: $value;
+                }
+            }
+            .page-link{
+                color: $value;
+            }
+        }
+    }   
+}
+.pagination-md {
+    .page-link{
+        padding: 0.50rem 1rem;
+        font-size: 16px;
+    }
+}

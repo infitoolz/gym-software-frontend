@@ -1,0 +1,52 @@
+/**************
+ 11 TAB CSS START
+***************/
+@each  $color , $value  in $theme-colors {   
+    .cdx-tab{        
+        &.tab-#{$color}{       
+            li{
+                a{
+                    border: none;
+                    color: currentColor;
+                    border-radius: 8px;
+                    &.active{
+                        background-color: rgba($value,1) !important;        
+                        color: $white;                 
+                    }
+                }
+            }
+        }   
+    }
+}
+@each  $color , $value  in $theme-colors {   
+    .cdx-tab{
+        &.tab-#{$color}-border{       
+            li{
+                a{
+                    border: 1px solid rgba($value,1) !important;
+                    color: rgba($value,1) ;
+                    border-radius: 8px;
+                    &.active{
+                        background-color: rgba($value,1) !important;
+                        color: $white;                 
+                    }
+                }
+                +li{
+                    margin-left: 10px;
+                }
+            }
+        }   
+    }
+}
+.cdx-tab{
+    width:fit-content;    
+    display: flex;
+    align-items: center;
+    border-bottom: none;
+    li{
+        a{
+            font-weight:500;
+            padding:10px 25px;
+        }
+    }
+}

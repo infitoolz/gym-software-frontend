@@ -1,0 +1,94 @@
+{
+  "diets": [
+    {
+      "title": "Lean & Green",
+      "description": "Baked Salmon with Steamed Broccoli and Brown Rice",
+      "healthScore": 85,
+      "type": "Dinner",
+      "difficulty": "Easy",
+      "time": "30 Minutes",
+      "calories": "400 Cal",
+      "carbs": "40g Carbs",
+      "protein": "35g Protein",
+      "fats": "15g Fats",
+      "scoreIndicators": 9,
+      "image": "diet-plan/leangreen.jpg",
+      "badgeClass": "badge-danger"
+    },
+    {
+      "title": "Power Protein",
+      "description": "Scrambled Eggs with Turkey Bacon and Sauteed Spinach",
+      "healthScore": 90,
+      "type": "Breakfast",
+      "difficulty": "Medium",
+      "time": "15 Minutes",
+      "calories": "350 Cal",
+      "carbs": "10g Carbs",
+      "protein": "25g Protein",
+      "fats": "20g Fats",
+      "scoreIndicators": 9,
+      "image": "diet-plan/powerprotein.jpg",
+      "badgeClass": "badge-info"
+    },
+    {
+      "title": "Vegan Energy Boost",
+      "description": "Chickpea and Avocado Salad with Lemon Tahini Dressing",
+      "healthScore": 80,
+      "type": "Lunch",
+      "difficulty": "Medium",
+      "time": "20 Minutes",
+      "calories": "400 Cal",
+      "carbs": "45g Carbs",
+      "protein": "15g Protein",
+      "fats": "18g Fats",
+      "scoreIndicators": 9,
+      "image": "diet-plan/veganenergy.jpg",
+      "badgeClass": "badge-warning"
+    }
+  ],
+  "popularMenus": [
+    {
+      "image": "diet-plan/grilled-steak.png",
+      "title": "Grilled Steak with Sweet Potato Fries",
+      "rating": "4.9/5",
+      "type": "Dinner",
+      "badgeClass": "badge-danger"
+    },
+    {
+      "image": "diet-plan/quinoa-stuffed.png",
+      "title": "Quinoa and Black Bean Stuffed Peppers",
+      "rating": "4.9/5",
+      "type": "Lunch",
+      "badgeClass": "badge-warning"
+    },
+    {
+      "image": "diet-plan/avocado-toast.png",
+      "title": "Avocado Toast With Poached Eggs",
+      "rating": "4.9/5",
+      "type": "Breakfast",
+      "badgeClass": "badge-info"
+    }
+  ],
+  "recommendedmenus": [
+    {
+      "image": "diet-plan/butter-banana.png",
+      "title": "Overnight Oats with Almond Butter and Banana",
+      "type": "Dinner",
+      "difficulty": "Easy",
+      "calories": "400 Cal",
+      "carbs": "50g Carbs",
+      "protein": "12g Protein",
+      "fats": "16g Fats"
+    },
+    {
+      "image": "diet-plan/grilled-chicken.png",
+      "title": "Grilled Chicken and Veggie Skewers",
+      "type": "Breakfast",
+      "difficulty": "Medium",
+      "calories": "400 Cal",
+      "carbs": "50g Carbs",
+      "protein": "12g Protein",
+      "fats": "16g Fats"
+    }
+  ]
+}

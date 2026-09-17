@@ -1,0 +1,62 @@
+[
+  {
+    "icon": "IconBrandBootstrap",
+    "title": "Bootstrap 5",
+    "description": "Cloud ui is built with latest version of bootstrap 5"
+  },
+  {
+    "icon": "IconCode",
+    "title": "Seamless Coding",
+    "description": "Refined templates, W3C code for top quality"
+  },
+  {
+    "icon": "IconSettings",
+    "title": "Easy to Customize",
+    "description": "Our Template is easy to do any required changes."
+  },
+  {
+    "icon": "IconTable",
+    "title": "Lots of table example",
+    "description": "Many table options for you to choose."
+  },
+  {
+    "icon": "IconCloudUpload",
+    "title": "Multiple file uploads",
+    "description": "Option to upload more than one file at one time"
+  },
+  {
+    "icon": "IconCalendar",
+    "title": "Calendar design",
+    "description": "Included calendar app with material design."
+  },
+  {
+    "icon": "IconPhoto",
+    "title": "Gallery options",
+    "description": "Included gallery options for you to showcase products"
+  },
+  {
+    "icon": "IconArtboard",
+    "title": "Editors",
+    "description": "Options to select the editors that you are comfortable"
+  },
+  {
+    "icon": "IconDevices2",
+    "title": "Fully responsive",
+    "description": "Fully responsive: displays well on any device size."
+  },
+  {
+    "icon": "IconHelpOctagon",
+    "title": "Premium support",
+    "description": "Reliable support for every query, always available."
+  },
+  {
+    "icon": "IconLayout",
+    "title": "Clean design",
+    "description": "Design that is clear and appealing"
+  },
+  {
+    "icon": "IconPalette",
+    "title": "Color templates",
+    "description": "Dark and light templates available"
+  }
+]

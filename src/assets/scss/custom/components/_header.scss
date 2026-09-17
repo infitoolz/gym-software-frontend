@@ -1,0 +1,266 @@
+/*********************
+ 13  HEADER START
+**********************/
+.codex-header {
+    background-color: var(--#{$prefix}body-bg);
+    padding:17px 24px;
+    top: 0;   
+    left: 0;
+    position: fixed;
+    margin-left: 245px;
+    width: calc(100% - 245px);
+    z-index: 4;
+    box-shadow: 0 0 20px 5px rgba($black,0.05);
+    transition: all 0.5s ease;
+    .codex-brand{
+        display: none;
+        align-items: center;
+    }
+    .input-group{
+        width: 450px;
+    }
+    .header-left-profile{
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        overflow: hidden;
+        flex: 0 0 38px;
+        img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+    }
+    .notiicon-iconwrap{
+        i{
+            animation: swing 2s ease-in-out infinite;
+        }
+    }
+    .navicon-wrap{
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--#{$prefix}bodybg-color) !important;
+        border: none;
+        position: relative;
+        padding: 0;
+        color: currentColor !important;       
+        i{           
+            font-size: 20px;
+        }       
+        .noti-count {
+            color: $white;
+            background-color: $theme-primary;
+            position: absolute;
+            top: 0;
+            right: 4px;
+            border-radius: 15px;
+            font-size: 9px;
+            line-height: 1;
+            width: 10px;
+            height: 10px;
+            &:before,
+            &:after{
+                content: '';
+                border-radius: 100%;
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;               
+                margin: auto;
+                transform: scale(0.3);
+                transform-origin: center center;
+                animation: noti-animation 3s linear infinite;
+            }
+            &:before{
+                background-color: $theme-primary;
+            }
+            &:after{
+                background-color: $theme-primary;
+            }
+        }    
+        &:before,
+        &:after{
+            display: none;
+        }   
+    }       
+    .nav-iconlist {        
+        >li {           
+            cursor: pointer;      
+            position: relative;
+            display: inline-block;
+            vertical-align: middle;
+            >a {
+                >i {
+                    font-size: 26px;
+                    color: $font-light;
+                }
+            }
+            &:nth-child(n+2) {
+                margin-left:15px;
+            }               
+        }
+        .navnotification-drop,
+        .navlang-drop,
+        .navprofile-drop {
+            padding-top: 0;
+            padding-bottom: 0;
+            .simplebar-content{
+                padding:0 !important;
+            }                      
+            ul {
+                li {
+                    a{
+                        text-transform: capitalize;       
+                        font-size: 15px;
+                        display: block;
+                        i{
+                            font-size: 18px;
+                        }
+                    }
+                    &:nth-child(n+2){
+                        border-top: 1px solid var(--#{$prefix}border-color);                                                                             
+                    }
+                    .media{
+                        align-items: center;
+                    }
+                }
+            }
+        }
+        .drop-header {
+            padding:18px 20px;
+            text-transform: capitalize;
+            border-bottom: 1px solid var(--#{$prefix}border-color);           
+        }
+        .drop-footer{
+            a {               
+                text-transform: uppercase;     
+                font-weight: 600;  
+                font-size: 14px;        
+                padding: 14px 20px;
+                text-align: center;
+                display: block;
+                border-top: 1px solid var(--#{$prefix}border-color);
+            }
+        }
+        .navprofile-drop {
+            min-width:250px;                   
+        }
+        .navnotification-drop{
+            min-width: 345px;
+            max-width: 360px;
+            ul {
+                height: 395px;
+                overflow-y: auto;
+                overflow-x: hidden;
+                padding: 20px;
+                li{
+                    border: none !important;
+                    a{
+                        border: 1px solid var(--#{$prefix}border-color);
+                        border-radius: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 12px;
+                        gap: 8px;
+                        // The text group must be allowed to shrink so the message
+                        // wraps inside the card instead of overflowing the box.
+                        > .d-flex{
+                            min-width: 0;
+                            flex: 1 1 auto;
+                        }
+                        .icon-nav{
+                            width: 50px;
+                            height: 50px;
+                            margin-right: 10px;
+                            flex-shrink: 0;
+                            img{
+                                width: 100%;
+                                height: 100%;
+                            }
+                        }
+                        .media-body{
+                            min-width: 0;
+                            h6,
+                            small{
+                                white-space: normal;
+                                overflow-wrap: anywhere;
+                                word-break: break-word;
+                            }
+                        }
+                        > svg{
+                            flex-shrink: 0;
+                        }
+                        .badge{
+                            padding: 6px 8px;
+                            margin-top: 10px;
+                        }
+                        i{
+                            margin-right: 0;
+                        }
+                    }
+                    +li{
+                        margin-top: 10px;
+                    }
+                }
+            }
+        }                          
+        .navlang-drop {
+            min-width: 200px;
+            li {
+                font-size: 16px;
+                a{
+                    padding: 10px 15px;
+                }
+                img{
+                    width: 30px;
+                    height: 18px;
+                    display: inline-block;
+                    margin-right: 5px;
+                }                   
+            }
+        }
+    }
+    .nav-profile{
+        img{           
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+        }
+        .media-body{
+            padding: 15px 10px;
+            text-align: center;
+            img{
+                width: 70px;
+                height: 70px;
+            }           
+            h6{
+                font-size: 18px;
+            }          
+        }       
+    }   
+}
+@keyframes noti-animation {
+    0% {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+    50% {
+      opacity: 0.1;
+    }
+    70% {
+      opacity: 0.09;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }

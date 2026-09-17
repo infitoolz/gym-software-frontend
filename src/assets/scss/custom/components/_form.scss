@@ -1,0 +1,115 @@
+/****************
+ 05 FORM START
+*****************/
+.form-control-color{
+  display: block;
+  background-color: transparent;
+  border-color: var(--#{$prefix}border-color);
+  border-radius: 8px;
+}
+.form-select{   
+    background-color: var(--#{$prefix}bodybg-color);
+    border-color: var(--#{$prefix}border-color);
+    font-size: 14px;
+    padding: 8px;
+    border-radius: 8px;
+    &:focus {
+        box-shadow: none;   
+        background-color: var(--#{$prefix}bodybg-color);
+    }
+}
+.form-control {
+  background-color: var(--#{$prefix}bodybg-color); 
+  border-color: var(--#{$prefix}border-color);
+  font-size: 14px;
+  padding: 8px;
+  color: $font-light;
+  border-radius: 8px;
+  &:focus {
+    box-shadow: none;   
+    border-color: var(--#{$prefix}border-color);
+    background-color: var(--#{$prefix}bodybg-color);
+  }
+  &::placeholder {
+    color: $font-light;
+  }
+}
+.form-group { 
+  margin-bottom: 20px;
+}
+.form-label {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+select.form-control {
+  position: relative;
+  appearance: auto;
+}
+.input-group-text { 
+  border-color: var(--#{$prefix}border-color);
+  color: $font-light;
+  background-color: var(--#{$prefix}bodybg-color); 
+  border-radius: 8px;
+  padding: 8px;
+  i{
+    font-size: 20px;
+  }
+}
+.input-group{
+    .input-group-text{
+        ~ .form-control{
+            border-left: none;
+        }
+    }
+    .form-control{
+        ~ .input-group-text{
+            border-left: none;
+        }
+    }
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* custom chekbox  start*/
+.custom-chek {
+  margin-bottom: 0;
+  .form-check-input {
+    width: 1.2em;
+    height: 1.2em;
+    border-color: var(--#{$prefix}border-color);
+    box-shadow: none;
+    margin-top: 1px;
+    &:checked {
+      background-color: $theme-primary;
+      border-color: $theme-primary;
+      box-shadow: none;
+    }
+  }
+  label {
+    margin-left: 5px;
+    margin-bottom: 0 !important;
+  }
+}
+
+/* check color */
+@each  $color , $value  in $theme-colors {   
+    .check-#{$color} {
+      .form-check-input {       
+        border-color: var(--#{$prefix}border-color);
+        &:checked {
+          background-color: $value;
+          border-color: $value;         
+        }
+      }     
+    }
+}
