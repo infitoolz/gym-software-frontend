@@ -32,14 +32,15 @@ export default function BmiTracking() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { auth } = useAuth();
+  const { user, auth } = useAuth();
+  const currentUser = user || auth;
   
-  const basePath = auth?.role === 'CORPORATE_HR' ? '/hr-portal' : '/corporate';
+  const basePath = currentUser?.role === 'CORPORATE_HR' ? '/hr-portal' : '/corporate';
 
   useEffect(() => {
     (async () => {
       try {
-        const hrUserId = auth?.userId || auth?.id;
+        const hrUserId = currentUser?.userId || currentUser?.id || localStorage.getItem("userId");
         const result = await getBmiData(hrUserId);
         setData(result);
         setLoading(false);
@@ -49,7 +50,7 @@ export default function BmiTracking() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [currentUser]);
 
   // BMI history chart
   const bmiChart = useMemo(() => {

@@ -433,8 +433,7 @@ export default function FollowupCalendar() {
     : 0;
 
   return (
-    <div className="themebody-wrap">
-      <div className="theme-body" style={{display:"flex", gap:20, minHeight:"70vh"}}>
+    <div style={{display:"flex", gap:20, minHeight:"70vh"}}>
 
       {/* ── Sidebar ──────────────────────────────────────── */}
       <div style={{
@@ -576,7 +575,6 @@ export default function FollowupCalendar() {
             ))}
           </div>
         )}
-      </div>
       </div>
     </div>
   );

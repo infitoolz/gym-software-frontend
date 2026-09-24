@@ -67,8 +67,18 @@ export default function TrainerDutySchedule() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("assignment");
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const canView = hasPermission("trainer-duty-schedule", "view");
   const canCreate = hasPermission("trainer-duty-schedule", "create");
@@ -133,6 +143,7 @@ export default function TrainerDutySchedule() {
     setIsEdit(false);
     setSelectedId(null);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
     setShowModal(true);
   };
@@ -154,6 +165,7 @@ export default function TrainerDutySchedule() {
     setIsEdit(true);
     setSelectedId(row?.id);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
     setShowModal(true);
   };
@@ -161,22 +173,32 @@ export default function TrainerDutySchedule() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
   };
 
   const validate = () => {
-    if (!form.trainerId) return "Trainer is required";
-    if (!form.title.trim()) return "Title is required";
-    if (!form.startDateTime || !form.endDateTime) return "Start and end time are required";
-    if (form.endDateTime < form.startDateTime) return "End time must be after start time";
-    return null;
+    const errors = {};
+    if (!form.trainerId) errors.trainerId = "Trainer is required";
+    if (!form.title.trim()) errors.title = "Title is required";
+    if (!form.startDateTime) errors.startDateTime = "Start date time is required";
+    if (!form.endDateTime) errors.endDateTime = "End date time is required";
+    if (form.startDateTime && form.endDateTime && form.endDateTime < form.startDateTime) {
+      errors.endDateTime = "End time must be after start time";
+    }
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
-    const validation = validate();
-    if (validation) {
-      setModalError(validation);
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.trainerId) {
+        setModalTab("assignment");
+      } else {
+        setModalTab("timing");
+      }
       return;
     }
 
@@ -377,8 +399,21 @@ export default function TrainerDutySchedule() {
         onNext={() => {
           setModalError("");
           if (modalTab === "assignment" && !form.trainerId) {
-            setModalError("Trainer is required");
+            setFieldErrors((prev) => ({ ...prev, trainerId: "Trainer is required" }));
             return;
+          }
+          if (modalTab === "timing") {
+            const errs = {};
+            if (!form.title.trim()) errs.title = "Title is required";
+            if (!form.startDateTime) errs.startDateTime = "Start date time is required";
+            if (!form.endDateTime) errs.endDateTime = "End date time is required";
+            if (form.startDateTime && form.endDateTime && form.endDateTime < form.startDateTime) {
+              errs.endDateTime = "End time must be after start time";
+            }
+            if (Object.keys(errs).length > 0) {
+              setFieldErrors((prev) => ({ ...prev, ...errs }));
+              return;
+            }
           }
           if (modalTab === "assignment") setModalTab("timing");
           else if (modalTab === "timing") setModalTab("notes");
@@ -391,11 +426,19 @@ export default function TrainerDutySchedule() {
         {modalTab === "assignment" && (
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Trainer</label>
-              <select className="form-select" value={form.trainerId} onChange={(e) => setForm((prev) => ({ ...prev, trainerId: e.target.value }))}>
+              <label className="form-label">Trainer *</label>
+              <select
+                className={`form-select ${fieldErrors.trainerId ? "is-invalid" : ""}`}
+                value={form.trainerId}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, trainerId: e.target.value }));
+                  clearFieldError("trainerId");
+                }}
+              >
                 <option value="">Select trainer</option>
                 {trainerOptions.map((trainer) => <option key={trainer.id} value={trainer.id}>{trainer.label}</option>)}
               </select>
+              {fieldErrors.trainerId && <div className="avm-field-error">{fieldErrors.trainerId}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Shift Type</label>
@@ -419,16 +462,42 @@ export default function TrainerDutySchedule() {
         {modalTab === "timing" && (
           <div className="row g-3">
             <div className="col-12">
-              <label className="form-label">Title</label>
-              <input className="form-control" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
+              <label className="form-label">Title *</label>
+              <input
+                className={`form-control ${fieldErrors.title ? "is-invalid" : ""}`}
+                value={form.title}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, title: e.target.value }));
+                  clearFieldError("title");
+                }}
+              />
+              {fieldErrors.title && <div className="avm-field-error">{fieldErrors.title}</div>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">Start Date Time</label>
-              <input type="datetime-local" className="form-control" value={form.startDateTime} onChange={(e) => setForm((prev) => ({ ...prev, startDateTime: e.target.value }))} />
+              <label className="form-label">Start Date Time *</label>
+              <input
+                type="datetime-local"
+                className={`form-control ${fieldErrors.startDateTime ? "is-invalid" : ""}`}
+                value={form.startDateTime}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, startDateTime: e.target.value }));
+                  clearFieldError("startDateTime");
+                }}
+              />
+              {fieldErrors.startDateTime && <div className="avm-field-error">{fieldErrors.startDateTime}</div>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">End Date Time</label>
-              <input type="datetime-local" className="form-control" value={form.endDateTime} onChange={(e) => setForm((prev) => ({ ...prev, endDateTime: e.target.value }))} />
+              <label className="form-label">End Date Time *</label>
+              <input
+                type="datetime-local"
+                className={`form-control ${fieldErrors.endDateTime ? "is-invalid" : ""}`}
+                value={form.endDateTime}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, endDateTime: e.target.value }));
+                  clearFieldError("endDateTime");
+                }}
+              />
+              {fieldErrors.endDateTime && <div className="avm-field-error">{fieldErrors.endDateTime}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Repeat Type</label>

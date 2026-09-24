@@ -1,0 +1,256 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPACT & UNIQUE USER MANAGEMENT UI STYLING
+// Ultra space-efficient stat widgets, sleek segmented tab bar, and sticky actions
+// ═══════════════════════════════════════════════════════════════════════════
+
+.users-page-wrapper {
+  // Page Header compact spacing
+  .page-breadcrumb {
+    margin-bottom: 12px !important;
+  }
+
+  // ── Unified Toolbar Strip (View Switcher + Current Role Info) ───────────
+  .um-toolbar-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: #0f141f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+
+    .um-switcher-group {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9px;
+      padding: 3px;
+      gap: 3px;
+
+      .um-tab-btn {
+        border: none;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 12.5px;
+        font-weight: 600;
+        padding: 5px 14px;
+        border-radius: 7px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        .um-badge-count {
+          background: rgba(255, 255, 255, 0.1);
+          color: inherit;
+          padding: 1px 7px;
+          border-radius: 10px;
+          font-size: 11px;
+          font-weight: 700;
+        }
+
+        &:hover:not(.active) {
+          color: #f8fafc;
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        &.active {
+          background: #0066ff;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 102, 255, 0.4);
+
+          .um-badge-count {
+            background: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+          }
+        }
+      }
+    }
+
+    .um-role-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .um-logged-as {
+        color: #94a3b8;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+
+        strong {
+          color: #f1f5f9;
+          font-weight: 600;
+        }
+      }
+
+      .um-role-tags {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+
+        .badge {
+          font-size: 10.5px;
+          font-weight: 600;
+          padding: 3px 8px;
+          border-radius: 6px;
+        }
+      }
+    }
+  }
+
+  // ── Compact & Unique Stat Grid (Ultra Low-Profile) ──────────────────────
+  .um-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+
+    .um-stat-card {
+      background: #0f141f;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        background: transparent;
+        transition: background 0.2s;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        border-color: rgba(255, 255, 255, 0.16);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      }
+
+      // Blue (Total)
+      &.stat-total {
+        &::before { background: #3b82f6; }
+        .um-stat-icon {
+          background: rgba(59, 130, 246, 0.14);
+          color: #3b82f6;
+          border: 1px solid rgba(59, 130, 246, 0.28);
+        }
+      }
+
+      // Green (Active)
+      &.stat-active {
+        &::before { background: #10b981; }
+        .um-stat-icon {
+          background: rgba(16, 185, 129, 0.14);
+          color: #10b981;
+          border: 1px solid rgba(16, 185, 129, 0.28);
+        }
+      }
+
+      // Red/Amber (Inactive)
+      &.stat-inactive {
+        &::before { background: #ef4444; }
+        .um-stat-icon {
+          background: rgba(239, 68, 68, 0.14);
+          color: #ef4444;
+          border: 1px solid rgba(239, 68, 68, 0.28);
+        }
+      }
+
+      // Purple (Role Types)
+      &.stat-roles {
+        &::before { background: #8b5cf6; }
+        .um-stat-icon {
+          background: rgba(139, 92, 246, 0.14);
+          color: #8b5cf6;
+          border: 1px solid rgba(139, 92, 246, 0.28);
+        }
+      }
+
+      .um-stat-icon {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .um-stat-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+
+        .um-stat-value {
+          font-size: 20px;
+          font-weight: 700;
+          line-height: 1.15;
+          color: #f8fafc;
+          margin: 0;
+          letter-spacing: -0.3px;
+        }
+
+        .um-stat-label {
+          font-size: 11px;
+          font-weight: 600;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+
+  // ── Responsive Adjustments ───────────────────────────────────────────────
+  @media (max-width: 1024px) {
+    .um-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .um-stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .um-toolbar-strip {
+      flex-direction: column;
+      align-items: stretch;
+
+      .um-switcher-group {
+        width: 100%;
+        .um-tab-btn {
+          flex: 1;
+          justify-content: center;
+        }
+      }
+
+      .um-role-info {
+        justify-content: space-between;
+      }
+    }
+  }
+}

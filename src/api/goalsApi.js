@@ -28,3 +28,18 @@ export async function deleteGoal(id) {
   await api.delete(`/goals/${id}`);
   return true;
 }
+
+export async function getMemberGoals(memberId) {
+  const response = await api.get(`/goals/member/${memberId}`);
+  return unwrapList(response);
+}
+
+export async function createGoalForMember(memberId, payload) {
+  const response = await api.post(`/goals/member/${memberId}`, payload);
+  return unwrapOne(response);
+}
+
+export async function loadGoalPresets(memberId = null, category = "strength") {
+  const response = await api.post("/goals/presets", { memberId, category });
+  return unwrapList(response);
+}

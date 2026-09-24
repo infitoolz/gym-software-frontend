@@ -1,28 +1,55 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Row, Col, Card, Container, Spinner, Badge, ProgressBar, Table } from "react-bootstrap";
+import { Row, Col, Card, Container, Spinner, Badge, ProgressBar, Table, Form } from "react-bootstrap";
 import Chart from "react-apexcharts";
 import { Link } from "react-router-dom";
 import { getCorporateReports } from "../../api/corporateWellnessApi";
+import api from "../../utils/api";
 import { useAuth } from "../../context/AuthContext";
 import {
   IconTrendingUp, IconUsers, IconHeartRateMonitor,
-  IconChevronRight, IconTrophy, IconAlertTriangle, IconCheck
+  IconChevronRight, IconTrophy, IconAlertTriangle, IconCheck, IconBuildingCommunity
 } from "@tabler/icons-react";
 
 export default function CorporateReports() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { auth } = useAuth();
+  const [corporateList, setCorporateList] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const { user, auth } = useAuth();
+  const currentUser = user || auth;
   
-  const basePath = auth?.role === 'CORPORATE_HR' ? '/hr-portal' : '/corporate';
+  const isCorporateHr = currentUser?.role === "CORPORATE_HR";
+  const basePath = isCorporateHr ? "/hr-portal" : "/corporate";
+
+  // Fetch available corporate partners for Admin view
+  useEffect(() => {
+    if (!isCorporateHr) {
+      const requesterId = currentUser?.userId || currentUser?.id;
+      if (requesterId) {
+        api.get(`/users/corporate-hr?requesterId=${requesterId}`)
+          .then((res) => setCorporateList(res.data?.data || []))
+          .catch(() => setCorporateList([]));
+      }
+    }
+  }, [isCorporateHr, currentUser]);
 
   useEffect(() => {
     (async () => {
-      const result = await getCorporateReports();
-      setData(result);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const hrUserId = isCorporateHr
+          ? (currentUser?.userId || currentUser?.id)
+          : (selectedCompanyId || undefined);
+
+        const result = await getCorporateReports(hrUserId);
+        setData(result);
+      } catch (err) {
+        console.error("Failed to load corporate reports", err);
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, []);
+  }, [currentUser, isCorporateHr, selectedCompanyId]);
 
   const trendChart = useMemo(() => {
     if (!data?.monthlyTrend) return null;
@@ -74,59 +101,163 @@ export default function CorporateReports() {
                 </ol>
               </nav>
             </div>
-            <Link to={basePath} className="btn btn-outline-primary btn-sm">Back to Dashboard</Link>
+            <div className="d-flex align-items-center gap-2">
+              {!isCorporateHr && corporateList.length > 0 && (
+                <Form.Select
+                  size="sm"
+                  style={{ width: "220px" }}
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                >
+                  <option value="">All Corporate Partners</option>
+                  {corporateList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.companyName}
+                    </option>
+                  ))}
+                </Form.Select>
+              )}
+              <Link to={basePath} className="btn btn-outline-primary btn-sm">Back to Dashboard</Link>
+            </div>
           </div>
 
           {/* ── Row 1: Overall score + Challenge stats ── */}
           <Row className="g-3 mb-4">
             <Col sm={6} lg={3}>
-              <Card className="border-0 shadow-sm h-100 text-center" style={{ background: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)" }}>
-                <Card.Body className="p-4 text-white">
-                  <IconHeartRateMonitor size={32} className="mb-2 text-white-50" />
-                  <h6 className="text-white-50 text-uppercase fw-bold small">Overall Wellness</h6>
-                  <h1 className="fw-bold mb-0">{d.overallWellness?.score || 0}</h1>
-                  <small className="text-white-50">/100 · {d.overallWellness?.change} from last month</small>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} lg={3}>
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-2">
-                    <IconTrophy size={20} className="me-2 text-warning" />
-                    <h6 className="fw-bold mb-0">Challenge Stats</h6>
+              <Card className="border-0 shadow-sm h-100" style={{ background: "linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)" }}>
+                <Card.Body className="p-4 text-white d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex align-items-center justify-content-between mb-2">
+                      <h6 className="text-white-50 text-uppercase fw-bold small mb-0">Overall Wellness</h6>
+                      <IconHeartRateMonitor size={22} className="text-white-50" />
+                    </div>
+                    <div className="d-flex align-items-baseline gap-2 mt-2">
+                      <h1 className="fw-bold mb-0">{d.overallWellness?.score || 0}</h1>
+                      <span className="text-white-50" style={{ fontSize: "14px" }}>/ 100</span>
+                    </div>
                   </div>
-                  <h2 className="fw-bold mb-0">{d.challengeStats?.total || 0}</h2>
-                  <small className="text-muted">Total challenges</small>
-                  <div className="d-flex justify-content-between mt-2 small">
-                    <span><Badge bg="success" className="small">{d.challengeStats?.completed || 0} completed</Badge></span>
-                    <span><Badge bg="warning" className="small">{d.challengeStats?.active || 0} active</Badge></span>
-                    <span><Badge bg="info" className="small">{d.challengeStats?.upcoming || 0} upcoming</Badge></span>
+                  <div className="mt-3 pt-2 border-top" style={{ borderColor: "rgba(255, 255, 255, 0.15)" }}>
+                    <span className="badge rounded-pill bg-white text-primary px-2 py-1 small fw-semibold">
+                      {d.overallWellness?.change || "0"}
+                    </span>
+                    <span className="text-white-50 small ms-2">from last month</span>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
             <Col sm={6} lg={3}>
               <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-2">
-                    <IconUsers size={20} className="me-2 text-primary" />
-                    <h6 className="fw-bold mb-0">Total Participants</h6>
+                <Card.Body className="p-4 d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-3"
+                        style={{ width: 34, height: 34, background: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}
+                      >
+                        <IconTrophy size={18} />
+                      </div>
+                      <h6 className="fw-bold mb-0">Challenge Stats</h6>
+                    </div>
+                    <div className="d-flex align-items-baseline gap-2 mt-2">
+                      <h2 className="fw-bold mb-0">{d.challengeStats?.total || 0}</h2>
+                      <small className="text-muted">Total challenges</small>
+                    </div>
                   </div>
-                  <h2 className="fw-bold mb-0">{(d.challengeStats?.totalParticipants || 0).toLocaleString()}</h2>
-                  <small className="text-muted">Across all challenges</small>
+                  <div className="d-flex align-items-center gap-1 flex-wrap mt-3 pt-2 border-top" style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}>
+                    <span
+                      className="badge d-inline-flex align-items-center gap-1"
+                      style={{
+                        background: "rgba(16, 185, 129, 0.1)",
+                        color: "#059669",
+                        border: "1px solid rgba(16, 185, 129, 0.25)",
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "3px 7px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                      {d.challengeStats?.completed || 0} Completed
+                    </span>
+                    <span
+                      className="badge d-inline-flex align-items-center gap-1"
+                      style={{
+                        background: "rgba(245, 158, 11, 0.1)",
+                        color: "#d97706",
+                        border: "1px solid rgba(245, 158, 11, 0.25)",
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "3px 7px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
+                      {d.challengeStats?.active || 0} Active
+                    </span>
+                    <span
+                      className="badge d-inline-flex align-items-center gap-1"
+                      style={{
+                        background: "rgba(14, 165, 233, 0.1)",
+                        color: "#0284c7",
+                        border: "1px solid rgba(14, 165, 233, 0.25)",
+                        fontSize: "11px",
+                        fontWeight: 500,
+                        padding: "3px 7px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#0ea5e9", display: "inline-block" }} />
+                      {d.challengeStats?.upcoming || 0} Upcoming
+                    </span>
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
             <Col sm={6} lg={3}>
               <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-2">
-                    <IconCheck size={20} className="me-2 text-success" />
-                    <h6 className="fw-bold mb-0">Avg Completion</h6>
+                <Card.Body className="p-4 d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-3"
+                        style={{ width: 34, height: 34, background: "rgba(0, 102, 255, 0.1)", color: "#0066ff" }}
+                      >
+                        <IconUsers size={18} />
+                      </div>
+                      <h6 className="fw-bold mb-0">Total Participants</h6>
+                    </div>
+                    <div className="d-flex align-items-baseline gap-2 mt-2">
+                      <h2 className="fw-bold mb-0">{(d.challengeStats?.totalParticipants || 0).toLocaleString()}</h2>
+                      <small className="text-muted">Enrolled</small>
+                    </div>
                   </div>
-                  <h2 className="fw-bold mb-0">{d.challengeStats?.avgCompletionRate || 0}%</h2>
-                  <ProgressBar now={d.challengeStats?.avgCompletionRate || 0} variant="success" className="mt-2" style={{ height: 6 }} />
+                  <div className="mt-3 pt-2 border-top" style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}>
+                    <small className="text-muted">Across all wellness challenges</small>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col sm={6} lg={3}>
+              <Card className="border-0 shadow-sm h-100">
+                <Card.Body className="p-4 d-flex flex-column justify-content-between">
+                  <div>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      <div
+                        className="d-flex align-items-center justify-content-center rounded-3"
+                        style={{ width: 34, height: 34, background: "rgba(16, 185, 129, 0.1)", color: "#10b981" }}
+                      >
+                        <IconCheck size={18} />
+                      </div>
+                      <h6 className="fw-bold mb-0">Avg Completion</h6>
+                    </div>
+                    <div className="d-flex align-items-baseline gap-2 mt-2">
+                      <h2 className="fw-bold mb-0">{d.challengeStats?.avgCompletionRate || 0}%</h2>
+                      <small className="text-muted">Completion rate</small>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-2 border-top" style={{ borderColor: "rgba(0, 0, 0, 0.06)" }}>
+                    <ProgressBar now={d.challengeStats?.avgCompletionRate || 0} variant="success" style={{ height: 6, borderRadius: 3 }} />
+                  </div>
                 </Card.Body>
               </Card>
             </Col>

@@ -1,0 +1,1127 @@
+/* ==========================================================================
+   FITNEXA PREMIUM WORKOUT PLAN DETAIL STYLES
+   ========================================================================== */
+
+.wpd-wrapper {
+  padding-bottom: 40px;
+}
+
+/* Ensure themebody-wrap allows sticky child elements to pin cleanly */
+.themebody-wrap.has-sticky-detail {
+  overflow: visible !important;
+}
+
+/* --------------------------------------------------------------------------
+   Two-Panel Architecture: Left Scrolls, Right Stays Fixed
+   -------------------------------------------------------------------------- */
+.wpd-scrollable-left {
+  height: calc(100vh - 165px);
+  max-height: calc(100vh - 165px);
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  padding-right: 14px;
+  padding-bottom: 30px;
+  scrollbar-width: thin;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 102, 255, 0.25);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 102, 255, 0.5);
+  }
+
+  @media (max-width: 991px) {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding-right: 0;
+  }
+}
+
+.wpd-fixed-right {
+  position: -webkit-sticky !important;
+  position: sticky !important;
+  top: 0 !important;
+  height: calc(100vh - 165px);
+  max-height: calc(100vh - 165px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding-right: 4px;
+  padding-bottom: 30px;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 102, 255, 0.2);
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 102, 255, 0.4);
+  }
+
+  @media (max-width: 991px) {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Top Navigation & Actions Bar
+   -------------------------------------------------------------------------- */
+.wpd-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.wpd-breadcrumb-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wpd-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.12));
+  background: var(--#{$prefix}card-bg, #ffffff);
+  color: var(--#{$prefix}body-color, #1e293b);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 102, 255, 0.08);
+    border-color: #0066ff;
+    color: #0066ff;
+    transform: translateX(-3px);
+  }
+}
+
+.wpd-breadcrumb-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--#{$prefix}secondary-color, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  .active {
+    color: var(--#{$prefix}heading-color, #0f172a);
+    font-weight: 700;
+  }
+}
+
+.wpd-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn-wpd-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: none;
+  background: linear-gradient(135deg, #0066ff 0%, #00d2f4 100%);
+  color: #ffffff !important;
+  box-shadow: 0 4px 18px rgba(0, 102, 255, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 102, 255, 0.45);
+    filter: brightness(1.08);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-wpd-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.12));
+  background: var(--#{$prefix}card-bg, #ffffff);
+  color: var(--#{$prefix}body-color, #475569);
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 102, 255, 0.05);
+    color: #0066ff;
+    border-color: #0066ff;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cinematic Hero Display
+   -------------------------------------------------------------------------- */
+.wpd-hero-card {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.25);
+  margin-bottom: 24px;
+}
+
+.wpd-hero-media {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  max-height: 50vh;
+  overflow: hidden;
+  cursor: pointer;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &:hover img {
+    transform: scale(1.03);
+  }
+
+  .wpd-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(15, 23, 42, 0.2) 0%,
+      rgba(15, 23, 42, 0.5) 45%,
+      rgba(15, 23, 42, 0.95) 100%
+    );
+    pointer-events: none;
+  }
+
+  .wpd-hero-zoom-hint {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  &:hover .wpd-hero-zoom-hint {
+    opacity: 1;
+  }
+}
+
+.wpd-hero-hud-top {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  z-index: 2;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.wpd-hud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  &.status-active {
+    background: rgba(16, 185, 129, 0.25);
+    border: 1px solid rgba(16, 185, 129, 0.55);
+    color: #34d399;
+
+    .wpd-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: wpd-pulse 2s infinite;
+    }
+  }
+
+  &.status-inactive {
+    background: rgba(239, 68, 68, 0.25);
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    color: #f87171;
+  }
+
+  &.glass-pill {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #f1f5f9;
+  }
+
+  &.level-pill {
+    background: rgba(245, 158, 11, 0.25);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+  }
+}
+
+@keyframes wpd-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.wpd-hero-content {
+  padding: 24px 28px 28px;
+  background: var(--#{$prefix}card-bg, #ffffff);
+  border-top: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+}
+
+.wpd-plan-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--#{$prefix}heading-color, #0f172a);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.wpd-plan-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--#{$prefix}secondary-color, #64748b);
+  margin-bottom: 18px;
+  max-width: 860px;
+}
+
+.wpd-tags-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.wpd-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--#{$prefix}tertiary-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+  color: var(--#{$prefix}body-color, #334155);
+
+  &.highlight {
+    background: rgba(0, 102, 255, 0.08);
+    border-color: rgba(0, 102, 255, 0.25);
+    color: #0066ff;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Performance Vitals Ribbon (4 KPI Cards)
+   -------------------------------------------------------------------------- */
+.wpd-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media (max-width: 991px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 575px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wpd-vital-card {
+  position: relative;
+  background: var(--#{$prefix}card-bg, #ffffff);
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 102, 255, 0.3);
+  }
+
+  .wpd-vital-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover .wpd-vital-icon {
+    transform: scale(1.08) rotate(3deg);
+  }
+
+  &.vital-blue .wpd-vital-icon {
+    background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(0, 198, 255, 0.22) 100%);
+    color: #0066ff;
+  }
+
+  &.vital-orange .wpd-vital-icon {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.12) 0%, rgba(251, 191, 36, 0.22) 100%);
+    color: #ea580c;
+  }
+
+  &.vital-emerald .wpd-vital-icon {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(52, 211, 153, 0.22) 100%);
+    color: #10b981;
+  }
+
+  &.vital-cyan .wpd-vital-icon {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.12) 0%, rgba(14, 165, 233, 0.22) 100%);
+    color: #0284c7;
+  }
+
+  .wpd-vital-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--#{$prefix}secondary-color, #64748b);
+    margin-bottom: 3px;
+  }
+
+  .wpd-vital-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--#{$prefix}heading-color, #0f172a);
+    line-height: 1.2;
+  }
+
+  .wpd-vital-sub {
+    font-size: 0.75rem;
+    color: var(--#{$prefix}tertiary-color, #94a3b8);
+    margin-top: 2px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Exercise Cards & Program Lineup
+   -------------------------------------------------------------------------- */
+.wpd-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--#{$prefix}heading-color, #0f172a);
+  }
+}
+
+.wpd-count-badge {
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(0, 102, 255, 0.1);
+  color: #0066ff;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.wpd-exercise-card {
+  background: var(--#{$prefix}card-bg, #ffffff);
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+
+  &:hover {
+    box-shadow: 0 10px 28px rgba(0, 102, 255, 0.08);
+    border-color: rgba(0, 102, 255, 0.25);
+  }
+}
+
+.wpd-exercise-top {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+
+  @media (max-width: 575px) {
+    flex-direction: column;
+  }
+}
+
+.wpd-exercise-thumb-wrap {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #0f172a;
+  flex-shrink: 0;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover img {
+    transform: scale(1.08);
+  }
+
+  .wpd-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    color: #ffffff;
+    transition: opacity 0.2s ease;
+  }
+
+  &:hover .wpd-thumb-overlay {
+    opacity: 1;
+  }
+}
+
+.wpd-exercise-index {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 102, 255, 0.9);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.wpd-exercise-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.wpd-exercise-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--#{$prefix}heading-color, #0f172a);
+  margin-bottom: 6px;
+}
+
+.wpd-exercise-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.wpd-pill-type {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 102, 255, 0.08);
+  color: #0066ff;
+  border: 1px solid rgba(0, 102, 255, 0.2);
+}
+
+.wpd-pill-body {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.wpd-pill-equip {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(147, 51, 234, 0.08);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.2);
+}
+
+.wpd-pill-diff {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.wpd-exercise-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--#{$prefix}secondary-color, #64748b);
+  margin-bottom: 0;
+}
+
+/* Exercise Stats Pill Bar */
+.wpd-specs-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--#{$prefix}tertiary-bg, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.06));
+  margin-bottom: 16px;
+
+  @media (max-width: 575px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.wpd-spec-item {
+  display: flex;
+  flex-direction: column;
+
+  .wpd-spec-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--#{$prefix}secondary-color, #64748b);
+    margin-bottom: 2px;
+  }
+
+  .wpd-spec-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--#{$prefix}heading-color, #0f172a);
+  }
+}
+
+/* Rest Timer Widget */
+.wpd-rest-timer-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.05) 0%, rgba(0, 198, 255, 0.05) 100%);
+  border: 1px dashed rgba(0, 102, 255, 0.3);
+  margin-bottom: 14px;
+}
+
+.wpd-timer-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0066ff;
+}
+
+.wpd-timer-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  button {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 102, 255, 0.3);
+    background: #ffffff;
+    color: #0066ff;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #0066ff;
+      color: #ffffff;
+    }
+
+    &.active {
+      background: #0066ff;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 102, 255, 0.4);
+    }
+  }
+}
+
+.wpd-timer-countdown {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0066ff;
+  background: rgba(0, 102, 255, 0.1);
+  padding: 2px 10px;
+  border-radius: 6px;
+  animation: wpd-pulse 1s infinite;
+}
+
+/* Instructions Checklist */
+.wpd-instructions-box {
+  border-top: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.06));
+  padding-top: 14px;
+}
+
+.wpd-instructions-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  color: var(--#{$prefix}heading-color, #0f172a);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    color: #0066ff;
+  }
+}
+
+.wpd-steps-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wpd-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--#{$prefix}tertiary-bg, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.04));
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--#{$prefix}body-color, #334155);
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 102, 255, 0.04);
+  }
+
+  .wpd-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 102, 255, 0.1);
+    color: #0066ff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Right Column Pro Fitness Sidebar Cards
+   -------------------------------------------------------------------------- */
+.wpd-side-card {
+  background: var(--#{$prefix}card-bg, #ffffff);
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 20px;
+  padding: 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+
+  .wpd-side-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--#{$prefix}heading-color, #0f172a);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+/* Coaching Notes Card */
+.wpd-notes-card {
+  background: linear-gradient(145deg, var(--#{$prefix}card-bg, #ffffff) 0%, rgba(0, 102, 255, 0.03) 100%);
+  border-left: 4px solid #0066ff;
+
+  .wpd-note-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--#{$prefix}border-color, rgba(0, 0, 0, 0.06));
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--#{$prefix}body-color, #334155);
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .bullet-icon {
+      color: #10b981;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  }
+}
+
+/* Weekly Routine Split */
+.wpd-split-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.wpd-split-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  border-radius: 10px;
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.06));
+  background: var(--#{$prefix}tertiary-bg, rgba(0, 0, 0, 0.02));
+  text-align: center;
+  transition: all 0.2s ease;
+
+  .day-name {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--#{$prefix}secondary-color, #64748b);
+    margin-bottom: 4px;
+  }
+
+  .day-status {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  &.is-workout {
+    background: rgba(0, 102, 255, 0.08);
+    border-color: rgba(0, 102, 255, 0.3);
+
+    .day-name {
+      color: #0066ff;
+    }
+
+    .day-status {
+      background: #0066ff;
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(0, 102, 255, 0.4);
+    }
+  }
+
+  &.is-rest {
+    .day-status {
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--#{$prefix}secondary-color, #94a3b8);
+    }
+  }
+}
+
+/* Recovery Pro Tips */
+.wpd-tip-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--#{$prefix}tertiary-bg, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.05));
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .tip-emoji {
+    font-size: 1.3rem;
+    line-height: 1;
+  }
+
+  .tip-main {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--#{$prefix}heading-color, #0f172a);
+  }
+
+  .tip-sub {
+    font-size: 0.72rem;
+    color: var(--#{$prefix}secondary-color, #64748b);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Workout Runner Modal
+   -------------------------------------------------------------------------- */
+.wpd-runner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+}
+
+.wpd-runner-body {
+  padding: 24px;
+}
+
+.wpd-runner-timer-hero {
+  text-align: center;
+  padding: 24px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.06) 0%, rgba(0, 198, 255, 0.08) 100%);
+  border: 1px solid rgba(0, 102, 255, 0.2);
+  margin-bottom: 24px;
+
+  .runner-big-time {
+    font-family: monospace;
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #0066ff;
+    letter-spacing: 2px;
+    line-height: 1;
+    margin: 8px 0 16px;
+  }
+
+  .runner-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+}
+
+.wpd-set-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--#{$prefix}border-color, rgba(0, 0, 0, 0.08));
+  background: var(--#{$prefix}card-bg, #ffffff);
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &.completed {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.3);
+
+    .set-text {
+      color: #10b981;
+      font-weight: 700;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Dark Mode Customizations
+   -------------------------------------------------------------------------- */
+[data-bs-theme="dark"] {
+  .wpd-hero-card {
+    border-color: rgba(0, 102, 255, 0.25);
+    box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  .wpd-hero-content {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .wpd-vital-card {
+    background: #131b2a;
+    border-color: rgba(255, 255, 255, 0.07);
+
+    &:hover {
+      border-color: rgba(0, 102, 255, 0.4);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .wpd-exercise-card {
+    background: #131b2a;
+    border-color: rgba(255, 255, 255, 0.07);
+
+    &:hover {
+      border-color: rgba(0, 102, 255, 0.35);
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  .wpd-side-card {
+    background: #131b2a;
+    border-color: rgba(255, 255, 255, 0.07);
+  }
+
+  .wpd-specs-strip {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .wpd-step-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .wpd-split-day {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+
+  .wpd-tip-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .wpd-timer-btns button {
+    background: #1e293b;
+    border-color: rgba(0, 102, 255, 0.4);
+    color: #38bdf8;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Print Mode Optimization
+   -------------------------------------------------------------------------- */
+@media print {
+  .theme-sidebar,
+  .theme-header,
+  .wpd-topbar,
+  .btn-wpd-start,
+  .wpd-rest-timer-box,
+  footer {
+    display: none !important;
+  }
+
+  .themebody-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .wpd-hero-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+  }
+
+  .wpd-exercise-card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    page-break-inside: avoid;
+  }
+}

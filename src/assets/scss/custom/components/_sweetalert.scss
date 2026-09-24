@@ -1,0 +1,209 @@
+/* ==========================================================================
+   FitNexa Modern Premium SweetAlert2 Dialog Cards Styling
+   Applies globally across all confirmation popups, alerts, and modals
+   ========================================================================== */
+
+.swal2-container {
+  z-index: 10000 !important;
+  background: rgba(15, 23, 42, 0.5) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  padding: 1.25rem !important;
+}
+
+/* ── Main Popup Card ─────────────────────────────────────────────────── */
+.swal2-popup {
+  background: #ffffff !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  box-shadow: 0 25px 65px -12px rgba(15, 23, 42, 0.26), 0 0 0 1px rgba(255, 255, 255, 0.8) inset !important;
+  padding: 2.25rem 2rem 2rem !important;
+  max-width: 440px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.swal2-popup.swal2-show {
+  animation: swalModernPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.swal2-popup.swal2-hide {
+  animation: swalModernHide 0.15s ease-in forwards !important;
+}
+
+@keyframes swalModernPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes swalModernHide {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+}
+
+/* ── Header Icon Styling ─────────────────────────────────────────────── */
+.swal2-icon {
+  width: 72px !important;
+  height: 72px !important;
+  margin: 0.25rem auto 1rem !important;
+  border-radius: 50% !important;
+  border-width: 2.5px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Success Icon */
+.swal2-icon.swal2-success {
+  border-color: #10b981 !important;
+  color: #059669 !important;
+  background: #ecfdf5 !important;
+  box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.12), 0 8px 20px -4px rgba(16, 185, 129, 0.25) !important;
+
+  .swal2-success-ring {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+  }
+  [class^='swal2-success-line'] {
+    background-color: #059669 !important;
+  }
+}
+
+/* Warning Icon */
+.swal2-icon.swal2-warning {
+  border-color: #f59e0b !important;
+  color: #d97706 !important;
+  background: #fffbeb !important;
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.12), 0 8px 20px -4px rgba(245, 158, 11, 0.22) !important;
+  font-weight: 700 !important;
+}
+
+/* Error Icon */
+.swal2-icon.swal2-error {
+  border-color: #ef4444 !important;
+  color: #dc2626 !important;
+  background: #fef2f2 !important;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.12), 0 8px 20px -4px rgba(239, 68, 68, 0.25) !important;
+
+  [class^='swal2-x-mark-line'] {
+    background-color: #dc2626 !important;
+  }
+}
+
+/* Info & Question Icon */
+.swal2-icon.swal2-info,
+.swal2-icon.swal2-question {
+  border-color: #3b82f6 !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.12), 0 8px 20px -4px rgba(59, 130, 246, 0.25) !important;
+}
+
+/* ── Title Typography ────────────────────────────────────────────────── */
+.swal2-title {
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.35 !important;
+  padding: 0 !important;
+  margin: 0.5rem 0 0.35rem 0 !important;
+}
+
+/* ── Description / Content ───────────────────────────────────────────── */
+.swal2-html-container {
+  font-size: 0.92rem !important;
+  color: #64748b !important;
+  line-height: 1.55 !important;
+  margin: 0.35rem 0 1.25rem 0 !important;
+  padding: 0 !important;
+}
+
+/* ── Action Buttons Row ──────────────────────────────────────────────── */
+.swal2-actions {
+  margin: 1.15rem 0 0 0 !important;
+  gap: 0.75rem !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.swal2-styled {
+  border-radius: 12px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+  padding: 0.65rem 1.6rem !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.swal2-styled:hover {
+  transform: translateY(-2px) !important;
+}
+
+.swal2-styled:active {
+  transform: translateY(0) !important;
+}
+
+/* Confirm Button (Default Primary) */
+.swal2-styled.swal2-confirm {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.25) !important;
+}
+
+.swal2-styled.swal2-confirm:hover {
+  box-shadow: 0 8px 20px -2px rgba(15, 23, 42, 0.35) !important;
+}
+
+/* Danger / Delete Confirm Button */
+.swal2-styled.swal2-confirm[style*="rgb(220, 38, 38)"],
+.swal2-styled.swal2-confirm[style*="#dc2626"],
+.swal2-styled.swal2-confirm[style*="#ef4444"],
+.swal2-styled.swal2-confirm[style*="red"] {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  box-shadow: 0 6px 18px -2px rgba(220, 38, 38, 0.38) !important;
+  color: #ffffff !important;
+}
+
+.swal2-styled.swal2-confirm[style*="rgb(220, 38, 38)"]:hover,
+.swal2-styled.swal2-confirm[style*="#dc2626"]:hover,
+.swal2-styled.swal2-confirm[style*="#ef4444"]:hover {
+  box-shadow: 0 8px 24px -2px rgba(220, 38, 38, 0.5) !important;
+}
+
+/* Cancel Button */
+.swal2-styled.swal2-cancel {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.swal2-styled.swal2-cancel:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* ── Timer Progress Bar ──────────────────────────────────────────────── */
+.swal2-timer-progress-bar {
+  background: linear-gradient(90deg, #10b981, #059669) !important;
+  height: 3px !important;
+  border-radius: 9999px !important;
+}

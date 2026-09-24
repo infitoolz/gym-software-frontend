@@ -3,8 +3,8 @@ import SockJS from "sockjs-client";
 import { getAccessToken } from "./api";
 
 // Derive the WebSocket base URL from the API base used by axios.
-// This works with both local dev (port 8082) and production.
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8082/api";
+// This works with both local dev (port 8083) and production.
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8083/api";
 const WS_BASE = API_BASE.replace(/^http/, "ws").replace(/\/api\/?$/, "");
 const WS_URL = `${WS_BASE}/ws/call`;
 
@@ -67,9 +67,9 @@ export function connectStomp(callbacks = {}) {
   if (useSockJS) {
     // SockJS fallback for environments where raw WebSocket won't connect
     const httpBase = API_BASE.replace(/\/api\/?$/, "");
-    options.webSocketFactory = () => new SockJS(`${httpBase}/ws/call`);
+    options.webSocketFactory = () => new SockJS(`${httpBase}/ws/call?token=${encodeURIComponent(token)}`);
   } else {
-    options.brokerURL = WS_URL;
+    options.brokerURL = `${WS_URL}?token=${encodeURIComponent(token)}`;
   }
 
   client = new Client(options);

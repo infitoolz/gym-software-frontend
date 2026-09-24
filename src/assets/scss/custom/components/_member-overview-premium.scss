@@ -1,0 +1,510 @@
+/* ==========================================================================
+   Member Overview Premium Dashboard Styling
+   ========================================================================== */
+
+.member-overview-dashboard {
+  padding-bottom: 2rem;
+
+  /* Welcome Banner / Header */
+  .dashboard-welcome-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+
+    .welcome-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .welcome-subtitle {
+      font-size: 0.92rem;
+      color: #64748b;
+      margin-bottom: 0;
+    }
+
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #334155;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    }
+  }
+
+  /* Top 4 KPI Metric Cards */
+  .stat-metric-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    padding: 20px;
+    margin-bottom: 24px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+
+      .stat-icon-wrap {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .stat-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+    }
+
+    .stat-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      line-height: 1.1;
+      color: #0f172a;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-bottom: 14px;
+
+      small {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #94a3b8;
+      }
+    }
+
+    .stat-progress-bar-wrap {
+      background: #f1f5f9;
+      height: 6px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 10px;
+
+      .stat-progress-bar-fill {
+        height: 100%;
+        border-radius: 6px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    }
+
+    .stat-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    /* Card color themes */
+    &.theme-steps {
+      .stat-icon-wrap {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+      .stat-badge {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+      .stat-progress-bar-fill {
+        background: linear-gradient(90deg, #2563eb, #38bdf8);
+      }
+    }
+
+    &.theme-water {
+      .stat-icon-wrap {
+        background: #ecfeff;
+        color: #0891b2;
+      }
+      .stat-badge {
+        background: #ecfeff;
+        color: #0891b2;
+      }
+      .stat-progress-bar-fill {
+        background: linear-gradient(90deg, #06b6d4, #22d3ee);
+      }
+    }
+
+    &.theme-calories {
+      .stat-icon-wrap {
+        background: #fff7ed;
+        color: #ea580c;
+      }
+      .stat-badge {
+        background: #fff7ed;
+        color: #ea580c;
+      }
+      .stat-progress-bar-fill {
+        background: linear-gradient(90deg, #ea580c, #f59e0b);
+      }
+    }
+
+    &.theme-heart {
+      .stat-icon-wrap {
+        background: #fff1f2;
+        color: #e11d48;
+      }
+      .stat-badge {
+        background: #fff1f2;
+        color: #e11d48;
+      }
+      .sparkline-container {
+        margin: 2px 0 8px 0;
+      }
+    }
+  }
+
+  /* General Overview Cards */
+  .overview-panel-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+    margin-bottom: 24px;
+    overflow: hidden;
+
+    .card-header-clean {
+      padding: 18px 22px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      .card-title-main {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .card-subtitle {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 2px;
+      }
+    }
+
+    .card-body-clean {
+      padding: 20px 22px;
+    }
+  }
+
+  /* This Week Hero Card */
+  .this-week-hero-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+    padding: 24px;
+    color: #ffffff;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
+    }
+
+    .hero-headline {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+      line-height: 1.2;
+    }
+
+    .hero-desc {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 18px;
+      line-height: 1.4;
+    }
+
+    .hero-btn {
+      background: #ffffff;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 0.88rem;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #f8fafc;
+        color: #1e40af;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+      }
+    }
+  }
+
+  /* Best Exercises List */
+  .exercises-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .exercise-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #f1f5f9;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #ffffff;
+        border-color: #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      .ex-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .ex-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 2px;
+      }
+
+      .ex-category {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+
+      .ex-pill {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        color: #475569;
+      }
+    }
+  }
+
+  /* Goals Cards */
+  .goal-card-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+      border-color: #cbd5e1;
+    }
+
+    .goal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+
+      .goal-name {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 2px;
+      }
+
+      .goal-value {
+        font-size: 0.78rem;
+        color: #64748b;
+      }
+
+      .goal-pct {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: #2563eb;
+      }
+    }
+  }
+
+  /* Empty Goals State */
+  .goals-empty-state {
+    padding: 28px 20px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 14px;
+
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #eff6ff;
+      color: #2563eb;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .empty-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 4px;
+    }
+
+    .empty-desc {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 14px;
+    }
+  }
+
+  /* Popular Workout Card */
+  .popular-plan-card {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    height: 100%;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+      border-color: #cbd5e1;
+    }
+
+    .plan-img-wrap {
+      position: relative;
+      height: 150px;
+      background: #f1f5f9;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover img {
+        transform: scale(1.04);
+      }
+
+      .plan-level-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(4px);
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 6px;
+      }
+    }
+
+    .plan-content {
+      padding: 14px 16px;
+
+      .plan-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 6px;
+        text-decoration: none;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &:hover {
+          color: #2563eb;
+        }
+      }
+
+      .plan-meta {
+        font-size: 0.78rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+    }
+  }
+}

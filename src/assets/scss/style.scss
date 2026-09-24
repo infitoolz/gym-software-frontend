@@ -40,10 +40,16 @@
 @import 'custom/components/badge';
 @import 'custom/components/switch';
 @import 'custom/components/alerts';
+@import 'custom/components/sweetalert';
 @import 'custom/components/pagination';
 @import 'custom/components/card';
 @import 'custom/components/tab';
 @import 'custom/components/table';
+@import 'custom/components/common-table';
+@import 'custom/components/user-compact';
+@import 'custom/components/workout-detail-premium';
+@import 'custom/components/workout-schedule-premium';
+@import 'custom/components/member-overview-premium';
 @import 'custom/components/header';
 @import 'custom/components/footer';
 @import 'custom/components/dropdown';
@@ -59,10 +65,13 @@
 
 // Pages
 @import 'custom/pages/authentication';
+@import 'custom/pages/auth-premium';
 @import 'custom/pages/workout';
 @import 'custom/pages/diate';
 @import 'custom/pages/onboding';
+@import 'custom/pages/profile';
 @import 'custom/pages/goal';
+@import 'custom/pages/exercise-master';
 
 // dashboard
 @import 'custom/dashboard/dashboard';
@@ -80,7 +89,7 @@
 .role-permissions-page-wrapper,
 .diet-plan-page {
   margin-top: 90px;
-  margin-left: 245px;
+  margin-left: 255px;
   margin-right: 24px;
   width: auto;
   min-height: calc(100vh - 90px);
@@ -240,3 +249,6 @@
     width: fit-content;
   }
 }
+
+// Global Print Styles
+@import 'custom/print';

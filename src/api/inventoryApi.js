@@ -28,3 +28,13 @@ export async function deleteInventory(id) {
   const response = await api.delete(`/inventory/${id}`);
   return unwrap(response);
 }
+
+export async function getPublicInventoryById(id) {
+  const response = await api.get(`/inventory/public/${id}`);
+  return unwrap(response);
+}
+
+export async function reportPublicIssue(id, reportData) {
+  const response = await api.post(`/inventory/public/${id}/report`, reportData);
+  return unwrap(response);
+}

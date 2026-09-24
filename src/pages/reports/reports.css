@@ -1,0 +1,398 @@
+/* ==========================================================================
+   FitNexa Reports & Analytics - Executive Modern Design System
+   ========================================================================== */
+
+/* ── Header & Action Controls ────────────────────────────────────────── */
+.reports-header-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.reports-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.reports-subtitle {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+
+.reports-actions-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* ── Filter Bar Pills ────────────────────────────────────────────────── */
+.report-filter-bar {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.report-filter-pill {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 9px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.report-filter-pill:hover {
+  color: #0f172a;
+}
+
+.report-filter-pill.active {
+  background: #ffffff;
+  color: #0284c7;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  font-weight: 700;
+}
+
+/* ── Modern KPI Cards ────────────────────────────────────────────────── */
+.report-kpi-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  padding: 1.35rem 1.45rem;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.report-kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.09);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.report-kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: transparent;
+}
+
+.report-kpi-card.card-revenue::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.report-kpi-card.card-conversion::before {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+}
+.report-kpi-card.card-traffic::before {
+  background: linear-gradient(90deg, #06b6d4, #0284c7);
+}
+.report-kpi-card.card-renewals::before {
+  background: linear-gradient(90deg, #f59e0b, #ea580c);
+}
+
+.report-kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.report-kpi-label {
+  font-size: 0.775rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin: 0;
+}
+
+.report-kpi-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.report-kpi-card:hover .report-kpi-icon-wrap {
+  transform: scale(1.08);
+}
+
+.icon-revenue {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+.icon-conversion {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+.icon-traffic {
+  background: rgba(6, 182, 212, 0.12);
+  color: #0284c7;
+}
+.icon-renewals {
+  background: rgba(245, 158, 11, 0.14);
+  color: #d97706;
+}
+
+.report-kpi-value {
+  font-size: 1.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.report-kpi-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.785rem;
+  color: #64748b;
+  padding-top: 0.6rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.report-trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.report-trend-badge.trend-up {
+  background: #ecfdf5;
+  color: #059669;
+}
+.report-trend-badge.trend-neutral {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.report-trend-badge.trend-warning {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+/* ── Modern Chart Containers ────────────────────────────────────────── */
+.report-chart-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.report-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.report-chart-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.report-chart-sub {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0.2rem 0 0 0;
+}
+
+.report-chart-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* ── Renewal Watchlist Table ─────────────────────────────────────────── */
+.renewal-table-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.renewal-table {
+  width: 100%;
+  margin-bottom: 0;
+  vertical-align: middle;
+}
+
+.renewal-table thead th {
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.renewal-table tbody td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.renewal-table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+.member-avatar-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0284c7, #3b82f6);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.expiry-badge-urgent {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+.expiry-badge-warning {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+
+/* ── Modern Export & Print Buttons ───────────────────────────────────── */
+.btn-export-csv {
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 7px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.btn-export-csv:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.btn-print-report {
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  font-size: 0.825rem;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 7px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+}
+
+.btn-print-report:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #ffffff;
+}
+
+/* ── Print Stylesheet ────────────────────────────────────────────────── */
+@media print {
+  /* Hide navigation, sidebar, and action buttons */
+  .left-menu-sidebar,
+  .main-header,
+  .reports-actions-bar,
+  .report-filter-bar,
+  .btn-print-report,
+  .btn-export-csv,
+  nav ol.breadcrumb,
+  .themebody-wrap {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  .report-kpi-card,
+  .report-chart-card,
+  .renewal-table-card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    break-inside: avoid;
+    margin-bottom: 12px !important;
+  }
+
+  .report-kpi-card::before {
+    display: none !important;
+  }
+}

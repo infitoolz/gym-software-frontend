@@ -16,8 +16,8 @@ function normalizeDietPlan(plan) {
     ingredients: Array.isArray(plan?.ingredients) ? plan.ingredients : [],
     directions: Array.isArray(plan?.directions) ? plan.directions : [],
     tools: Array.isArray(plan?.tools) ? plan.tools : [],
-    galleryImages: (plan?.galleryImages || []).map(resolveDietImage),
-    mainImage: resolveDietImage(plan?.mainImage || plan?.image),
+    galleryImages: (plan?.galleryImages || plan?.gallery_images || []).map(resolveDietImage),
+    mainImage: resolveDietImage(plan?.mainImage || plan?.main_image || plan?.image),
     calories: Number(plan?.calories) || 0,
     protein: Number(plan?.protein) || 0,
     carbs: Number(plan?.carbs) || 0,
@@ -25,15 +25,19 @@ function normalizeDietPlan(plan) {
     cholesterol: Number(plan?.cholesterol) || 0,
     sodium: Number(plan?.sodium) || 0,
     potassium: Number(plan?.potassium) || 0,
-    vitaminA: Number(plan?.vitaminA) || 0,
-    vitaminC: Number(plan?.vitaminC) || 0,
+    vitaminA: Number(plan?.vitaminA ?? plan?.vitamina) || 0,
+    vitaminC: Number(plan?.vitaminC ?? plan?.vitaminc) || 0,
     calcium: Number(plan?.calcium) || 0,
     iron: Number(plan?.iron) || 0,
-    prepTime: Number(plan?.prepTime) || 0,
-    cookTime: Number(plan?.cookTime) || 0,
-    totalSteps: Math.max(Number(plan?.totalSteps) || 1, 1),
-    healthScore: Number(plan?.healthScore) || 0,
+    prepTime: Number(plan?.prepTime ?? plan?.prep_time) || 0,
+    cookTime: Number(plan?.cookTime ?? plan?.cook_time) || 0,
+    totalSteps: Math.max(Number(plan?.totalSteps ?? plan?.total_steps) || 1, 1),
+    healthScore: Number(plan?.healthScore ?? plan?.health_score) || 0,
     status: plan?.status || "ACTIVE",
+    dietType: plan?.dietType || plan?.diet_type || "",
+    mealType: plan?.mealType || plan?.meal_type || "",
+    servingSize: plan?.servingSize || plan?.serving_size || "",
+    dietNotes: plan?.dietNotes || plan?.diet_notes || "",
   };
 }
 
@@ -195,9 +199,12 @@ export default function Dietdetail() {
                         </div>
                       )}
 
-                      <div className="d-flex align-items-center justify-content-between mt-4 mb-2">
+                      <div className="d-flex flex-wrap align-items-center gap-2 mt-4 mb-2">
                         <span className={`badge ${plan.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>{plan.status}</span>
-                        <span className="d-flex align-items-center gap-1 text-muted">
+                        {plan.dietType && <span className="badge bg-info text-white">{plan.dietType}</span>}
+                        {plan.mealType && <span className="badge bg-primary text-white">{plan.mealType}</span>}
+                        {plan.servingSize && <span className="badge bg-secondary text-white">{plan.servingSize}</span>}
+                        <span className="d-flex align-items-center gap-1 text-muted ms-auto">
                           <IconHeartBroken size={16} />
                           {plan.healthScore}/100
                         </span>
@@ -324,7 +331,13 @@ export default function Dietdetail() {
                                   {plan.notes}
                                 </li>
                               </ul>
-                            ) : (
+                            ) : null}
+                            {plan.dietNotes ? (
+                              <div className="mt-2 text-muted small">
+                                <strong>Diet Note:</strong> {plan.dietNotes}
+                              </div>
+                            ) : null}
+                            {!plan.notes && !plan.dietNotes && (
                               <div className="text-muted">No notes added.</div>
                             )}
                           </div>

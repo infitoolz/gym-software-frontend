@@ -17,3 +17,19 @@ export async function completeOnboarding() {
   await api.post("/users/me/onboarding-complete");
   return true;
 }
+
+// Server-backed PIN lock APIs
+export async function setPinOnServer(pin) {
+  const response = await api.post("/users/me/pin", { pin });
+  return unwrapOne(response);
+}
+
+export async function removePinOnServer() {
+  const response = await api.delete("/users/me/pin");
+  return unwrapOne(response);
+}
+
+export async function verifyPinOnServer(pin) {
+  const response = await api.post("/users/me/pin/verify", { pin });
+  return unwrapOne(response);
+}

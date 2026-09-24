@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8082/api";
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  `http://${typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "localhost"}:8083/api`;
 
 let accessToken = null;
 
@@ -17,7 +19,7 @@ const clearAuthAndRedirect = () => {
   localStorage.removeItem("email");
   localStorage.removeItem("name");
 
-  if (window.location.pathname !== "/sign-in") {
+  if (window.location.pathname !== "/sign-in" && !window.location.pathname.startsWith("/asset/")) {
     window.location.href = "/sign-in";
   }
 };

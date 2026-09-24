@@ -6,7 +6,7 @@ const authPayload = {
 };
 
 async function check() {
-    const authRes = await fetch('http://localhost:8082/api/auth/login', {
+    const authRes = await fetch('http://localhost:8083/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authPayload)
@@ -20,7 +20,7 @@ async function check() {
     const authData = await authRes.json();
     const token = authData.token || authData.data?.token || authData.accessToken || authData.data?.accessToken;
     
-    const res = await fetch('http://localhost:8082/api/leads', {
+    const res = await fetch('http://localhost:8083/api/leads', {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     console.log(res.status, res.statusText);

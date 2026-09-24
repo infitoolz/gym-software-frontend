@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getLeads, createLead, updateLead, deleteLead, convertLeadToMember } from "../../api/leadsApi";
 import { getTrainers } from "../../api/userAdminApi";
 import { getMembershipPlans } from "../../api/membershipPlansApi";
+import PhoneInputWithFlag from "../../components/PhoneInputWithFlag";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const STATUS_META = {
@@ -94,6 +95,30 @@ function FInput({ label, required, ...props }) {
   );
 }
 
+function FPhoneInput({ label = "Phone", required, value, onChange, placeholder = "9876543210" }) {
+  return (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-1">
+        <label style={{fontSize:12.5, fontWeight:600, color:"#64748b", margin:0}}>
+          {label}{required && <span style={{color:"#ef4444"}}> *</span>}
+        </label>
+        {value ? (
+          <span style={{ fontSize: 11, color: value.length === 10 ? "#16a34a" : "#94a3b8", fontWeight: 600 }}>
+            {value.length}/10
+          </span>
+        ) : null}
+      </div>
+      <PhoneInputWithFlag
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        required={required}
+        size="sm"
+      />
+    </div>
+  );
+}
+
 function FSelect({ label, children, ...props }) {
   return (
     <div>
@@ -129,6 +154,15 @@ function LeadModal({ show, onHide, lead, onSaved }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.phone) { Swal.fire("Required","Name and Phone are mandatory","warning"); return; }
+    const phoneDigits = String(form.phone || "").replace(/\D/g, "");
+    if (phoneDigits.length !== 10) {
+      Swal.fire("Invalid Phone", "Phone number must be exactly 10 digits", "warning");
+      return;
+    }
+    if (!/^[6-9]/.test(phoneDigits)) {
+      Swal.fire("Invalid Phone", "Mobile number must start with 6, 7, 8, or 9", "warning");
+      return;
+    }
     setSaving(true);
     try {
       if (lead) {
@@ -175,7 +209,7 @@ function LeadModal({ show, onHide, lead, onSaved }) {
             <div style={{fontSize:11, fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:14}}>👤 Personal Details</div>
             <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
               <FInput label="Full Name" required placeholder="e.g. Rahul Sharma" value={form.name} onChange={e => set("name",e.target.value)} />
-              <FInput label="Phone" required placeholder="9876543210" value={form.phone} onChange={e => set("phone",e.target.value)} />
+              <FPhoneInput label="Phone" required placeholder="9876543210" value={form.phone} onChange={e => set("phone", e.target.value)} />
               <FInput label="Email" type="email" placeholder="optional@email.com" value={form.email} onChange={e => set("email",e.target.value)} />
               <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8}}>
                 <FInput label="Age" type="number" min={10} max={100} value={form.age} onChange={e => set("age",e.target.value)} />
@@ -392,8 +426,7 @@ export default function LeadRegistry() {
   });
 
   return (
-    <div className="themebody-wrap">
-      <div className="theme-body">
+    <div className="lead-registry-page">
       {/* ── Header ─────────────────────────────────────── */}
       <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
         <div>
@@ -612,7 +645,6 @@ export default function LeadRegistry() {
         plans={plans}
         onDone={loadData}
       />
-      </div>
     </div>
   );
 }

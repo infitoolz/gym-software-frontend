@@ -5,6 +5,7 @@ import { IconHome, IconEdit, IconTrash, IconPlus } from "@tabler/icons-react";
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -40,7 +41,17 @@ export default function WorkoutSimpleMasterPage({
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const canCreate = hasPermission(pageKey, canCreateAction);
@@ -86,6 +97,7 @@ export default function WorkoutSimpleMasterPage({
     setIsEdit(false);
     setSelectedId(null);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -99,6 +111,7 @@ export default function WorkoutSimpleMasterPage({
     setSelectedId(row?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -106,12 +119,14 @@ export default function WorkoutSimpleMasterPage({
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
   const validateForm = () => {
-    if (!form.name?.trim()) return `${label} name is required`;
-    return null;
+    const errors = {};
+    if (!form.name?.trim()) errors.name = `${label} name is required`;
+    return errors;
   };
 
   const modalStepIndex = useMemo(() => {
@@ -122,7 +137,7 @@ export default function WorkoutSimpleMasterPage({
   const goToNextStep = () => {
     setModalError("");
     if (modalTab === "basic" && !form.name?.trim()) {
-      setModalError(`${label} name is required`);
+      setFieldErrors({ name: `${label} name is required` });
       return;
     }
     if (modalStepIndex < STEP_FIELDS.length - 1) {
@@ -139,9 +154,10 @@ export default function WorkoutSimpleMasterPage({
 
   const handleSubmit = async () => {
     setModalError("");
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setModalTab("basic");
       return;
     }
 
@@ -212,59 +228,33 @@ export default function WorkoutSimpleMasterPage({
           )}
         </div>
 
-        <div className="card">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center py-4">Loading...</div>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Description</th>
-                      <th>Status</th>
-                      <th>Updated</th>
-                      <th className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="text-center py-4">No {label.toLowerCase()}s found</td>
-                      </tr>
-                    ) : (
-                      pageRows.map((row) => (
-                        <tr key={row.id}>
-                          <td>{row.name}</td>
-                          <td>{row.description || "-"}</td>
-                          <td>
-                            <span className={`badge ${String(row.status).toUpperCase() === "ACTIVE" ? "bg-success" : "bg-secondary"}`}>
-                              {row.status || "ACTIVE"}
-                            </span>
-                          </td>
-                          <td>{row.updatedAt ? new Date(row.updatedAt).toLocaleString() : "-"}</td>
-                          <td className="text-end">
-                            {canEdit && (
-                              <button type="button" className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(row)}>
-                                <IconEdit size={14} />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(row)}>
-                                <IconTrash size={14} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+        <CommonTable
+          columns={[
+            { key: "name", label: "NAME", sortable: true },
+            { key: "description", label: "DESCRIPTION", sortable: true },
+            { key: "status", label: "STATUS", sortable: true },
+            {
+              key: "updatedAt",
+              label: "UPDATED",
+              sortable: true,
+              render: (val) => (val ? new Date(val).toLocaleString() : "-"),
+            },
+          ]}
+          data={pageRows}
+          entityName={label.toLowerCase()}
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={confirmDelete}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try { await deleteFn(id); } catch (e) {}
+            }
+            setNotice(`${ids.length} ${label.toLowerCase()}s deleted successfully`);
+            await loadData();
+          }}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       </div>
 
       <WizardPopup
@@ -283,12 +273,16 @@ export default function WorkoutSimpleMasterPage({
         {modalTab === "basic" && (
           <div className="row g-3">
             <div className="col-12">
-              <label className="form-label">Name</label>
+              <label className="form-label">Name *</label>
               <input
-                className="form-control"
+                className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
                 value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, name: e.target.value }));
+                  clearFieldError("name");
+                }}
               />
+              {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>

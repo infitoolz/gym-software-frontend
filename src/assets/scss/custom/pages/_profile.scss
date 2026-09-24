@@ -1,0 +1,500 @@
+/* ==========================================================================
+   FitNexa User Profile Page Styling
+   ========================================================================== */
+
+.profile-page-wrapper {
+  padding-bottom: 32px;
+
+  /* Card styling */
+  .profile-card {
+    border-radius: 18px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+    background: #ffffff;
+    transition: all 0.2s ease;
+    overflow: hidden;
+
+    .card-body {
+      padding: 24px 26px;
+    }
+
+    .profile-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+
+      .card-header-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+
+        .header-icon {
+          color: #0066ff;
+        }
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     1. Left Profile Identity Card
+     -------------------------------------------------------------------------- */
+  .profile-identity-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+
+    .profile-avatar-wrap {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(0, 210, 244, 0.16) 100%);
+      border: 2px solid rgba(0, 102, 255, 0.25);
+      color: #0066ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .profile-user-info {
+      min-width: 0;
+
+      .profile-user-name {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+      }
+
+      .profile-role-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 20px;
+        background: rgba(0, 102, 255, 0.08);
+        color: #0066ff;
+        border: 1px solid rgba(0, 102, 255, 0.16);
+      }
+    }
+  }
+
+  /* 3 Stat Chips */
+  .profile-stat-chips {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+
+    .profile-stat-chip {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 8px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(0, 102, 255, 0.04);
+        border-color: rgba(0, 102, 255, 0.2);
+      }
+
+      .chip-icon {
+        color: #0066ff;
+        margin-bottom: 2px;
+      }
+
+      .chip-val {
+        font-weight: 800;
+        font-size: 0.95rem;
+        color: #0f172a;
+      }
+
+      .chip-lbl {
+        font-size: 0.68rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+    }
+  }
+
+  /* Member Pass Box */
+  .profile-member-pass {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0, 102, 255, 0.05) 0%, rgba(0, 210, 244, 0.07) 100%);
+    border: 1px solid rgba(0, 102, 255, 0.16);
+    margin-bottom: 20px;
+
+    .pass-left {
+      .pass-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #0066ff;
+        letter-spacing: 0.06em;
+      }
+
+      .pass-hint {
+        font-size: 0.72rem;
+        color: #64748b;
+        margin-top: 1px;
+      }
+    }
+
+    .pass-code-badge {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ffffff;
+      background: #0066ff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      letter-spacing: 0.06em;
+      box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+    }
+  }
+
+  /* Detail Rows */
+  .profile-detail-list {
+    margin-bottom: 20px;
+
+    .profile-detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .detail-key {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #64748b;
+
+        .key-icon {
+          color: #94a3b8;
+        }
+      }
+
+      .detail-val {
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: #0f172a;
+        text-align: right;
+      }
+    }
+  }
+
+  /* Edit Button */
+  .btn-edit-profile {
+    width: 100%;
+    padding: 11px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #0066ff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #0052cc;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(0, 102, 255, 0.32);
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     2. About Tiles
+     -------------------------------------------------------------------------- */
+  .about-tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+
+    .about-info-tile {
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      }
+
+      .tile-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #0066ff;
+        margin-bottom: 8px;
+      }
+
+      .tile-content {
+        font-size: 0.9rem;
+        color: #1e293b;
+        line-height: 1.5;
+        word-break: break-word;
+        margin: 0;
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     3. Preferences Settings Rows
+     -------------------------------------------------------------------------- */
+  .pref-setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    &:first-child {
+      padding-top: 4px;
+    }
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .pref-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .pref-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 102, 255, 0.07);
+        color: #0066ff;
+        flex-shrink: 0;
+      }
+
+      .pref-title {
+        font-size: 0.92rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 1px;
+      }
+
+      .pref-desc {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin: 0;
+      }
+    }
+
+    .form-check {
+      margin: 0;
+      padding-left: 0;
+      display: flex;
+      align-items: center;
+
+      .form-check-input {
+        cursor: pointer;
+        width: 44px;
+        height: 24px;
+        margin: 0;
+        float: none;
+        background-color: #cbd5e1;
+        border-color: #cbd5e1;
+        transition: all 0.2s ease;
+
+        &:focus {
+          border-color: rgba(0, 102, 255, 0.5);
+          box-shadow: 0 0 0 0.2rem rgba(0, 102, 255, 0.15);
+        }
+
+        &:checked {
+          background-color: #0066ff;
+          border-color: #0066ff;
+        }
+      }
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     4. Account Session Card
+     -------------------------------------------------------------------------- */
+  .account-session-box {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+
+    .session-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #0f172a;
+
+      .status-indicator {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+      }
+    }
+
+    .session-desc {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .btn-logout {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #ef4444;
+      border: 1.5px solid rgba(239, 68, 68, 0.25);
+      background: rgba(239, 68, 68, 0.03);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: #ef4444;
+        color: #ffffff;
+        border-color: #ef4444;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+      }
+    }
+  }
+
+  /* Dark mode overrides */
+  body.dark &,
+  [data-theme="dark"] & {
+    .profile-card {
+      background: #1e293b;
+      border-color: rgba(255, 255, 255, 0.08);
+
+      .card-header-title {
+        color: #f1f5f9;
+      }
+    }
+
+    .profile-identity-header {
+      .profile-user-info .profile-user-name {
+        color: #f1f5f9;
+      }
+    }
+
+    .profile-stat-chips .profile-stat-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+
+      .chip-val {
+        color: #f1f5f9;
+      }
+    }
+
+    .profile-member-pass {
+      background: rgba(0, 102, 255, 0.12);
+      border-color: rgba(0, 102, 255, 0.25);
+
+      .pass-hint {
+        color: #94a3b8;
+      }
+    }
+
+    .profile-detail-list .profile-detail-row {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+
+      .detail-key {
+        color: #94a3b8;
+      }
+
+      .detail-val {
+        color: #f1f5f9;
+      }
+    }
+
+    .about-tiles-grid .about-info-tile {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+
+      .tile-content {
+        color: #cbd5e1;
+      }
+    }
+
+    .pref-setting-item {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+
+      .pref-left {
+        .pref-title {
+          color: #f1f5f9;
+        }
+
+        .pref-desc {
+          color: #94a3b8;
+        }
+      }
+    }
+
+    .account-session-box {
+      .session-status {
+        color: #f1f5f9;
+      }
+
+      .session-desc {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .about-tiles-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

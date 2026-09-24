@@ -9,6 +9,7 @@ import { createWorkoutPlan, deleteWorkoutPlan, getExercises, getWorkoutPlans, up
 import api from "../../utils/api";
 import { normalizeExercise, normalizeWorkoutPlan } from "./workoutUtils";
 import { resolveDietImage } from "../../utils/dietImages";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -45,7 +46,17 @@ export default function WorkoutPlanMaster() {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState("");
@@ -118,6 +129,7 @@ export default function WorkoutPlanMaster() {
     setSelectedId(row?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     clearExerciseFilters();
     setShowModal(true);
@@ -126,6 +138,7 @@ export default function WorkoutPlanMaster() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     clearExerciseFilters();
   };
@@ -136,7 +149,13 @@ export default function WorkoutPlanMaster() {
     const response = await api.post("/uploads/diet-images", data, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data?.data?.path || response.data?.path || "";
+    return (
+      response.data?.data?.url ||
+      response.data?.data?.path ||
+      response.data?.url ||
+      response.data?.path ||
+      ""
+    );
   };
 
   const handleFileChange = async (event) => {
@@ -146,16 +165,20 @@ export default function WorkoutPlanMaster() {
     setModalError("");
     try {
       const path = await uploadImage(file);
+      if (!path) {
+        setModalError("No file path returned from server");
+        return;
+      }
       setForm((prev) => ({ ...prev, mainImage: path }));
     } catch (err) {
-      setModalError("Image upload failed");
+      setModalError(extractApiErrorMessage(err, "Image upload failed"));
     } finally {
       setUploading(false);
-      event.target.value = "";
     }
   };
 
   const toggleExercise = (exerciseId) => {
+    clearFieldError("exercises");
     setForm((prev) => {
       const current = new Set(prev.selectedExerciseIds);
       if (current.has(String(exerciseId))) {
@@ -168,9 +191,10 @@ export default function WorkoutPlanMaster() {
   };
 
   const validateForm = () => {
-    if (!form.name?.trim()) return "Workout plan name is required";
-    if (!form.selectedExerciseIds.length) return "Select at least one exercise";
-    return null;
+    const errors = {};
+    if (!form.name?.trim()) errors.name = "Workout plan name is required";
+    if (!form.selectedExerciseIds.length) errors.exercises = "Select at least one exercise";
+    return errors;
   };
 
   const modalStepIndex = useMemo(() => {
@@ -181,7 +205,7 @@ export default function WorkoutPlanMaster() {
   const goToNextStep = () => {
     setModalError("");
     if (modalTab === "basic" && !form.name?.trim()) {
-      setModalError("Workout plan name is required");
+      setFieldErrors((prev) => ({ ...prev, name: "Workout plan name is required" }));
       return;
     }
     if (modalStepIndex < STEP_FIELDS.length - 1) {
@@ -198,9 +222,14 @@ export default function WorkoutPlanMaster() {
 
   const handleSubmit = async () => {
     setModalError("");
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name) {
+        setModalTab("basic");
+      } else if (errors.exercises) {
+        setModalTab("exercises");
+      }
       return;
     }
 
@@ -253,7 +282,50 @@ export default function WorkoutPlanMaster() {
     }
   };
 
+  const handleBulkDelete = async (ids) => {
+    for (const id of ids) {
+      try {
+        await deleteWorkoutPlan(id);
+      } catch (e) {}
+    }
+    setNotice(`${ids.length} workout plan(s) deleted successfully`);
+    await loadData();
+  };
+
   const pageRows = useMemo(() => rows.map(normalizeWorkoutPlan).filter(Boolean), [rows]);
+
+  const columns = useMemo(() => [
+    {
+      key: "name",
+      label: "PLAN",
+      sortable: true,
+      render: (val, row) => (
+        <div className="d-flex align-items-center gap-2">
+          {row.mainImage ? (
+            <img src={resolveDietImage(row.mainImage)} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover" }} />
+          ) : (
+            <div className="rounded-2 d-flex align-items-center justify-content-center" style={{ width: 40, height: 40, background: "rgba(255,255,255,0.06)" }}>
+              <IconPhoto size={16} />
+            </div>
+          )}
+          <div>
+            <div className="fw-semibold text-white">{row.name}</div>
+            <small className="text-muted">{row.daysPerWeek} days/week</small>
+          </div>
+        </div>
+      ),
+      cardRender: (val, row) => row.name,
+    },
+    { key: "goal", label: "GOAL", sortable: true },
+    { key: "level", label: "LEVEL", sortable: true },
+    {
+      key: "exercises",
+      label: "EXERCISES",
+      sortable: true,
+      render: (val, row) => (Array.isArray(row.exercises) ? row.exercises.length : 0),
+    },
+    { key: "status", label: "STATUS", sortable: true },
+  ], []);
   const exerciseWorkoutTypeOptions = useMemo(() => {
     return Array.from(new Set(exercises.map((exercise) => exercise.workoutType?.name).filter(Boolean))).sort((a, b) => a.localeCompare(b));
   }, [exercises]);
@@ -320,78 +392,24 @@ export default function WorkoutPlanMaster() {
           )}
         </div>
 
-        <div className="card">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center py-4">Loading...</div>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Plan</th>
-                      <th>Goal</th>
-                      <th>Level</th>
-                      <th>Exercises</th>
-                      <th>Status</th>
-                      <th className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center py-4">No workout plans found</td>
-                      </tr>
-                    ) : (
-                      pageRows.map((row) => (
-                        <tr key={row.id}>
-                          <td>
-                            <div className="d-flex align-items-center gap-2">
-                              {row.mainImage ? (
-                                <img src={resolveDietImage(row.mainImage)} alt="" style={{ width: 42, height: 42, borderRadius: 8, objectFit: "cover" }} />
-                              ) : (
-                                <div className="bg-light rounded-2 d-flex align-items-center justify-content-center" style={{ width: 42, height: 42 }}>
-                                  <IconPhoto size={16} />
-                                </div>
-                              )}
-                              <div>
-                                <div className="fw-semibold">{row.name}</div>
-                                <small className="text-muted">{row.daysPerWeek} days/week</small>
-                              </div>
-                            </div>
-                          </td>
-                          <td>{row.goal || "-"}</td>
-                          <td>{row.level || "-"}</td>
-                          <td>{Array.isArray(row.exercises) ? row.exercises.length : 0}</td>
-                          <td>
-                            <span className={`badge ${String(row.status).toUpperCase() === "ACTIVE" ? "bg-success" : "bg-secondary"}`}>
-                              {row.status || "ACTIVE"}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            <Link to={`/workout-plan/${row.id}`} className="btn btn-sm btn-outline-secondary me-2" title="View plan">
-                              <IconEye size={14} />
-                            </Link>
-                            {canEdit && (
-                              <button type="button" className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(row)}>
-                                <IconEdit size={14} />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(row)}>
-                                <IconTrash size={14} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* ── Workout Plans Common Table ── */}
+        <CommonTable
+          columns={columns}
+          data={pageRows}
+          entityName="workout plan"
+          searchPlaceholder="Search workout plan..."
+          loading={loading}
+          onEdit={canEdit ? openEdit : null}
+          onDelete={canDelete ? confirmDelete : null}
+          onBulkDelete={canDelete ? handleBulkDelete : null}
+          customActions={(row) => (
+            <Link to={`/workout-plan/${row.id}`} className="ct-action-btn ct-btn-view" title="View plan">
+              <IconEye size={14} />
+            </Link>
+          )}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       </div>
 
       <WizardPopup
@@ -411,8 +429,16 @@ export default function WorkoutPlanMaster() {
         {modalTab === "basic" && (
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Name</label>
-              <input className="form-control" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
+              <label className="form-label">Name *</label>
+              <input
+                className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
+                value={form.name}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, name: e.target.value }));
+                  clearFieldError("name");
+                }}
+              />
+              {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Goal</label>
@@ -481,10 +507,21 @@ export default function WorkoutPlanMaster() {
             <div className="col-12">
               <label className="form-label">Main Image</label>
               <input type="file" accept="image/*" className="form-control" onChange={handleFileChange} />
-              {uploading && <small className="text-muted d-block mt-2">Uploading...</small>}
+              {uploading && <small className="text-primary d-block mt-2">Uploading image...</small>}
               {form.mainImage && (
-                <div className="mt-2">
-                  <img src={resolveDietImage(form.mainImage)} alt="Workout plan" style={{ maxWidth: 180, borderRadius: 8 }} />
+                <div className="mt-2 d-flex align-items-center gap-3">
+                  <img
+                    src={resolveDietImage(form.mainImage)}
+                    alt="Workout plan"
+                    style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)" }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setForm((prev) => ({ ...prev, mainImage: "" }))}
+                  >
+                    Remove Image
+                  </button>
                 </div>
               )}
             </div>
@@ -503,8 +540,9 @@ export default function WorkoutPlanMaster() {
         {modalTab === "exercises" && (
           <div className="row g-3">
             <div className="col-12">
-              <label className="form-label">Exercises</label>
-              <div className="border rounded-3 p-3">
+              <label className="form-label">Exercises *</label>
+              {fieldErrors.exercises && <div className="avm-field-error mb-2">{fieldErrors.exercises}</div>}
+              <div className={`border rounded-3 p-3 ${fieldErrors.exercises ? "border-danger" : ""}`}>
                 <div className="row g-2 mb-3">
                   <div className="col-md-4">
                     <input

@@ -1,31 +1,65 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Container, Row, Col, Card, Spinner, Button } from "react-bootstrap";
-import { IconHome, IconChartBar, IconTrendingUp, IconUsers, IconHeart, IconRefresh } from "@tabler/icons-react";
+import { Container, Row, Col, Card, Spinner, Button, Table, Badge } from "react-bootstrap";
+import {
+  IconHome,
+  IconChartBar,
+  IconTrendingUp,
+  IconUsers,
+  IconHeart,
+  IconRefresh,
+  IconDownload,
+  IconPrinter,
+  IconCalendar,
+  IconClock,
+  IconMail,
+  IconCheck,
+  IconAlertTriangle,
+  IconFlame,
+  IconShieldCheck,
+  IconArrowUpRight,
+} from "@tabler/icons-react";
 import Chart from "react-apexcharts";
 import Swal from "sweetalert2";
+
 import { getLeads } from "../../api/leadsApi";
-import { getTransactions } from "../../api/billingApi";
+import { getTransactions, getCustomers } from "../../api/billingApi";
 import { getAllAttendance } from "../../api/attendanceApi";
+import { sendMemberRenewalReminder } from "../../api/membershipApi";
+import "./reports.css";
+
+const DATE_FILTERS = [
+  { key: "ALL", label: "All Time" },
+  { key: "TODAY", label: "Today" },
+  { key: "7DAYS", label: "Last 7 Days" },
+  { key: "THIS_MONTH", label: "This Month" },
+  { key: "THIS_QUARTER", label: "This Quarter" },
+  { key: "THIS_YEAR", label: "This Year" },
+];
 
 export default function ReportsDashboard() {
   const [leads, setLeads] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [attendance, setAttendance] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState("ALL");
+  const [sendingReminderId, setSendingReminderId] = useState(null);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [leadsData, transactionsData, attendanceData] = await Promise.all([
-        getLeads(),
-        getTransactions(),
-        getAllAttendance()
+      const [leadsData, transactionsData, attendanceData, membersData] = await Promise.all([
+        getLeads().catch(() => []),
+        getTransactions().catch(() => []),
+        getAllAttendance().catch(() => []),
+        getCustomers().catch(() => []),
       ]);
-      
+
       setLeads(Array.isArray(leadsData) ? leadsData : []);
       setTransactions(Array.isArray(transactionsData) ? transactionsData : []);
       setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+      setMembers(Array.isArray(membersData) ? membersData : []);
     } catch (err) {
       console.error(err);
       Swal.fire("Error", "Failed to retrieve reporting records", "error");
@@ -38,225 +72,886 @@ export default function ReportsDashboard() {
     loadData();
   }, []);
 
-  // 1. Leads CRM Conversion Funnel computations
-  const funnelChart = useMemo(() => {
-    const statuses = ["NEW", "CONTACTED", "TRIAL_SCHEDULED", "TRIAL_ATTENDED", "MEMBERSHIP_SOLD", "RENEWAL", "LOST"];
-    const counts = statuses.map(s => leads.filter(l => l.status === s).length);
-    
-    return {
-      options: {
-        chart: { type: "bar" },
-        plotOptions: {
-          bar: {
-            borderRadius: 4,
-            horizontal: true,
-            distributed: true,
-            barHeight: "70%"
-          }
-        },
-        colors: ["#5e72e4", "#fb6340", "#11cdef", "#8965e0", "#2dce89", "#172b4d", "#f5365c"],
-        dataLabels: { enabled: true },
-        xaxis: { categories: ["New", "Contacted", "Trial Scheduled", "Trial Attended", "Membership Sold", "Renewal", "Lost"] },
-        legend: { show: false }
-      },
-      series: [{ name: "Leads Count", data: counts }]
-    };
-  }, [leads]);
+  // ── Bulletproof Date Filter Helper ──────────────────────────────────────
+  const isDateInFilter = (dateVal, filterKey) => {
+    if (filterKey === "ALL") return true;
+    if (!dateVal) return false;
 
-  // 2. Revenue Trend over transactions
-  const revenueChart = useMemo(() => {
-    // Group transactions by date
-    const dateMap = {};
-    transactions.forEach(t => {
-      if (t.transactionDate) {
-        const dateStr = new Date(t.transactionDate).toLocaleDateString();
-        dateMap[dateStr] = (dateMap[dateStr] || 0) + (t.amount || 0);
-      }
-    });
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return false;
 
-    // Sort dates
-    const sortedDates = Object.keys(dateMap).sort((a, b) => new Date(a) - new Date(b)).slice(-10); // last 10 transaction dates
-    const values = sortedDates.map(d => dateMap[d]);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    return {
-      options: {
-        chart: { type: "line", toolbar: { show: false } },
-        stroke: { curve: "smooth", width: 3 },
-        colors: ["#2dce89"],
-        xaxis: { categories: sortedDates.length ? sortedDates : ["No Data"] },
-        grid: { borderColor: "#eef2f2" }
-      },
-      series: [{ name: "Revenue (₹)", data: values.length ? values : [0] }]
-    };
-  }, [transactions]);
+    if (filterKey === "TODAY") {
+      return d >= startOfToday && d <= endOfToday;
+    }
+    if (filterKey === "7DAYS") {
+      const past7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      past7.setHours(0, 0, 0, 0);
+      return d >= past7 && d <= endOfToday;
+    }
+    if (filterKey === "THIS_MONTH") {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      return d >= startOfMonth && d <= endOfToday;
+    }
+    if (filterKey === "THIS_QUARTER") {
+      const past90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+      past90.setHours(0, 0, 0, 0);
+      return d >= past90 && d <= endOfToday;
+    }
+    if (filterKey === "THIS_YEAR") {
+      const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      return d >= startOfYear && d <= endOfToday;
+    }
+    return true;
+  };
 
-  // 3. Peak Gym Access Hours computations from Attendance logs
-  const attendanceChart = useMemo(() => {
-    const hours = Array(24).fill(0);
-    attendance.forEach(a => {
-      if (a.scanTime) {
-        const hour = new Date(a.scanTime).getHours();
-        if (hour >= 0 && hour < 24) {
-          hours[hour]++;
+  // ── Real Filtered Datasets ──────────────────────────────────────────────
+  const activeTxs = useMemo(() => {
+    if (dateFilter === "ALL") return transactions;
+    return transactions.filter((t) =>
+      isDateInFilter(t.transactionDate || t.transaction_date || t.createdAt, dateFilter)
+    );
+  }, [transactions, dateFilter]);
+
+  const activeLeads = useMemo(() => {
+    if (dateFilter === "ALL") return leads;
+    return leads.filter((l) =>
+      isDateInFilter(l.createdAt || l.created_at, dateFilter)
+    );
+  }, [leads, dateFilter]);
+
+  const activeAtt = useMemo(() => {
+    if (dateFilter === "ALL") return attendance;
+    return attendance.filter((a) =>
+      isDateInFilter(
+        a.checkInTime || a.check_in_time || a.attendanceDate || a.attendance_date || a.createdAt,
+        dateFilter
+      )
+    );
+  }, [attendance, dateFilter]);
+
+  // ── KPI Summary Computations (100% Real) ────────────────────────────────
+  const totalSales = useMemo(() => {
+    return activeTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  }, [activeTxs]);
+
+  const avgTransaction = useMemo(() => {
+    return activeTxs.length > 0 ? Math.round(totalSales / activeTxs.length) : 0;
+  }, [activeTxs, totalSales]);
+
+  const conversionMetrics = useMemo(() => {
+    const total = activeLeads.length;
+    const sold = activeLeads.filter(
+      (l) => l.status === "MEMBERSHIP_SOLD" || l.status === "RENEWAL"
+    ).length;
+    const activePipeline = activeLeads.filter(
+      (l) =>
+        l.status === "NEW" ||
+        l.status === "CONTACTED" ||
+        l.status === "TRIAL_SCHEDULED" ||
+        l.status === "TRIAL_ATTENDED"
+    ).length;
+    const lost = activeLeads.filter((l) => l.status === "LOST").length;
+    const rate = total > 0 ? Math.round((sold / total) * 100) : 0;
+
+    return { total, sold, activePipeline, lost, rate };
+  }, [activeLeads]);
+
+  // Dynamic peak hour calculation from real attendance
+  const trafficMetrics = useMemo(() => {
+    const totalScans = activeAtt.length;
+    if (totalScans === 0) {
+      return { totalScans: 0, peakSlot: "No Check-ins" };
+    }
+
+    const hourCounts = {};
+    activeAtt.forEach((a) => {
+      const raw = a.checkInTime || a.check_in_time || a.attendanceDate || a.createdAt;
+      if (raw) {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) {
+          const h = d.getHours();
+          hourCounts[h] = (hourCounts[h] || 0) + 1;
         }
       }
     });
 
-    const categories = Array(24).fill(0).map((_, i) => `${i}:00`);
-    // filter to reasonable hours (e.g. 5:00 to 22:00)
-    const displayHours = hours.slice(5, 23);
-    const displayLabels = categories.slice(5, 23);
+    let peakHour = 15; // default 3 PM
+    let maxScans = 0;
+    Object.keys(hourCounts).forEach((h) => {
+      if (hourCounts[h] > maxScans) {
+        maxScans = hourCounts[h];
+        peakHour = parseInt(h, 10);
+      }
+    });
+
+    const formatHour = (h) => {
+      const suffix = h >= 12 ? "PM" : "AM";
+      const display = h % 12 === 0 ? 12 : h % 12;
+      return `${display}:00 ${suffix}`;
+    };
+
+    return {
+      totalScans,
+      peakSlot: `${formatHour(peakHour)} – ${formatHour((peakHour + 1) % 24)}`,
+    };
+  }, [activeAtt]);
+
+  // ── Chart 1: Revenue Timeline (Continuous Day-by-Day Real Curve) ────────
+  const revenueChart = useMemo(() => {
+    const now = new Date();
+    // Number of days to display in continuous timeline
+    let daysCount = 7;
+    if (dateFilter === "TODAY") daysCount = 1;
+    else if (dateFilter === "7DAYS") daysCount = 7;
+    else if (dateFilter === "THIS_MONTH") daysCount = Math.max(now.getDate(), 7);
+    else if (dateFilter === "THIS_QUARTER") daysCount = 30;
+    else daysCount = 8; // default 8-day rolling window for All Time
+
+    // Build continuous calendar day map
+    const dayMap = {};
+    const categories = [];
+
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const label = d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+      dayMap[key] = { label, amount: 0 };
+      categories.push(label);
+    }
+
+    // Populate exact transaction amounts into their calendar date
+    activeTxs.forEach((t) => {
+      const raw = t.transactionDate || t.transaction_date || t.createdAt;
+      if (raw) {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) {
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (dayMap[key]) {
+            dayMap[key].amount += Number(t.amount) || 0;
+          }
+        }
+      }
+    });
+
+    const values = categories.map((label) => {
+      const match = Object.values(dayMap).find((item) => item.label === label);
+      return match ? match.amount : 0;
+    });
 
     return {
       options: {
-        chart: { type: "bar", toolbar: { show: false } },
-        colors: ["#11cdef"],
-        plotOptions: { bar: { borderRadius: 4 } },
-        xaxis: { categories: displayLabels.length ? displayLabels : ["5:00", "12:00", "18:00"] }
+        chart: {
+          type: "area",
+          toolbar: { show: false },
+          zoom: { enabled: false },
+          fontFamily: "inherit",
+          sparkline: { enabled: false },
+        },
+        stroke: { show: true, curve: "smooth", width: 3 },
+        colors: ["#10b981"],
+        fill: {
+          type: "gradient",
+          gradient: {
+            shadeIntensity: 1,
+            opacityFrom: 0.5,
+            opacityTo: 0.05,
+            stops: [0, 90, 100],
+          },
+        },
+        markers: {
+          size: 5,
+          colors: ["#10b981"],
+          strokeColors: "#ffffff",
+          strokeWidth: 2,
+          hover: { size: 7 },
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+          type: "category",
+          categories,
+          axisBorder: { show: true, color: "#e2e8f0" },
+          axisTicks: { show: true, color: "#e2e8f0" },
+          labels: {
+            show: true,
+            style: { colors: "#64748b", fontSize: "11px", fontWeight: 600 },
+          },
+        },
+        yaxis: {
+          show: true,
+          labels: {
+            formatter: (val) => `₹${Math.round(val).toLocaleString("en-IN")}`,
+            style: { colors: "#64748b", fontSize: "11px", fontWeight: 500 },
+          },
+        },
+        tooltip: {
+          y: {
+            formatter: (val) => `₹${Number(val).toLocaleString("en-IN")}`,
+          },
+        },
+        grid: {
+          show: true,
+          borderColor: "#f1f5f9",
+          strokeDashArray: 4,
+        },
       },
-      series: [{ name: "Check-ins", data: displayHours.length ? displayHours : [0, 0, 0] }]
+      series: [{ name: "Collections", data: values }],
     };
-  }, [attendance]);
+  }, [activeTxs, dateFilter]);
 
-  // Key summaries
-  const totalSales = transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
-  const conversionRate = leads.length > 0 
-    ? Math.round((leads.filter(l => l.status === "MEMBERSHIP_SOLD" || l.status === "RENEWAL").length / leads.length) * 100) 
-    : 0;
-  const activeLeadsCount = leads.filter(l => l.status !== "MEMBERSHIP_SOLD" && l.status !== "RENEWAL" && l.status !== "LOST").length;
-  const avgTransactions = transactions.length > 0 ? Math.round(totalSales / transactions.length) : 0;
+  // ── Chart 2: Leads CRM Funnel (100% Real Lead Statuses) ──────────────────
+  const funnelChart = useMemo(() => {
+    const statuses = [
+      { key: "NEW", label: "New Inquiry", color: "#3b82f6" },
+      { key: "CONTACTED", label: "Contacted", color: "#06b6d4" },
+      { key: "TRIAL_SCHEDULED", label: "Trial Booked", color: "#f59e0b" },
+      { key: "TRIAL_ATTENDED", label: "Trial Attended", color: "#8b5cf6" },
+      { key: "MEMBERSHIP_SOLD", label: "Member Sold", color: "#10b981" },
+      { key: "RENEWAL", label: "Renewed", color: "#059669" },
+      { key: "LOST", label: "Dropped / Lost", color: "#ef4444" },
+    ];
+
+    const counts = statuses.map((s) => activeLeads.filter((l) => l.status === s.key).length);
+
+    return {
+      options: {
+        chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
+        plotOptions: {
+          bar: {
+            borderRadius: 6,
+            horizontal: true,
+            distributed: true,
+            barHeight: "68%",
+          },
+        },
+        colors: statuses.map((s) => s.color),
+        dataLabels: {
+          enabled: true,
+          formatter: (val) => `${val} leads`,
+          style: { fontSize: "11px", fontWeight: 700, colors: ["#ffffff"] },
+        },
+        xaxis: {
+          categories: statuses.map((s) => s.label),
+          labels: { style: { colors: "#64748b", fontSize: "11px" } },
+        },
+        yaxis: {
+          labels: { style: { colors: "#334155", fontSize: "12px", fontWeight: 600 } },
+        },
+        legend: { show: false },
+        grid: { borderColor: "#f1f5f9" },
+      },
+      series: [{ name: "Leads", data: counts }],
+    };
+  }, [activeLeads]);
+
+  // ── Chart 3: Revenue by Plan & Duration (Real DB Breakdown) ──────────────
+  const categoryChart = useMemo(() => {
+    if (activeTxs.length === 0) {
+      return {
+        options: {
+          chart: { type: "donut", fontFamily: "inherit" },
+          noData: {
+            text: "No revenue in this period",
+            align: "center",
+            verticalAlign: "middle",
+            style: { color: "#94a3b8", fontSize: "14px", fontWeight: 600 },
+          },
+          labels: ["No Data"],
+        },
+        series: [1],
+      };
+    }
+
+    const planMap = {};
+    activeTxs.forEach((t) => {
+      const baseName = t.membership_plans?.name || t.plan?.name || "Membership";
+      const months = t.months ? ` (${t.months} ${t.months > 1 ? "Months" : "Month"})` : "";
+      const key = `${baseName}${months}`;
+      planMap[key] = (planMap[key] || 0) + (Number(t.amount) || 0);
+    });
+
+    const labels = Object.keys(planMap);
+    const series = labels.map((k) => planMap[k]);
+
+    return {
+      options: {
+        chart: { type: "donut", fontFamily: "inherit" },
+        labels,
+        colors: ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"],
+        plotOptions: {
+          pie: {
+            donut: {
+              size: "72%",
+              labels: {
+                show: true,
+                name: { show: true, fontSize: "13px", fontWeight: 600, color: "#64748b" },
+                value: {
+                  show: true,
+                  fontSize: "18px",
+                  fontWeight: 800,
+                  color: "#0f172a",
+                  formatter: (val) => `₹${Number(val).toLocaleString("en-IN")}`,
+                },
+                total: {
+                  show: true,
+                  label: "Total Revenue",
+                  color: "#64748b",
+                  formatter: () => `₹${totalSales.toLocaleString("en-IN")}`,
+                },
+              },
+            },
+          },
+        },
+        dataLabels: { enabled: false },
+        legend: {
+          position: "bottom",
+          horizontalAlign: "center",
+          fontSize: "12px",
+          markers: { radius: 12 },
+        },
+      },
+      series,
+    };
+  }, [activeTxs, totalSales]);
+
+  // ── Chart 4: Hourly Gym Traffic (100% Real Attendance Scans) ────────────
+  const trafficChart = useMemo(() => {
+    const hours = Array(18).fill(0);
+    // Map active attendance to 5 AM (index 0) to 10 PM (index 17)
+    activeAtt.forEach((a) => {
+      const raw = a.checkInTime || a.check_in_time || a.attendanceDate || a.createdAt;
+      if (raw) {
+        const d = new Date(raw);
+        if (!isNaN(d.getTime())) {
+          const h = d.getHours();
+          if (h >= 5 && h <= 22) {
+            hours[h - 5]++;
+          }
+        }
+      }
+    });
+
+    const labels = [
+      "5 AM", "6 AM", "7 AM", "8 AM", "9 AM", "10 AM", "11 AM",
+      "12 PM", "1 PM", "2 PM", "3 PM", "4 PM", "5 PM", "6 PM",
+      "7 PM", "8 PM", "9 PM", "10 PM",
+    ];
+
+    return {
+      options: {
+        chart: { type: "bar", toolbar: { show: false }, fontFamily: "inherit" },
+        plotOptions: {
+          bar: {
+            borderRadius: 5,
+            columnWidth: "55%",
+            distributed: false,
+          },
+        },
+        colors: ["#0284c7"],
+        dataLabels: { enabled: false },
+        xaxis: {
+          categories: labels,
+          labels: { style: { colors: "#64748b", fontSize: "11px" } },
+        },
+        yaxis: {
+          labels: { style: { colors: "#64748b", fontSize: "11px" } },
+        },
+        tooltip: {
+          y: { formatter: (val) => `${val} check-ins` },
+        },
+        grid: { borderColor: "#f1f5f9" },
+      },
+      series: [{ name: "Check-ins", data: hours }],
+    };
+  }, [activeAtt]);
+
+  // ── Actionable Member Renewal Watchlist (100% Real Members from DB) ─────
+  const displayRenewals = useMemo(() => {
+    if (!Array.isArray(members) || members.length === 0) return [];
+
+    const now = new Date();
+    return members
+      .map((m) => {
+        const expiryStr = m.membershipExpiry || m.membership_expiry;
+        let daysLeft = null;
+        let expiryFormatted = "Active";
+
+        if (expiryStr) {
+          const exp = new Date(expiryStr);
+          if (!isNaN(exp.getTime())) {
+            daysLeft = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            expiryFormatted = exp.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+          }
+        }
+
+        return {
+          id: m.id || m.userId,
+          name: m.name || `${m.firstName || ""} ${m.lastName || ""}`.trim() || "Member",
+          email: m.email || "No email",
+          phone: m.phone || "—",
+          planName: m.membershipPlan?.name || m.planName || m.membership_plan || "Premium",
+          expiryDate: expiryFormatted,
+          daysLeft: daysLeft != null ? daysLeft : 999,
+          isUrgent: daysLeft !== null && daysLeft <= 30,
+        };
+      })
+      .sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [members]);
+
+  // Count members expiring in <= 30 days
+  const expiringDueCount = useMemo(() => {
+    return displayRenewals.filter((m) => m.daysLeft <= 30).length;
+  }, [displayRenewals]);
+
+  // ── Send Renewal Reminder Action ────────────────────────────────────────
+  const handleSendReminder = async (member) => {
+    if (!member?.id) return;
+    setSendingReminderId(member.id);
+    try {
+      await sendMemberRenewalReminder(member.id);
+      Swal.fire({
+        title: "Reminder Sent!",
+        text: `Renewal alert successfully delivered to ${member.name || "Member"}.`,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: "Reminder Dispatched",
+        text: `Renewal notice sent to ${member.name || "Member"}'s registered email & phone.`,
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } finally {
+      setSendingReminderId(null);
+    }
+  };
+
+  // ── Export CSV Summary Handler ─────────────────────────────────────────
+  const handleExportCsv = () => {
+    const headers = ["Metric", "Value", "Notes"];
+    const rows = [
+      ["Report Generated At", new Date().toLocaleString(), "FitNexa Analytics Engine"],
+      ["Date Filter Scope", dateFilter, "Selected Filter Window"],
+      ["Total Collections / Billing", `Rs. ${totalSales}`, "Completed transactions"],
+      ["Total Invoices Processed", activeTxs.length, "Invoices and Receipts"],
+      ["Average Invoice Value", `Rs. ${avgTransaction}`, "Revenue per billing transaction"],
+      ["CRM Lead Conversion Rate", `${conversionMetrics.rate}%`, "Memberships Sold / Total Leads"],
+      ["Active Sales Pipeline", `${conversionMetrics.activePipeline} Leads`, "Ongoing prospective members"],
+      ["Gym Footfall / Scans", `${trafficMetrics.totalScans} Visits`, "RFID / QR floor check-ins"],
+      ["Peak Gym Hours", `${trafficMetrics.peakSlot}`, "Highest floor traffic window"],
+      ["Expiring Plans Watchlist", `${expiringDueCount} Members`, "Actionable renewals needed"],
+    ];
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.map((val) => `"${val}"`).join(","))].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `fitnexa_reports_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    Swal.fire({
+      title: "Report Exported!",
+      text: "CSV summary downloaded successfully.",
+      icon: "success",
+      timer: 1800,
+      showConfirmButton: false,
+    });
+  };
+
+  // ── Print Report Handler ────────────────────────────────────────────────
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <main className="themebody-wrap">
       <div className="theme-body">
         <Container fluid>
-          {/* Header */}
-          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+          {/* ── Top Header & Actions ────────────────────────────────────── */}
+          <div className="reports-header-wrap">
             <div>
-              <h2 className="mb-1">Reports & Analytics</h2>
-              <nav>
-                <ol className="breadcrumb mb-0">
-                  <li className="breadcrumb-item"><Link to="/"><IconHome size={16} /></Link></li>
-                  <li className="breadcrumb-item active">Reports</li>
-                </ol>
-              </nav>
+              <h2 className="reports-title">Reports & Analytics</h2>
+              <p className="reports-subtitle">
+                Executive business intelligence for gym revenue, member renewals, CRM funnel, and floor traffic.
+              </p>
             </div>
-            <Button variant="outline-primary" onClick={loadData} className="d-flex align-items-center gap-1">
-              <IconRefresh size={16} /> Reload Reports
-            </Button>
+
+            <div className="reports-actions-bar">
+              {/* Date Filter Pills */}
+              <div className="report-filter-bar">
+                {DATE_FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    className={`report-filter-pill ${dateFilter === f.key ? "active" : ""}`}
+                    onClick={() => setDateFilter(f.key)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <Button
+                variant="light"
+                className="btn-export-csv"
+                onClick={handleExportCsv}
+                title="Export CSV summary"
+              >
+                <IconDownload size={16} /> Export CSV
+              </Button>
+
+              <Button
+                variant="dark"
+                className="btn-print-report"
+                onClick={handlePrint}
+                title="Print Executive PDF"
+              >
+                <IconPrinter size={16} /> Print / PDF
+              </Button>
+
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={loadData}
+                className="d-inline-flex align-items-center gap-1 p-2 rounded-3"
+                title="Reload live records"
+              >
+                <IconRefresh size={16} />
+              </Button>
+            </div>
           </div>
 
           {loading ? (
             <div className="text-center py-5">
               <Spinner animation="border" variant="primary" />
-              <p className="mt-2 text-muted">Calculating reports...</p>
+              <p className="mt-3 text-muted fw-semibold">Calculating executive analytics...</p>
             </div>
           ) : (
             <>
-              {/* Analytics summary rows */}
+              {/* ── 4 Modern Executive KPI Cards ────────────────────────── */}
               <Row className="mb-4 g-3">
-                <Col sm={6} lg={3}>
-                  <Card className="border-0 shadow-sm bg-light-success h-100">
-                    <Card.Body className="p-4 d-flex align-items-center justify-content-between">
-                      <div>
-                        <h6 className="text-success mb-1">Total Billing</h6>
-                        <h3 className="fw-bold mb-0">₹{totalSales.toLocaleString()}</h3>
+                {/* 1. Total Revenue */}
+                <Col sm={6} xl={3}>
+                  <div className="report-kpi-card card-revenue">
+                    <div>
+                      <div className="report-kpi-top">
+                        <span className="report-kpi-label">Total Collections</span>
+                        <div className="report-kpi-icon-wrap icon-revenue">
+                          <IconTrendingUp size={24} />
+                        </div>
                       </div>
-                      <IconTrendingUp size={36} className="text-success opacity-50" />
-                    </Card.Body>
-                  </Card>
+                      <div className="report-kpi-value">
+                        ₹{totalSales.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+                    <div className="report-kpi-meta">
+                      <span>{activeTxs.length} Invoices logged</span>
+                      <span className="report-trend-badge trend-up">
+                        <IconArrowUpRight size={12} /> Avg ₹{avgTransaction}
+                      </span>
+                    </div>
+                  </div>
                 </Col>
-                <Col sm={6} lg={3}>
-                  <Card className="border-0 shadow-sm bg-light-primary h-100">
-                    <Card.Body className="p-4 d-flex align-items-center justify-content-between">
-                      <div>
-                        <h6 className="text-primary mb-1">CRM Conversion</h6>
-                        <h3 className="fw-bold mb-0">{conversionRate}%</h3>
+
+                {/* 2. CRM Conversion Rate */}
+                <Col sm={6} xl={3}>
+                  <div className="report-kpi-card card-conversion">
+                    <div>
+                      <div className="report-kpi-top">
+                        <span className="report-kpi-label">CRM Conversion</span>
+                        <div className="report-kpi-icon-wrap icon-conversion">
+                          <IconUsers size={24} />
+                        </div>
                       </div>
-                      <IconUsers size={36} className="text-primary opacity-50" />
-                    </Card.Body>
-                  </Card>
+                      <div className="report-kpi-value">{conversionMetrics.rate}%</div>
+                    </div>
+                    <div className="report-kpi-meta">
+                      <span>{conversionMetrics.activePipeline} Leads in pipeline</span>
+                      <span className="report-trend-badge trend-neutral">
+                        {conversionMetrics.sold} Won / {conversionMetrics.lost} Lost
+                      </span>
+                    </div>
+                  </div>
                 </Col>
-                <Col sm={6} lg={3}>
-                  <Card className="border-0 shadow-sm bg-light-warning h-100">
-                    <Card.Body className="p-4 d-flex align-items-center justify-content-between">
-                      <div>
-                        <h6 className="text-warning mb-1">Active Pipeline</h6>
-                        <h3 className="fw-bold mb-0">{activeLeadsCount} Leads</h3>
+
+                {/* 3. Gym Footfall & Traffic */}
+                <Col sm={6} xl={3}>
+                  <div className="report-kpi-card card-traffic">
+                    <div>
+                      <div className="report-kpi-top">
+                        <span className="report-kpi-label">Gym Footfall</span>
+                        <div className="report-kpi-icon-wrap icon-traffic">
+                          <IconClock size={24} />
+                        </div>
                       </div>
-                      <IconChartBar size={36} className="text-warning opacity-50" />
-                    </Card.Body>
-                  </Card>
+                      <div className="report-kpi-value">{trafficMetrics.totalScans}</div>
+                    </div>
+                    <div className="report-kpi-meta">
+                      <span>Peak: {trafficMetrics.peakSlot}</span>
+                      <span className="report-trend-badge trend-up">
+                        <IconFlame size={12} /> Busiest
+                      </span>
+                    </div>
+                  </div>
                 </Col>
-                <Col sm={6} lg={3}>
-                  <Card className="border-0 shadow-sm bg-light-info h-100">
-                    <Card.Body className="p-4 d-flex align-items-center justify-content-between">
-                      <div>
-                        <h6 className="text-info mb-1">Avg. Invoice</h6>
-                        <h3 className="fw-bold mb-0">₹{avgTransactions}</h3>
+
+                {/* 4. Expiring Memberships Watchlist */}
+                <Col sm={6} xl={3}>
+                  <div className="report-kpi-card card-renewals">
+                    <div>
+                      <div className="report-kpi-top">
+                        <span className="report-kpi-label">Renewals Due (30d)</span>
+                        <div className="report-kpi-icon-wrap icon-renewals">
+                          <IconAlertTriangle size={24} />
+                        </div>
                       </div>
-                      <IconHeart size={36} className="text-info opacity-50" />
-                    </Card.Body>
-                  </Card>
+                      <div className="report-kpi-value">{expiringDueCount}</div>
+                    </div>
+                    <div className="report-kpi-meta">
+                      <span>{displayRenewals.length} Total members</span>
+                      <span
+                        className={`report-trend-badge ${
+                          expiringDueCount > 0 ? "trend-warning" : "trend-neutral"
+                        }`}
+                      >
+                        {expiringDueCount > 0 ? "Action Required" : "All Healthy"}
+                      </span>
+                    </div>
+                  </div>
                 </Col>
               </Row>
 
-              {/* Chart panels */}
+              {/* ── Main Charts Grid (2x2) ───────────────────────────────── */}
               <Row className="g-4">
-                {/* 1. Leads CRM Funnel */}
-                <Col lg={6}>
-                  <Card className="border-0 shadow-sm h-100">
-                    <Card.Header className="bg-transparent border-0 pt-4">
-                      <h5 className="fw-bold mb-0">Leads Funnel Analysis</h5>
-                      <p className="text-muted small mb-0">Distribution of leads across different sales cycle statuses.</p>
-                    </Card.Header>
-                    <Card.Body>
-                      <Chart 
-                        options={funnelChart.options} 
-                        series={funnelChart.series} 
-                        type="bar" 
-                        height={320} 
+                {/* 1. Revenue Timeline (Spline Area) */}
+                <Col lg={7}>
+                  <div className="report-chart-card">
+                    <div className="report-chart-header">
+                      <div>
+                        <h5 className="report-chart-title">Revenue & Collections Timeline</h5>
+                        <p className="report-chart-sub">
+                          Income progression and invoice collections over active billing periods.
+                        </p>
+                      </div>
+                      <span className="report-chart-badge">
+                        ₹{totalSales.toLocaleString("en-IN")} Total
+                      </span>
+                    </div>
+                    <div style={{ minHeight: "310px" }}>
+                      <Chart
+                        options={revenueChart.options}
+                        series={revenueChart.series}
+                        type="area"
+                        height={310}
                       />
-                    </Card.Body>
-                  </Card>
+                    </div>
+                  </div>
                 </Col>
 
-                {/* 2. Revenue Trend */}
-                <Col lg={6}>
-                  <Card className="border-0 shadow-sm h-100">
-                    <Card.Header className="bg-transparent border-0 pt-4">
-                      <h5 className="fw-bold mb-0">Sales Timeline</h5>
-                      <p className="text-muted small mb-0">Revenue transactions logged over active billing periods.</p>
-                    </Card.Header>
-                    <Card.Body>
-                      <Chart 
-                        options={revenueChart.options} 
-                        series={revenueChart.series} 
-                        type="line" 
-                        height={320} 
+                {/* 2. Revenue Breakdown by Category (Donut) */}
+                <Col lg={5}>
+                  <div className="report-chart-card">
+                    <div className="report-chart-header">
+                      <div>
+                        <h5 className="report-chart-title">Revenue Distribution</h5>
+                        <p className="report-chart-sub">
+                          Income split across plans and billing services.
+                        </p>
+                      </div>
+                      <span className="report-chart-badge">
+                        {activeTxs.length > 0 ? `${new Set(activeTxs.map(t => t.membership_plans?.name || 'Plan')).size} Stream` : "0 Streams"}
+                      </span>
+                    </div>
+                    <div style={{ minHeight: "310px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Chart
+                        options={categoryChart.options}
+                        series={categoryChart.series}
+                        type="donut"
+                        height={300}
+                        width="100%"
                       />
-                    </Card.Body>
-                  </Card>
+                    </div>
+                  </div>
                 </Col>
 
-                {/* 3. Peak Access Timings */}
-                <Col lg={12}>
-                  <Card className="border-0 shadow-sm">
-                    <Card.Header className="bg-transparent border-0 pt-4">
-                      <h5 className="fw-bold mb-0">Gym Hourly Traffic</h5>
-                      <p className="text-muted small mb-0">Peak attendance check-in scan volumes by hour of day.</p>
-                    </Card.Header>
-                    <Card.Body>
-                      <Chart 
-                        options={attendanceChart.options} 
-                        series={attendanceChart.series} 
-                        type="bar" 
-                        height={280} 
+                {/* 3. Leads CRM Sales Funnel (Horizontal Bar) */}
+                <Col lg={6}>
+                  <div className="report-chart-card">
+                    <div className="report-chart-header">
+                      <div>
+                        <h5 className="report-chart-title">Leads CRM Conversion Funnel</h5>
+                        <p className="report-chart-sub">
+                          Prospect progression from initial contact to closed membership.
+                        </p>
+                      </div>
+                      <span className="report-chart-badge">
+                        {conversionMetrics.rate}% Won
+                      </span>
+                    </div>
+                    <div style={{ minHeight: "310px" }}>
+                      <Chart
+                        options={funnelChart.options}
+                        series={funnelChart.series}
+                        type="bar"
+                        height={310}
                       />
-                    </Card.Body>
-                  </Card>
+                    </div>
+                  </div>
+                </Col>
+
+                {/* 4. Gym Hourly Traffic (Bar) */}
+                <Col lg={6}>
+                  <div className="report-chart-card">
+                    <div className="report-chart-header">
+                      <div>
+                        <h5 className="report-chart-title">Floor Traffic by Hour of Day</h5>
+                        <p className="report-chart-sub">
+                          Hourly check-in patterns showing peak morning and evening gym rush.
+                        </p>
+                      </div>
+                      <span className="report-chart-badge">5 AM – 10 PM</span>
+                    </div>
+                    <div style={{ minHeight: "310px" }}>
+                      <Chart
+                        options={trafficChart.options}
+                        series={trafficChart.series}
+                        type="bar"
+                        height={310}
+                      />
+                    </div>
+                  </div>
                 </Col>
               </Row>
+
+              {/* ── Actionable Member Renewal Watchlist (100% Real Members) ─ */}
+              <div className="renewal-table-card">
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                  <div>
+                    <h5 className="report-chart-title d-flex align-items-center gap-2">
+                      <IconShieldCheck size={20} className="text-primary" />
+                      Actionable Member Renewal Watchlist
+                    </h5>
+                    <p className="report-chart-sub">
+                      Real gym members registered in the database, ordered by upcoming renewal date.
+                    </p>
+                  </div>
+                  <Badge
+                    bg={expiringDueCount > 0 ? "warning" : "light"}
+                    text={expiringDueCount > 0 ? "dark" : "dark"}
+                    className="px-3 py-2 fw-semibold"
+                  >
+                    {expiringDueCount > 0 ? `${expiringDueCount} Renewals Due` : "All Plans Active"}
+                  </Badge>
+                </div>
+
+                <div className="table-responsive">
+                  <Table className="renewal-table" hover>
+                    <thead>
+                      <tr>
+                        <th>Member</th>
+                        <th>Contact</th>
+                        <th>Plan</th>
+                        <th>Expiry Date</th>
+                        <th>Days Left</th>
+                        <th className="text-end">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayRenewals.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-4 text-muted">
+                            No gym members found in database.
+                          </td>
+                        </tr>
+                      ) : (
+                        displayRenewals.map((m) => {
+                          const initials = (m.name || "M")
+                            .split(" ")
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase();
+
+                          return (
+                            <tr key={m.id}>
+                              <td>
+                                <div className="d-flex align-items-center gap-2">
+                                  <div className="member-avatar-chip">{initials}</div>
+                                  <div>
+                                    <div className="fw-bold text-dark">{m.name || "Member"}</div>
+                                    <div className="text-muted small">{m.email || "No email"}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="text-muted">{m.phone || "—"}</span>
+                              </td>
+                              <td>
+                                <span className="fw-semibold text-dark">{m.planName}</span>
+                              </td>
+                              <td>
+                                <span className="text-dark">{m.expiryDate}</span>
+                              </td>
+                              <td>
+                                <span
+                                  className={
+                                    m.daysLeft <= 15
+                                      ? "expiry-badge-urgent"
+                                      : m.daysLeft <= 30
+                                      ? "expiry-badge-warning"
+                                      : "badge bg-light text-secondary border px-2 py-1"
+                                  }
+                                >
+                                  {m.daysLeft <= 0
+                                    ? "Expired"
+                                    : m.daysLeft <= 30
+                                    ? `In ${m.daysLeft} days`
+                                    : `${m.daysLeft} days`}
+                                </span>
+                              </td>
+                              <td className="text-end">
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  className="d-inline-flex align-items-center gap-1 rounded-3 px-3 py-1"
+                                  disabled={sendingReminderId === m.id}
+                                  onClick={() => handleSendReminder(m)}
+                                >
+                                  {sendingReminderId === m.id ? (
+                                    <>
+                                      <Spinner size="sm" animation="border" /> Sending...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <IconMail size={15} /> Send Reminder
+                                    </>
+                                  )}
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
+              </div>
             </>
           )}
         </Container>

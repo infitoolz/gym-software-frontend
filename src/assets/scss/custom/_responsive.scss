@@ -2,18 +2,20 @@
 27 RESPONSVIE
 **************/
 @media screen and (min-width:768px) {
-    // Sidebar is now always a 72px icon rail — these rules ensure header/footer/content
-    // are always offset by 72px regardless of the sidebar mode.
+    // Dynamic sidebar width offset (245px expanded vs 70px collapsed)
     .codex-header {
-        margin-left: 72px;
-        width: calc(100% - 72px);
+        margin-left: var(--sidebar-width) !important;
+        width: calc(100% - var(--sidebar-width)) !important;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .codex-footer {
-        margin-left: 72px;
-        width: calc(100% - 72px);
+        margin-left: var(--sidebar-width) !important;
+        width: calc(100% - var(--sidebar-width)) !important;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .themebody-wrap {
-        margin-left: 72px;
+        margin-left: var(--sidebar-width) !important;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .users-page-wrapper,
     .branch-page-wrapper,
@@ -23,7 +25,8 @@
     .head-office-page-wrapper,
     .role-permissions-page-wrapper,
     .diet-plan-page {
-        margin-left: 72px;
+        margin-left: var(--sidebar-width) !important;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     [data-bs-sidebar=horizontal] {
         .codex-header {

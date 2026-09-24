@@ -12,6 +12,7 @@ import {
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -43,7 +44,17 @@ export default function DepartmentPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const modalStepIndex = useMemo(() => {
     const index = DEPARTMENT_STEPS.findIndex((item) => item.key === modalTab);
@@ -106,6 +117,7 @@ export default function DepartmentPage() {
     setForm({ ...EMPTY_FORM, branchId: currentRole === "ADMIN" ? String(currentUser?.branchId) : "" });
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -120,6 +132,7 @@ export default function DepartmentPage() {
     setSelectedId(dept?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -127,6 +140,7 @@ export default function DepartmentPage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -135,12 +149,15 @@ export default function DepartmentPage() {
     
     // Validate current step before proceeding
     if (modalTab === "basic") {
+      const errs = {};
       if (!form.name?.trim()) {
-        setModalError("Department name is required");
-        return;
+        errs.name = "Department name is required";
       }
       if (!form.branchId) {
-        setModalError("Branch is required");
+        errs.branchId = "Branch is required";
+      }
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errs }));
         return;
       }
     }
@@ -160,21 +177,22 @@ export default function DepartmentPage() {
   // ── Form submit ───────────────────────────────────────────────────────────────
 
   const validateForm = () => {
+    const errors = {};
     if (!form.name?.trim()) {
-      return "Department name is required";
+      errors.name = "Department name is required";
     }
     if (!form.branchId) {
-      return "Branch is required";
+      errors.branchId = "Branch is required";
     }
-    return null;
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setModalTab("basic");
       return;
     }
@@ -244,19 +262,26 @@ export default function DepartmentPage() {
       <div className="col-md-12">
         <label className="form-label">Department Name *</label>
         <input
-          className="form-control"
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, name: e.target.value });
+            clearFieldError("name");
+          }}
           placeholder="Enter department name"
         />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
 
       <div className="col-md-12">
         <label className="form-label">Branch *</label>
         <select
-          className="form-select"
+          className={`form-select ${fieldErrors.branchId ? "is-invalid" : ""}`}
           value={form.branchId}
-          onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, branchId: e.target.value });
+            clearFieldError("branchId");
+          }}
           disabled={currentRole === "ADMIN" || brLoading}
         >
           <option value="">Select Branch</option>
@@ -264,6 +289,7 @@ export default function DepartmentPage() {
             <option key={b.id} value={b.id}>{b.name}</option>
           ))}
         </select>
+        {fieldErrors.branchId && <div className="avm-field-error">{fieldErrors.branchId}</div>}
         {currentRole === "ADMIN" && (
           <small className="text-muted d-block mt-1">
             Branch is locked to your assigned branch
@@ -381,62 +407,38 @@ export default function DepartmentPage() {
           </div>
         </div>
 
-        {/* ── Departments Table ── */}
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Departments List</h5>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Branch</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={5} className="text-center py-4">Loading...</td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="text-center py-4">No departments found</td>
-                    </tr>
-                  ) : (
-                    rows.map((dept) => {
-                      const branch = branches.find((b) => b.id === dept.branchId);
-                      return (
-                        <tr key={dept.id}>
-                          <td className="fw-semibold">{dept.name}</td>
-                          <td>{branch?.name || "-"}</td>
-                          <td>{dept.description || "-"}</td>
-                          <td>
-                            <span className={`badge ${dept.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                              {dept.status === "ACTIVE" ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(dept)}>
-                              <IconEdit size={14} />
-                            </button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(dept.id)}>
-                              <IconTrash size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── Departments Table with CommonTable ── */}
+        <CommonTable
+          columns={[
+            { key: "name", label: "NAME", sortable: true },
+            {
+              key: "branchId",
+              label: "BRANCH",
+              sortable: true,
+              render: (val, row) => {
+                const b = branches.find((item) => item.id === row.branchId);
+                return b?.name || "-";
+              },
+            },
+            { key: "description", label: "DESCRIPTION", sortable: true },
+            { key: "status", label: "STATUS", sortable: true },
+          ]}
+          data={rows}
+          entityName="department"
+          searchPlaceholder="Search department..."
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={(d) => confirmDelete(d.id)}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try { await deleteDepartment(id); } catch (e) {}
+            }
+            setNotice(`${ids.length} departments deleted successfully`);
+            await loadData();
+          }}
+          canEdit={true}
+          canDelete={true}
+        />
 
         {/* ── Add / Edit Department Modal using WizardPopup ─────────────────────── */}
         <WizardPopup

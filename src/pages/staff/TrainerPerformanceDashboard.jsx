@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { getTrainerPerformances } from "../../api/userAdminApi";
+import { Container } from "react-bootstrap";
+import { IconHome, IconAward } from "@tabler/icons-react";
 
 const medalColors = ["#FFD700", "#C0C0C0", "#CD7F32"];
 const medalLabels = ["🥇", "🥈", "🥉"];
@@ -44,6 +47,24 @@ const StatPill = ({ label, value, color }) => (
   </div>
 );
 
+const normalizeTrainerPerformance = (item) => {
+  const name = item?.name || item?.trainerName || "Trainer";
+  return {
+    ...item,
+    id: item?.trainerId || item?.id,
+    trainerId: item?.trainerId || item?.id,
+    name,
+    trainerName: name,
+    performanceScore: Number(item?.performanceScore || item?.score || 0),
+    assignedMembers: Number(item?.assignedMembers || item?.memberCount || 0),
+    revenueGenerated: Number(item?.revenueGenerated || item?.revenue || 0),
+    attendancePercentage: Number(item?.attendancePercentage ?? item?.attendanceRate ?? 0),
+    retentionPercentage: Number(item?.retentionPercentage ?? item?.retentionRate ?? 0),
+    rating: Number(item?.rating ?? item?.averageRating ?? 0),
+    transformations: Number(item?.transformations ?? item?.transformationsCount ?? 0),
+  };
+};
+
 export default function TrainerPerformanceDashboard() {
   const { user } = useAuth();
   const [trainers, setTrainers] = useState([]);
@@ -56,7 +77,7 @@ export default function TrainerPerformanceDashboard() {
     setLoading(true);
     getTrainerPerformances(user.userId)
       .then((data) => {
-        setTrainers(Array.isArray(data) ? data : []);
+        setTrainers(Array.isArray(data) ? data.map(normalizeTrainerPerformance) : []);
         setError(null);
       })
       .catch(() => setError("Failed to load trainer performance data."))
@@ -64,31 +85,45 @@ export default function TrainerPerformanceDashboard() {
   }, [user]);
 
   const filtered = trainers.filter((t) =>
-    t.name?.toLowerCase().includes(search.toLowerCase())
+    (t.name || t.trainerName || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const avgScore =
     trainers.length > 0
-      ? Math.round(trainers.reduce((s, t) => s + t.performanceScore, 0) / trainers.length)
+      ? Math.round(trainers.reduce((s, t) => s + (Number(t.performanceScore) || 0), 0) / trainers.length)
       : 0;
   const topTrainer = trainers[0];
-  const totalRevenue = trainers.reduce((s, t) => s + t.revenueGenerated, 0);
-  const totalMembers = trainers.reduce((s, t) => s + t.assignedMembers, 0);
+  const totalRevenue = trainers.reduce((s, t) => s + (Number(t.revenueGenerated) || 0), 0);
+  const totalMembers = trainers.reduce((s, t) => s + (Number(t.assignedMembers) || 0), 0);
 
   return (
-    <div style={{ background: "#f0f2f8", minHeight: "100vh", padding: "32px 24px", fontFamily: "'Inter', 'Segoe UI', sans-serif" }}>
-      {/* Page Header */}
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1a1a2e", margin: 0 }}>
-          🏆 Trainer Performance Dashboard
-        </h1>
-        <p style={{ color: "#6c757d", marginTop: 6, fontSize: 15 }}>
-          Real-time leaderboard & metrics for every trainer in your gym
-        </p>
-      </div>
+    <main className="themebody-wrap">
+      <div className="theme-body trainer-performance-page">
+        <Container fluid>
+          {/* Page Header */}
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+              <h2 className="mb-1 d-flex align-items-center gap-2">
+                <IconAward size={26} className="text-warning" />
+                Trainer Performance Dashboard
+              </h2>
+              <nav>
+                <ol className="breadcrumb mb-0">
+                  <li className="breadcrumb-item">
+                    <Link to="/"><IconHome size={16} /></Link>
+                  </li>
+                  <li className="breadcrumb-item text-muted">Settings</li>
+                  <li className="breadcrumb-item active">Trainer Performance</li>
+                </ol>
+              </nav>
+            </div>
+            <p className="text-muted small mb-0 d-none d-md-block">
+              Real-time leaderboard & metrics for every trainer in your gym
+            </p>
+          </div>
 
-      {/* Summary Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginBottom: 36 }}>
+          {/* Summary Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: 18, marginBottom: 30 }}>
         {[
           {
             label: "Total Trainers",
@@ -110,13 +145,13 @@ export default function TrainerPerformanceDashboard() {
           },
           {
             label: "Total Revenue",
-            value: `₹${totalRevenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
+            value: `₹${(Number(totalRevenue) || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`,
             icon: "💰",
             gradient: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
           },
           {
             label: "Top Performer",
-            value: topTrainer ? topTrainer.name.split(" ")[0] : "–",
+            value: topTrainer ? (topTrainer.name || topTrainer.trainerName || "").trim().split(" ")[0] || "–" : "–",
             icon: "🥇",
             gradient: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
           },
@@ -344,12 +379,12 @@ export default function TrainerPerformanceDashboard() {
                         </div>
                       </td>
                       <td style={{ padding: "14px", textAlign: "center", fontWeight: 700, color: "#28a745", whiteSpace: "nowrap" }}>
-                        ₹{t.revenueGenerated.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        ₹{(Number(t.revenueGenerated) || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                       </td>
                       <td style={{ padding: "14px", textAlign: "center" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 3 }}>
-                          <span style={{ color: "#ffa500", fontSize: 16 }}>{"★".repeat(Math.round(t.rating))}</span>
-                          <span style={{ fontWeight: 600, color: "#6c757d", fontSize: 13 }}>{t.rating.toFixed(1)}</span>
+                          <span style={{ color: "#ffa500", fontSize: 16 }}>{"★".repeat(Math.min(5, Math.max(0, Math.round(Number(t.rating) || 0))))}</span>
+                          <span style={{ fontWeight: 600, color: "#6c757d", fontSize: 13 }}>{(Number(t.rating) || 0).toFixed(1)}</span>
                         </div>
                       </td>
                       <td style={{ padding: "14px", textAlign: "center" }}>
@@ -379,7 +414,9 @@ export default function TrainerPerformanceDashboard() {
             </table>
           </div>
         )}
+        </div>
+        </Container>
       </div>
-    </div>
+    </main>
   );
 }

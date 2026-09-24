@@ -4,6 +4,7 @@ import { Container, Row, Col, Form, InputGroup, Alert } from 'react-bootstrap';
 import api from "../../utils/api";
 import { useAuth } from '../../context/AuthContext';
 import logo from "/src/assets/images/logo/logo.png";
+import logoWhite from "/src/assets/images/logo/logo-white.png";
 import InputGroupText from 'react-bootstrap/esm/InputGroupText';
 import {
   IconEye, IconEyeOff, IconChartBar, IconUsers,
@@ -155,9 +156,19 @@ export default function SalesLogin() {
         <div style={blob('30%',  '-80px',  '200px', '#0ea5e9', 0.10)} />
 
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 56, position: 'relative', zIndex: 1 }}>
-          <img src={logo} alt="FitNexus" style={{ height: 36, filter: 'brightness(0) invert(1)' }} />
-          <span style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>FitNexus CRM</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 56, position: 'relative', zIndex: 1 }}>
+          <img src={logoWhite} alt="FITNEXA" style={{ height: 40, objectFit: 'contain' }} />
+          <span style={{
+            fontSize: 12,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.08em',
+            padding: '4px 10px',
+            background: 'rgba(255, 255, 255, 0.12)',
+            border: '1px solid rgba(255, 255, 255, 0.18)',
+            borderRadius: 20,
+            color: '#fff'
+          }}>CRM PORTAL</span>
         </div>
 
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -210,9 +221,17 @@ export default function SalesLogin() {
         <div style={card}>
 
           {/* Mobile logo */}
-          <div className="d-flex d-lg-none align-items-center gap-2 mb-4">
-            <img src={logo} alt="FitNexus" style={{ height: 28 }} />
-            <span style={{ fontWeight: 700, fontSize: 16, color: '#1e293b' }}>FitNexus CRM</span>
+          <div className="d-flex d-lg-none align-items-center justify-content-between mb-4">
+            <img src={logo} alt="FITNEXA" style={{ height: 32, objectFit: 'contain' }} />
+            <span style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: '#6366f1',
+              background: '#ede9fe',
+              padding: '4px 10px',
+              borderRadius: 16,
+              letterSpacing: '0.04em'
+            }}>CRM PORTAL</span>
           </div>
 
           <div style={{ marginBottom: 28 }}>

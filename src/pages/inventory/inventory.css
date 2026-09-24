@@ -1,0 +1,433 @@
+/* ==========================================================================
+   FitNexa Inventory Management - Modern Premium UI Styles
+   ========================================================================== */
+
+/* ── KPI Stats Cards ─────────────────────────────────────────────────── */
+.inv-stat-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.05);
+  padding: 1.25rem 1.4rem;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.inv-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.inv-stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.inv-stat-card.card-primary::before {
+  background: linear-gradient(90deg, #3b82f6, #6366f1);
+}
+.inv-stat-card.card-success::before {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.inv-stat-card.card-warning::before {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+.inv-stat-card.card-danger::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.inv-stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.inv-stat-card:hover .inv-stat-icon-wrap {
+  transform: scale(1.08);
+}
+
+.inv-stat-icon-primary {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+.inv-stat-icon-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+.inv-stat-icon-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+.inv-stat-icon-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.inv-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.inv-stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.25rem;
+}
+
+.inv-stat-sub {
+  font-size: 0.775rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ── Category Pill Tabs ──────────────────────────────────────────────── */
+.inv-category-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.35rem 0.25rem 0.85rem 0.25rem;
+  scrollbar-width: thin;
+}
+
+.inv-cat-pill {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 9999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.inv-cat-pill:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.inv-cat-pill.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.inv-cat-badge {
+  background: rgba(100, 116, 139, 0.15);
+  color: inherit;
+  font-size: 0.72rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 9999px;
+  font-weight: 700;
+}
+
+.inv-cat-pill.active .inv-cat-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ── Item Badges & Tags ──────────────────────────────────────────────── */
+.inv-asset-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+.inv-cat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.22rem 0.65rem;
+  border-radius: 8px;
+}
+
+.inv-cat-tag-equipment {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+.inv-cat-tag-supplements {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.inv-cat-tag-accessories {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border: 1px solid #e9d5ff;
+}
+.inv-cat-tag-other {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* ── Status Pills ────────────────────────────────────────────────────── */
+.inv-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.inv-status-instock {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.inv-status-lowstock {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.inv-status-outstock {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+.inv-status-maintenance {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.inv-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.inv-status-instock .inv-pulse-dot {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+.inv-status-lowstock .inv-pulse-dot {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+.inv-status-outstock .inv-pulse-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+.inv-status-maintenance .inv-pulse-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+}
+
+/* ── Custom Action Buttons in Table ──────────────────────────────────── */
+.inv-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  padding: 0;
+}
+
+.inv-action-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.inv-action-btn-qr:hover {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #16a34a;
+}
+
+.inv-action-btn-service:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+/* ── Printable QR Asset Tag Badge ────────────────────────────────────── */
+.inv-qr-card-preview {
+  background: #ffffff;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 380px;
+  margin: 0 auto;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  position: relative;
+}
+
+.inv-qr-tag-header {
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.inv-qr-gym-brand {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #0f172a;
+  text-transform: uppercase;
+}
+
+.inv-qr-gym-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.inv-qr-image-wrapper {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1rem;
+  display: inline-block;
+  margin: 0.5rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.inv-qr-image-wrapper img {
+  width: 160px;
+  height: 160px;
+  display: block;
+}
+
+.inv-qr-item-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 0.5rem;
+}
+
+.inv-qr-item-sku {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.04em;
+}
+
+.inv-qr-meta-row {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.6rem;
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+/* ── Print Media Query for Sticker Labels ────────────────────────────── */
+@media print {
+  /* Hide page shell and modal decorations */
+  .themebody-wrap,
+  .sidebar,
+  .header,
+  .theme-header,
+  .modal-backdrop,
+  .modal-header,
+  .modal-footer,
+  .btn-close {
+    display: none !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  .modal {
+    position: static !important;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .modal-dialog {
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+
+  .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  .modal-body {
+    padding: 0 !important;
+  }
+
+  .inv-qr-card-preview {
+    margin: 20px auto !important;
+    border: 2px dashed #000000 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    visibility: visible !important;
+  }
+
+  .inv-qr-card-preview * {
+    visibility: visible !important;
+  }
+}

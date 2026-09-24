@@ -7,15 +7,15 @@ $font-awesome: 'FontAwesome';
 $font-themify: 'themify';
 
 // theme colors
-$theme-primary: #1AB0B0;
-$theme-secondary: #ff7042;
+$theme-primary: #0066FF;
+$theme-secondary: #00D2F4;
 $theme-success:#02BC7D;
-$theme-info:#2196F3;
+$theme-info:#0088FF;
 $theme-warning:#F5BA4A;
 $theme-danger:#F75C7F;
 $theme-light:#f4f4f4;
 $theme-dark:#333333;
-$sidebar-bg:#0d2928;
+$sidebar-bg:#102030;
 
 $theme-colors:(
     "primary":    $theme-primary,
@@ -41,9 +41,9 @@ $insta-color: #e2215d;
 $whp-color:#4aec61;
 
 // dark layout
-$dark-body:#021a1a;
-$dark-card:#092424;
-$extradark-card:#223050;
+$dark-body:#0a111a;
+$dark-card:#102030;
+$extradark-card:#0b121e;
 $dark-font:#cdc9c9;
 $dark-small-font:#cdc9c9;
 $dark-border:#495057;

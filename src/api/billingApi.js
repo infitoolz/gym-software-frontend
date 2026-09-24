@@ -52,3 +52,20 @@ export async function createExpense(payload, creatorId) {
   const res = await api.post("/billing/expenses", payload, { params: { creatorId } });
   return unwrap(res) || null;
 }
+
+// Customers / Members for receipt assignment
+export async function getCustomers(requesterId) {
+  const res = await api.get("/users/customers", { params: { requesterId } });
+  return unwrap(res) || [];
+}
+
+// Email actions
+export async function sendInvoiceEmail(invoiceId, email) {
+  const res = await api.post(`/billing/invoices/${invoiceId}/send-email`, { email });
+  return unwrap(res);
+}
+
+export async function sendReceiptEmail(receiptId, email) {
+  const res = await api.post(`/billing/receipts/${receiptId}/send-email`, { email });
+  return unwrap(res);
+}

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Badge, Button, Card, Col, Container, Row, Table, Spinner } from "react-bootstrap";
+import { Badge, Button, Card, Col, Container, Row, Table, Spinner, Alert } from "react-bootstrap";
 import {
   IconAlertTriangle,
   IconBrandWhatsapp,
@@ -8,9 +8,16 @@ import {
   IconRefresh,
   IconSend,
   IconUsers,
+  IconMail,
+  IconCheck,
+  IconBolt,
 } from "@tabler/icons-react";
 import { useAuth } from "../../context/AuthContext";
-import { getExpiringMembers } from "../../api/membershipApi";
+import {
+  getExpiringMembers,
+  triggerRenewalReminders,
+  sendMemberRenewalReminder,
+} from "../../api/membershipApi";
 import Footer from "../../components/Footer";
 
 const EXPIRY_FILTERS = [
@@ -70,6 +77,10 @@ export default function RenewalManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sentSet, setSentSet] = useState(new Set());
+  const [emailSentSet, setEmailSentSet] = useState(new Set());
+  const [sendingEmailId, setSendingEmailId] = useState(null);
+  const [autoScanLoading, setAutoScanLoading] = useState(false);
+  const [scanMessage, setScanMessage] = useState(null);
 
   const fetchMembers = useCallback(
     async (days) => {
@@ -124,6 +135,74 @@ export default function RenewalManagement() {
     });
   };
 
+  const handleSendEmail = async (member) => {
+    if (!member.email) {
+      alert(`No email address on file for ${member.firstName || "this member"}.`);
+      return;
+    }
+    setSendingEmailId(member.id);
+    try {
+      await sendMemberRenewalReminder(member.id);
+      setEmailSentSet((prev) => new Set([...prev, member.id]));
+      setScanMessage({
+        type: "success",
+        text: `Renewal reminder email successfully sent to ${member.email}!`,
+      });
+    } catch (err) {
+      alert(err?.response?.data?.message || err?.message || "Failed to send renewal email.");
+    } finally {
+      setSendingEmailId(null);
+    }
+  };
+
+  const handleBulkEmail = async () => {
+    const toSend = members.filter((m) => m.email);
+    if (toSend.length === 0) {
+      alert("No members with an email address found in this list.");
+      return;
+    }
+    if (!window.confirm(`Send renewal reminder emails to ${toSend.length} member(s)?`)) {
+      return;
+    }
+    setSendingEmailId("bulk");
+    let sentCount = 0;
+    for (const m of toSend) {
+      try {
+        await sendMemberRenewalReminder(m.id);
+        setEmailSentSet((prev) => new Set([...prev, m.id]));
+        sentCount++;
+      } catch (e) {
+        console.warn(`Failed sending email to member ${m.id}:`, e);
+      }
+    }
+    setSendingEmailId(null);
+    setScanMessage({
+      type: "success",
+      text: `Successfully dispatched ${sentCount} renewal reminder email(s)!`,
+    });
+  };
+
+  const handleRunAutoScan = async () => {
+    setAutoScanLoading(true);
+    setScanMessage(null);
+    try {
+      const res = await triggerRenewalReminders();
+      const results = res?.data || {};
+      setScanMessage({
+        type: "success",
+        text: `Daily automated scan completed! Processed: ${results.processedUsers || 0} members · ${results.expiryEmailsSent || 0} emails dispatched · ${results.expiryNotificationsSent || 0} in-app alerts sent.`,
+      });
+      fetchMembers(selectedDays);
+    } catch (err) {
+      setScanMessage({
+        type: "danger",
+        text: err?.response?.data?.message || err?.message || "Failed to run automated renewal scan.",
+      });
+    } finally {
+      setAutoScanLoading(false);
+    }
+  };
+
   const currentFilter = EXPIRY_FILTERS.find((f) => f.days === selectedDays) || EXPIRY_FILTERS[3];
   const countsByDays = {};
   EXPIRY_FILTERS.forEach((f) => {
@@ -139,33 +218,65 @@ export default function RenewalManagement() {
   });
 
   const withPhone = members.filter((m) => m.phone).length;
+  const withEmail = members.filter((m) => m.email).length;
   const withoutPhone = members.length - withPhone;
 
   return (
-    <main className="themebody-wrap">
-      <div className="theme-body">
+    <>
+      <main className="themebody-wrap">
+        <div className="theme-body">
         <Container fluid>
           {/* ── Header ── */}
-          <div className="d-flex align-items-center justify-content-between mb-4">
+          <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
             <div>
               <h3 className="fw-bold mb-1">
                 <IconAlertTriangle size={26} className="text-warning me-2" />
                 Renewal Management
               </h3>
               <p className="text-muted mb-0 small">
-                Track expiring memberships and send WhatsApp reminders in one click.
+                Automated background scanner & 1-click WhatsApp & Email renewal reminders.
               </p>
             </div>
-            <Button
-              variant="outline-secondary"
-              size="sm"
-              onClick={() => fetchMembers(selectedDays)}
-              disabled={loading}
-            >
-              <IconRefresh size={16} className="me-1" />
-              Refresh
-            </Button>
+            <div className="d-flex gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                className="d-flex align-items-center gap-1 fw-semibold"
+                style={{ background: "#2bb3a3", borderColor: "#2bb3a3", color: "#06231f" }}
+                onClick={handleRunAutoScan}
+                disabled={autoScanLoading}
+                title="Run immediate automated background scan for all expiring members"
+              >
+                {autoScanLoading ? (
+                  <Spinner size="sm" animation="border" />
+                ) : (
+                  <IconBolt size={16} />
+                )}
+                <span>{autoScanLoading ? "Scanning..." : "Run Auto-Renewal Scan"}</span>
+              </Button>
+              <Button
+                variant="outline-secondary"
+                size="sm"
+                onClick={() => fetchMembers(selectedDays)}
+                disabled={loading}
+              >
+                <IconRefresh size={16} className="me-1" />
+                Refresh
+              </Button>
+            </div>
           </div>
+
+          {/* Alert feedback for scans or bulk emails */}
+          {scanMessage && (
+            <Alert
+              variant={scanMessage.type}
+              dismissible
+              onClose={() => setScanMessage(null)}
+              className="mb-4 shadow-sm"
+            >
+              {scanMessage.text}
+            </Alert>
+          )}
 
           {/* ── Summary Stats ── */}
           <Row className="g-3 mb-4">
@@ -234,11 +345,24 @@ export default function RenewalManagement() {
                     {f.label}
                   </button>
                 ))}
-                <div className="ms-auto d-flex gap-2">
+                <div className="ms-auto d-flex flex-wrap gap-2">
                   <span className="text-muted small align-self-center">
                     <IconUsers size={14} className="me-1" />
-                    {members.length} members · {withPhone} with phone
+                    {members.length} members · {withEmail} with email · {withPhone} with phone
                   </span>
+                  {members.length > 0 && withEmail > 0 && (
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="d-flex align-items-center gap-1 fw-semibold"
+                      onClick={handleBulkEmail}
+                      disabled={sendingEmailId === "bulk"}
+                      title="Send renewal reminder emails to all members with an email address"
+                    >
+                      {sendingEmailId === "bulk" ? <Spinner size="sm" animation="border" /> : <IconMail size={16} />}
+                      Email to All ({withEmail})
+                    </Button>
+                  )}
                   {members.length > 0 && withPhone > 0 && (
                     <Button
                       variant="success"
@@ -247,7 +371,7 @@ export default function RenewalManagement() {
                       onClick={handleBulkWhatsApp}
                     >
                       <IconBrandWhatsapp size={16} />
-                      Send to All ({withPhone})
+                      WhatsApp to All ({withPhone})
                     </Button>
                   )}
                 </div>
@@ -393,33 +517,67 @@ export default function RenewalManagement() {
                               <DaysLeft expiry={m.membershipExpiry} />
                             </td>
                             <td className="py-3 text-end px-4">
-                              {waUrl ? (
-                                <Button
-                                  size="sm"
-                                  variant={sent ? "outline-success" : "success"}
-                                  className="d-inline-flex align-items-center gap-1 fw-semibold"
-                                  style={{
-                                    background: sent ? undefined : "#25d366",
-                                    borderColor: "#25d366",
-                                    color: sent ? "#25d366" : "#fff",
-                                    transition: "all 0.2s",
-                                  }}
-                                  onClick={() => handleSendWhatsApp(m)}
-                                  title="Send WhatsApp reminder"
-                                >
-                                  {sent ? (
-                                    <>
-                                      <IconSend size={14} /> Sent
-                                    </>
-                                  ) : (
-                                    <>
-                                      <IconBrandWhatsapp size={14} /> Send
-                                    </>
-                                  )}
-                                </Button>
-                              ) : (
-                                <span className="text-muted small fst-italic">No phone</span>
-                              )}
+                              <div className="d-inline-flex gap-2 justify-content-end align-items-center">
+                                {/* Email Reminder Button */}
+                                {m.email ? (
+                                  <Button
+                                    size="sm"
+                                    variant={emailSentSet.has(m.id) ? "outline-primary" : "primary"}
+                                    className="d-inline-flex align-items-center gap-1 fw-semibold"
+                                    style={
+                                      emailSentSet.has(m.id)
+                                        ? undefined
+                                        : { background: "#2563eb", borderColor: "#2563eb", color: "#fff" }
+                                    }
+                                    disabled={sendingEmailId === m.id}
+                                    onClick={() => handleSendEmail(m)}
+                                    title={`Send renewal reminder email to ${m.email}`}
+                                  >
+                                    {sendingEmailId === m.id ? (
+                                      <Spinner size="sm" animation="border" />
+                                    ) : emailSentSet.has(m.id) ? (
+                                      <>
+                                        <IconCheck size={14} /> Emailed
+                                      </>
+                                    ) : (
+                                      <>
+                                        <IconMail size={14} /> Email
+                                      </>
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <span className="text-muted small fst-italic me-1">No email</span>
+                                )}
+
+                                {/* WhatsApp Reminder Button */}
+                                {waUrl ? (
+                                  <Button
+                                    size="sm"
+                                    variant={sent ? "outline-success" : "success"}
+                                    className="d-inline-flex align-items-center gap-1 fw-semibold"
+                                    style={{
+                                      background: sent ? undefined : "#25d366",
+                                      borderColor: "#25d366",
+                                      color: sent ? "#25d366" : "#fff",
+                                      transition: "all 0.2s",
+                                    }}
+                                    onClick={() => handleSendWhatsApp(m)}
+                                    title="Send WhatsApp reminder"
+                                  >
+                                    {sent ? (
+                                      <>
+                                        <IconSend size={14} /> Sent
+                                      </>
+                                    ) : (
+                                      <>
+                                        <IconBrandWhatsapp size={14} /> WhatsApp
+                                      </>
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <span className="text-muted small fst-italic">No phone</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -432,7 +590,8 @@ export default function RenewalManagement() {
           </Card>
         </Container>
       </div>
-      <Footer />
     </main>
+    <Footer />
+  </>
   );
 }

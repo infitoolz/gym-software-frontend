@@ -1,91 +1,128 @@
 /****************
-  17 SIDEBAR START
+  17 EXPANDABLE / COLLAPSIBLE DARK NAVY SIDEBAR
 *****************/
 
-// ── CSS custom properties (augment per-flyout colors) ────────────────────────
-.sidebar-flyout-panel {
-  --flyout-from: #6366f1;
-  --flyout-to:   #8b5cf6;
+// ── CSS Variables for dynamic sidebar width ──────────────────────────────────
+:root {
+  --sidebar-width: 255px;
+}
+body[data-sidebar-collapsed="true"],
+body[data-bs-sidebar="compact"] {
+  --sidebar-width: 70px;
 }
 
-// ── Narrow Icon Rail ─────────────────────────────────────────────────────────
+// ── Sidebar Container ────────────────────────────────────────────────────────
 .sidebar-rail {
   position: fixed;
   top: 0;
   left: 0;
-  width: 72px;
+  width: var(--sidebar-width);
   height: 100vh;
-  background-color: var(--#{$prefix}sidebar-bg);
-  border-right: 1px solid var(--#{$prefix}sidebarborder-color);
-  box-shadow: 4px 0 24px rgba($black, 0.07);
+  background-color: #0e1828;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.22);
   display: flex;
   flex-direction: column;
-  align-items: center;
   z-index: 100;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 
-  // Logo
+  // ── Brand Logo Area ────────────────────────────────────────────────────────
   .rail-logo {
     flex-shrink: 0;
     width: 100%;
+    height: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 14px 0 12px;
-    border-bottom: 1px solid var(--#{$prefix}sidebarborder-color);
-    img {
-      width: 38px;
-      height: 38px;
-      object-fit: contain;
-      border-radius: 10px;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      &:hover { transform: scale(1.12) rotate(-4deg); }
-    }
-  }
-
-  // Scrollable nav
-  .rail-nav {
-    flex: 1 1 auto;
-    width: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 10px 0 8px;
-    scrollbar-width: none;
-    &::-webkit-scrollbar { display: none; }
-  }
-
-  .rail-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  // Each icon pill
-  .sidebar-rail-item {
-    position: relative;
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--#{$prefix}sidebar-link);
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease,
-      transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
-      box-shadow 0.2s ease;
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    background-color: #09111e;
+    box-sizing: border-box;
 
     a {
       display: flex;
       align-items: center;
       justify-content: center;
+      text-decoration: none;
       width: 100%;
       height: 100%;
+      overflow: hidden;
+    }
+
+    .rail-logo-img {
+      max-height: 52px;
+      max-width: 215px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+      border-radius: 6px;
+      transition: transform 0.2s ease;
+      &:hover {
+        transform: scale(1.03);
+      }
+    }
+  }
+
+  // ── Scrollable Nav ─────────────────────────────────────────────────────────
+  .rail-nav {
+    flex: 1 1 auto;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+    }
+  }
+
+  .rail-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sidebar-group-item {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  // ── Menu Items ─────────────────────────────────────────────────────────────
+  .sidebar-rail-item {
+    position: relative;
+    width: calc(100% - 16px);
+    margin: 2px 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    user-select: none;
+    box-sizing: border-box;
+
+    a {
+      display: flex;
+      align-items: center;
+      width: 100%;
       color: inherit;
       text-decoration: none;
     }
@@ -94,122 +131,363 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      svg { width: 21px; height: 21px; stroke-width: 1.7; }
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 1.8;
+      }
     }
 
-    // Small chevron for submenu items
+    .rail-label {
+      margin-left: 12px;
+      font-size: 13.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      color: inherit;
+      transition: opacity 0.2s ease;
+    }
+
     .rail-chevron {
-      position: absolute;
-      right: 4px;
-      bottom: 4px;
-      width: 14px;
-      height: 14px;
+      margin-left: auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0.3;
-      transition: opacity 0.2s ease;
-      svg { width: 10px; height: 10px; }
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+      transition: transform 0.25s ease, color 0.2s ease;
+      svg {
+        width: 14px;
+        height: 14px;
+      }
     }
 
-    // Hover state
+    // Hover
     &:hover {
-      background-color: var(--#{$prefix}sidebar-linkactive);
-      color: $theme-primary;
-      transform: scale(1.08);
-      .rail-chevron { opacity: 0.7; }
+      background-color: #16263d;
+      color: #ffffff;
+      .rail-chevron {
+        color: #94a3b8;
+      }
     }
 
-    // Active (current route)
+    // Active
     &.active {
-      background: linear-gradient(135deg, $theme-primary, darken($theme-primary, 12%));
-      color: $white;
-      box-shadow: 0 6px 20px rgba($theme-primary, 0.35);
-      transform: scale(1.05);
-      .rail-chevron { opacity: 0.8; }
-    }
-
-    // Flyout open — highlighted but not fully active
-    &.flyout-open:not(.active) {
-      background: rgba($theme-primary, 0.1);
-      color: $theme-primary;
-      .rail-chevron { opacity: 0.8; }
-    }
-
-    // Native tooltip via title attribute
-    &[title]:hover::after {
-      content: attr(title);
-      position: fixed;
-      left: 80px;
-      padding: 5px 12px;
-      background: var(--#{$prefix}sidebar-bg);
-      color: var(--#{$prefix}sidebar-link);
-      font-size: 12px;
+      background: linear-gradient(135deg, #005ce6 0%, #0077ff 60%, #00c6ff 100%);
+      color: #ffffff !important;
       font-weight: 600;
-      white-space: nowrap;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba($black, 0.12);
-      border: 1px solid var(--#{$prefix}sidebarborder-color);
-      z-index: 9999;
-      pointer-events: none;
+      box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+
+      .rail-icon svg {
+        color: #ffffff !important;
+      }
+      .rail-label {
+        color: #ffffff !important;
+        font-weight: 600;
+      }
+      .rail-chevron {
+        color: rgba(255, 255, 255, 0.85) !important;
+      }
+    }
+
+    // Open accordion parent
+    &.accordion-open:not(.active) {
+      background-color: rgba(255, 255, 255, 0.04);
+      color: #e2e8f0;
+      .rail-chevron {
+        color: #cbd5e1;
+      }
     }
   }
 
-  // Premium upgrade icon
+  // ── Accordion Submenu (Inline for Expanded Mode) ───────────────────────────
+  .sidebar-accordion-menu {
+    list-style: none;
+    margin: 2px 8px 6px 8px;
+    padding: 6px 4px 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border-left: 2px solid rgba(0, 210, 244, 0.45);
+    animation: accordionFadeDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+    li {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-subitem {
+      display: flex;
+      align-items: center;
+      padding: 7px 8px 7px 12px;
+      border-radius: 6px;
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.18s ease;
+
+      .subitem-bullet {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: #64748b;
+        margin-right: 8px;
+        flex-shrink: 0;
+        transition: background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+      }
+
+      .subitem-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+        flex-shrink: 0;
+        svg {
+          width: 15px;
+          height: 15px;
+        }
+      }
+
+      .subitem-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+      }
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.07);
+        color: #ffffff;
+        .subitem-bullet {
+          background-color: #00d2f4;
+          transform: scale(1.4);
+          box-shadow: 0 0 6px rgba(0, 210, 244, 0.6);
+        }
+      }
+
+      &.active {
+        color: #ffffff !important;
+        font-weight: 600;
+        background: linear-gradient(90deg, rgba(0, 102, 255, 0.25) 0%, rgba(0, 210, 244, 0.08) 100%);
+        border-left: 3px solid #00d2f4;
+
+        .subitem-bullet {
+          background-color: #00d2f4;
+          box-shadow: 0 0 8px #00d2f4;
+          transform: scale(1.4);
+        }
+
+        .subitem-icon {
+          color: #00d2f4 !important;
+        }
+      }
+    }
+  }
+
+  // ── Upgrade Banner ─────────────────────────────────────────────────────────
   .rail-upgrade {
     flex-shrink: 0;
-    padding: 8px 0 16px;
-    display: flex;
-    justify-content: center;
+    padding: 10px 12px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+
     a {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-      color: $white;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+      color: #ffffff;
       text-decoration: none;
-      box-shadow: 0 6px 20px rgba(#f59e0b, 0.4);
-      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
-      svg { width: 20px; height: 20px; }
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+
       &:hover {
-        transform: scale(1.12);
-        box-shadow: 0 10px 28px rgba(#ef4444, 0.45);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
       }
     }
   }
 }
 
-// ── Flyout Submenu Panel ──────────────────────────────────────────────────────
+// ── Collapsed State Rules ───────────────────────────────────────────────────
+.sidebar-rail.is-collapsed,
+body.sidebar-collapsed .sidebar-rail,
+body[data-sidebar-collapsed="true"] .sidebar-rail,
+body[data-bs-sidebar="compact"] .sidebar-rail {
+  width: 70px !important;
+
+  .rail-logo {
+    padding: 10px 6px !important;
+    justify-content: center !important;
+    a {
+      justify-content: center !important;
+    }
+    .rail-logo-img {
+      max-height: 38px !important;
+      max-width: 52px !important;
+    }
+  }
+
+  .sidebar-rail-item {
+    width: 44px !important;
+    height: 44px !important;
+    margin: 4px auto !important;
+    padding: 0 !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+
+    a {
+      justify-content: center !important;
+    }
+
+    .rail-label,
+    .rail-chevron {
+      display: none !important;
+    }
+
+    .rail-icon {
+      margin: 0 !important;
+    }
+
+    // Native floating tooltip on hover
+    &[title]:hover::after {
+      content: attr(title);
+      position: fixed;
+      left: 78px;
+      padding: 6px 12px;
+      background: #0f1c32;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      border-radius: 6px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 9999;
+      pointer-events: none;
+    }
+  }
+
+  .sidebar-accordion-menu {
+    display: none !important;
+  }
+
+  .rail-upgrade {
+    padding: 8px 0 16px !important;
+    display: flex !important;
+    justify-content: center !important;
+    a {
+      width: 42px !important;
+      height: 42px !important;
+      padding: 0 !important;
+      border-radius: 10px !important;
+      span {
+        display: none !important;
+      }
+    }
+  }
+}
+
+// ── Layout Margins for Header, Footer & Content ──────────────────────────────
+@media screen and (min-width: 768px) {
+  // Expanded layout (default)
+  body:not(.sidebar-collapsed):not([data-sidebar-collapsed="true"]) {
+    .codex-header {
+      margin-left: 255px !important;
+      width: calc(100% - 255px) !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .codex-footer {
+      margin-left: 255px !important;
+      width: calc(100% - 255px) !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .themebody-wrap,
+    .users-page-wrapper,
+    .branch-page-wrapper,
+    .designation-page-wrapper,
+    .department-page-wrapper,
+    .team-page-wrapper,
+    .head-office-page-wrapper,
+    .role-permissions-page-wrapper,
+    .diet-plan-page {
+      margin-left: 255px !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+
+  // Collapsed layout
+  body.sidebar-collapsed,
+  body[data-sidebar-collapsed="true"],
+  body[data-bs-sidebar="compact"] {
+    .codex-header {
+      margin-left: 70px !important;
+      width: calc(100% - 70px) !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .codex-footer {
+      margin-left: 70px !important;
+      width: calc(100% - 70px) !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .themebody-wrap,
+    .users-page-wrapper,
+    .branch-page-wrapper,
+    .designation-page-wrapper,
+    .department-page-wrapper,
+    .team-page-wrapper,
+    .head-office-page-wrapper,
+    .role-permissions-page-wrapper,
+    .diet-plan-page {
+      margin-left: 70px !important;
+      transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
+}
+
+// ── Flyout Submenu Panel (Active in Collapsed Mode or Flyout Trigger) ─────────
 .sidebar-flyout-panel {
   position: fixed;
   top: 0;
-  left: 72px;
+  left: 70px;
   width: 236px;
   height: 100vh;
-  background-color: var(--#{$prefix}sidebar-bg);
-  border-right: 1px solid var(--#{$prefix}sidebarborder-color);
-  box-shadow: 8px 0 40px rgba($black, 0.12);
-  z-index: 99;
+  background-color: #0e1828;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.35);
+  z-index: 1050; // Above sidebar (100)
   display: flex;
   flex-direction: column;
-  animation: flyoutSlide 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: flyoutSlide 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
   overflow: hidden;
 
-  // ── Gradient header ─────────────────────────────────────────────────────
+  // Gradient header
   .flyout-panel-header {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 18px 16px 16px;
-    background: linear-gradient(135deg, var(--flyout-from) 0%, var(--flyout-to) 100%);
+    background: linear-gradient(135deg, var(--flyout-from, #6366f1) 0%, var(--flyout-to, #8b5cf6) 100%);
     position: relative;
     overflow: hidden;
 
-    // Decorative blurred circle
     &::before {
       content: "";
       position: absolute;
@@ -218,17 +496,7 @@
       width: 80px;
       height: 80px;
       border-radius: 50%;
-      background: rgba($white, 0.12);
-    }
-    &::after {
-      content: "";
-      position: absolute;
-      right: 20px;
-      bottom: -30px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: rgba($white, 0.08);
+      background: rgba(255, 255, 255, 0.12);
     }
   }
 
@@ -244,8 +512,8 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: rgba($white, 0.9);
-    box-shadow: 0 0 8px rgba($white, 0.7);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
     animation: pulseDot 2s ease-in-out infinite;
   }
 
@@ -254,7 +522,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    color: $white;
+    color: #ffffff;
     position: relative;
     z-index: 1;
   }
@@ -262,24 +530,24 @@
   .flyout-panel-close {
     position: relative;
     z-index: 1;
-    background: rgba($white, 0.15);
-    border: 1px solid rgba($white, 0.25);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     width: 26px;
     height: 26px;
     border-radius: 8px;
     cursor: pointer;
-    color: $white;
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background 0.18s ease, transform 0.18s ease;
     &:hover {
-      background: rgba($white, 0.3);
+      background: rgba(255, 255, 255, 0.3);
       transform: scale(1.1);
     }
   }
 
-  // ── Scrollable items list ────────────────────────────────────────────────
+  // Scrollable list
   .flyout-panel-list {
     flex: 1 1 auto;
     overflow-y: auto;
@@ -287,17 +555,15 @@
     margin: 0;
     list-style: none;
     scrollbar-width: thin;
-    scrollbar-color: rgba($black, 0.1) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
     &::-webkit-scrollbar { width: 3px; }
-    &::-webkit-scrollbar-track { background: transparent; }
-    &::-webkit-scrollbar-thumb { background: rgba($black, 0.1); border-radius: 2px; }
+    &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
   }
 
   .flyout-item-wrap {
     animation: itemFadeIn 0.3s ease both;
   }
 
-  // Each flyout link row
   .flyout-item {
     display: flex;
     align-items: center;
@@ -305,18 +571,14 @@
     padding: 9px 10px 9px 8px;
     border-radius: 10px;
     text-decoration: none;
-    color: var(--#{$prefix}sidebar-link);
-    transition:
-      background-color 0.18s ease,
-      color 0.18s ease,
-      transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-      box-shadow 0.18s ease;
+    color: #94a3b8;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.2s ease;
     margin-bottom: 2px;
 
     .flyout-item-arrow {
       margin-left: auto;
       opacity: 0;
-      color: var(--flyout-from);
+      color: var(--flyout-from, #6366f1);
       transform: translateX(-4px);
       transition: opacity 0.18s ease, transform 0.2s ease;
       display: flex;
@@ -324,8 +586,8 @@
     }
 
     &:hover {
-      background-color: var(--#{$prefix}sidebar-linkactive);
-      color: var(--#{$prefix}sidebar-linkactivefont);
+      background-color: #14223a;
+      color: #ffffff;
       transform: translateX(4px);
       .flyout-item-arrow {
         opacity: 1;
@@ -334,30 +596,27 @@
     }
 
     &.active {
-      background: linear-gradient(135deg, var(--flyout-from) 0%, var(--flyout-to) 100%);
-      color: $white;
-      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
-      .flyout-item-icon { background: rgba($white, 0.2) !important; }
-      .flyout-item-label { font-weight: 600; }
-      .flyout-item-arrow { opacity: 1; color: rgba($white, 0.8); transform: translateX(0); }
+      background: linear-gradient(135deg, var(--flyout-from, #6366f1) 0%, var(--flyout-to, #8b5cf6) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+      .flyout-item-icon { background: rgba(255, 255, 255, 0.2) !important; }
+      .flyout-item-label { font-weight: 600; color: #ffffff; }
+      .flyout-item-arrow { opacity: 1; color: rgba(255, 255, 255, 0.85); transform: translateX(0); }
     }
   }
 
-  // Icon bubble
   .flyout-item-icon {
     flex-shrink: 0;
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    background: rgba(99, 102, 241, 0.1); // safe fallback
-    background: color-mix(in srgb, var(--item-color, #6366f1) 14%, transparent);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--item-color, #6366f1);
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+    transition: transform 0.2s ease;
     svg { width: 16px; height: 16px; stroke-width: 1.8; }
-    .flyout-item:hover & { transform: scale(1.12); background: color-mix(in srgb, var(--item-color, #6366f1) 22%, transparent); }
   }
 
   .flyout-item-label {
@@ -371,27 +630,74 @@
   }
 }
 
-// ── Backdrop ─────────────────────────────────────────────────────────────────
+body:not(.sidebar-collapsed):not([data-sidebar-collapsed="true"]) .sidebar-flyout-panel {
+  left: 255px;
+}
+
 .flyout-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 98;
+  z-index: 1040;
   background: transparent;
 }
 
-// ── Body layout ───────────────────────────────────────────────────────────────
-.themebody-wrap { margin-left: 72px; }
-.body-layear {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100vh;
-  z-index: 5;
-  background-color: rgba($black, 0.2);
+// ── Mobile Responsive Overlay (< 768px) ───────────────────────────────────────
+@media screen and (max-width: 767.98px) {
+  .sidebar-rail {
+    transform: translateX(-100%);
+    width: 260px !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1050;
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+
+    .rail-logo {
+      padding: 8px 14px !important;
+      justify-content: center !important;
+      a { justify-content: center !important; }
+      .rail-logo-img {
+        max-height: 52px !important;
+        max-width: 215px !important;
+      }
+    }
+
+    .sidebar-rail-item {
+      width: calc(100% - 16px) !important;
+      margin: 2px 8px !important;
+      padding: 10px 12px !important;
+      justify-content: flex-start !important;
+
+      a { justify-content: flex-start !important; }
+      .rail-label { display: block !important; }
+      .rail-chevron { display: flex !important; }
+    }
+
+    .sidebar-accordion-menu {
+      display: flex !important;
+    }
+
+    .rail-upgrade {
+      display: block !important;
+      padding: 10px 12px 16px !important;
+      a {
+        width: 100% !important;
+        height: auto !important;
+        padding: 9px 12px !important;
+        span { display: inline !important; }
+      }
+    }
+  }
+
+  .sidebar-flyout-panel {
+    display: none !important;
+  }
 }
 
 // ── Animations ────────────────────────────────────────────────────────────────
 @keyframes flyoutSlide {
-  from { opacity: 0; transform: translateX(-20px); }
+  from { opacity: 0; transform: translateX(-16px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 
@@ -403,4 +709,15 @@
 @keyframes pulseDot {
   0%, 100% { opacity: 1;   transform: scale(1); }
   50%       { opacity: 0.6; transform: scale(0.8); }
+}
+
+@keyframes accordionFadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

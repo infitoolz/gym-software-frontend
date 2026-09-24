@@ -12,6 +12,7 @@ import Swal from "sweetalert2";
 import { getLeads } from "../../api/leadsApi";
 import { getTrainers } from "../../api/userAdminApi";
 import { useAuth } from "../../context/AuthContext";
+import PhoneInputWithFlag from "../../components/PhoneInputWithFlag";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const REWARD_SLABS = [
@@ -200,8 +201,11 @@ function AddReferrerModal({ show, type, onClose, onAdd }) {
 
   const submit = () => {
     if (!name.trim() || !phone.trim()) { Swal.fire("Required","Name & Phone required","warning"); return; }
+    const phoneDigits = String(phone || "").replace(/\D/g, "");
+    if (phoneDigits.length !== 10) { Swal.fire("Invalid Phone", "Phone number must be exactly 10 digits", "warning"); return; }
+    if (!/^[6-9]/.test(phoneDigits)) { Swal.fire("Invalid Phone", "Mobile number must start with 6, 7, 8, or 9", "warning"); return; }
     const code = `REF${name.replace(/\s/g,"").slice(0,4).toUpperCase()}${Math.floor(1000+Math.random()*9000)}`;
-    onAdd({ name, phone, partnerType: partner, referredBy: refName, code, type });
+    onAdd({ name, phone: phoneDigits, partnerType: partner, referredBy: refName, code, type });
     setName(""); setPhone(""); setRefName(""); onClose();
   };
 
@@ -226,8 +230,20 @@ function AddReferrerModal({ show, type, onClose, onAdd }) {
               <input value={name} onChange={e => setName(e.target.value)} className="form-control" style={{ borderRadius:10, fontSize:13 }} placeholder="Arun Kumar" />
             </div>
             <div>
-              <label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", display:"block", marginBottom:4 }}>Phone *</label>
-              <input value={phone} onChange={e => setPhone(e.target.value)} className="form-control" style={{ borderRadius:10, fontSize:13 }} placeholder="9876543210" />
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", margin:0 }}>Phone *</label>
+                {phone && (
+                  <span style={{ fontSize: 11, color: phone.length === 10 ? "#16a34a" : "#94a3b8", fontWeight: 600 }}>
+                    {phone.length}/10
+                  </span>
+                )}
+              </div>
+              <PhoneInputWithFlag
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                placeholder="9876543210"
+                size="sm"
+              />
             </div>
             {type === "partner" && (
               <div>

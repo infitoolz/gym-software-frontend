@@ -6,6 +6,7 @@ import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
 import PhoneField from "../../components/PhoneField";
+import CommonTable from "../../components/CommonTable";
 import { ensureCountryCodeValue, sanitizePhoneDigits, splitPhoneWithCountryCode, validatePhoneNumber } from "../../utils/phoneUtils";
 
 const EMPTY_FORM = {
@@ -39,7 +40,17 @@ export default function HeadOfficePage() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const modalStepIndex = useMemo(() => {
     const index = HEAD_OFFICE_STEPS.findIndex((item) => item.key === modalTab);
@@ -93,6 +104,7 @@ export default function HeadOfficePage() {
     setForm(EMPTY_FORM);
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -112,6 +124,7 @@ export default function HeadOfficePage() {
     setSelectedId(office?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab(parsedPhone.phone || office?.email ? "contact" : "basic");
     setShowModal(true);
   };
@@ -119,6 +132,7 @@ export default function HeadOfficePage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -126,7 +140,7 @@ export default function HeadOfficePage() {
     setModalError("");
     // Validate basic info before going to next step
     if (modalTab === "basic" && !form.name?.trim()) {
-      setModalError("Head office name is required");
+      setFieldErrors((prev) => ({ ...prev, name: "Head office name is required" }));
       return;
     }
     if (modalStepIndex < modalStepCount - 1) {
@@ -144,33 +158,33 @@ export default function HeadOfficePage() {
   // ── Form submit ───────────────────────────────────────────────────────────────
 
   const validateForm = () => {
+    const errors = {};
     if (!form.name?.trim()) {
-      return "Head office name is required";
+      errors.name = "Head office name is required";
     }
 
     if (form.phone) {
       const phoneValidation = validatePhoneNumber(form.phone, form.countryCode);
-      if (phoneValidation) return phoneValidation;
+      if (phoneValidation) errors.phone = phoneValidation;
     }
 
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      return "Please enter a valid email address";
+      errors.email = "Please enter a valid email address";
     }
 
-    return null;
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
-      // If validation fails on contact step, stay there; otherwise go to basic
-      if (validationMessage.includes("phone") || validationMessage.includes("email")) {
-        setModalTab("contact");
-      } else {
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name) {
         setModalTab("basic");
+      } else if (errors.phone || errors.email) {
+        setModalTab("contact");
       }
       return;
     }
@@ -250,11 +264,15 @@ export default function HeadOfficePage() {
       <div className="col-md-12">
         <label className="form-label">Head Office Name *</label>
         <input
-          className="form-control"
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, name: e.target.value });
+            clearFieldError("name");
+          }}
           placeholder="Enter head office name"
         />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
 
       <div className="col-md-12">
@@ -304,19 +322,28 @@ export default function HeadOfficePage() {
           label="Phone Number"
           countryCode={form.countryCode}
           value={form.phone}
-          onChange={({ countryCode, phone }) => setForm({ ...form, countryCode, phone })}
+          onChange={({ countryCode, phone }) => {
+            setForm({ ...form, countryCode, phone });
+            clearFieldError("phone");
+          }}
+          className={fieldErrors.phone ? "is-invalid" : ""}
         />
+        {fieldErrors.phone && <div className="avm-field-error">{fieldErrors.phone}</div>}
       </div>
 
       <div className="col-md-12">
         <label className="form-label">Email Address</label>
         <input
           type="email"
-          className="form-control"
+          className={`form-control ${fieldErrors.email ? "is-invalid" : ""}`}
           value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, email: e.target.value });
+            clearFieldError("email");
+          }}
           placeholder="office@example.com"
         />
+        {fieldErrors.email && <div className="avm-field-error">{fieldErrors.email}</div>}
         <small className="text-muted d-block mt-1">
           Used for official communication
         </small>
@@ -403,61 +430,31 @@ export default function HeadOfficePage() {
           </div>
         </div>
 
-        {/* ── Head Offices Table ── */}
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Head Offices List</h5>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Location</th>
-                    <th>Contact</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">Loading...</td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">No head offices found</td>
-                    </tr>
-                  ) : (
-                    rows.map((office) => (
-                      <tr key={office.id}>
-                        <td className="fw-semibold">{office.name}</td>
-                        <td>{office.location || "-"}</td>
-                        <td>{office.phone || "-"}</td>
-                        <td>{office.email || "-"}</td>
-                        <td>
-                          <span className={`badge ${office.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                            {office.status === "ACTIVE" ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td>
-                          <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(office)}>
-                            <IconEdit size={14} />
-                          </button>
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(office.id)}>
-                            <IconTrash size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── Head Offices Table with CommonTable ── */}
+        <CommonTable
+          columns={[
+            { key: "name", label: "NAME", sortable: true },
+            { key: "location", label: "LOCATION", sortable: true },
+            { key: "phone", label: "CONTACT", sortable: true },
+            { key: "email", label: "EMAIL", sortable: true },
+            { key: "status", label: "STATUS", sortable: true },
+          ]}
+          data={rows}
+          entityName="head office"
+          searchPlaceholder="Search head office..."
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={(office) => confirmDelete(office.id)}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try { await deleteHeadOffice(id); } catch (e) {}
+            }
+            setNotice(`${ids.length} head offices deleted successfully`);
+            await loadData();
+          }}
+          canEdit={true}
+          canDelete={true}
+        />
 
         {/* ── Add / Edit Head Office Modal using WizardPopup ─────────────────────── */}
         <WizardPopup

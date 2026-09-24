@@ -20,7 +20,11 @@ export default function CorporateDashboard() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ companyName: "", email: "", password: "" });
   const [saving, setSaving] = useState(false);
+  const [corporateList, setCorporateList] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
   const { user } = useAuth();
+  const isCorporateHr = user?.role === "CORPORATE_HR";
+  const basePath = isCorporateHr ? "/hr-portal" : "/corporate";
 
   const handleCreateCorporate = async () => {
     if (!formData.companyName || !formData.email || !formData.password) {
@@ -48,18 +52,33 @@ export default function CorporateDashboard() {
   };
 
   useEffect(() => {
+    if (!isCorporateHr) {
+      const requesterId = user?.userId || user?.id;
+      if (requesterId) {
+        api.get(`/users/corporate-hr?requesterId=${requesterId}`)
+          .then((res) => setCorporateList(res.data?.data || []))
+          .catch(() => setCorporateList([]));
+      }
+    }
+  }, [isCorporateHr, user]);
+
+  useEffect(() => {
     (async () => {
       try {
-        const hrUserId = user?.userId || user?.id;
+        setLoading(true);
+        const hrUserId = isCorporateHr
+          ? (user?.userId || user?.id)
+          : (selectedCompanyId || undefined);
+
         const result = await getWellnessDashboard(hrUserId);
         setData(result);
-        setLoading(false);
       } catch (err) {
         console.error(err);
+      } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [user, isCorporateHr, selectedCompanyId]);
 
   const trendChart = useMemo(() => {
     if (!data?.wellnessScoreTrend) return null;
@@ -125,19 +144,34 @@ export default function CorporateDashboard() {
                 </ol>
               </nav>
             </div>
-            <div className="d-flex gap-2">
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              {!isCorporateHr && corporateList.length > 0 && (
+                <Form.Select
+                  size="sm"
+                  style={{ width: "220px" }}
+                  value={selectedCompanyId}
+                  onChange={(e) => setSelectedCompanyId(e.target.value)}
+                >
+                  <option value="">All Corporate Partners</option>
+                  {corporateList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.companyName}
+                    </option>
+                  ))}
+                </Form.Select>
+              )}
               {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <button onClick={() => setShowCreateModal(true)} className="btn btn-primary btn-sm d-flex align-items-center gap-1">
                   <IconBuildingCommunity size={16} /> Create Corporate Account
                 </button>
               )}
-              <Link to="bmi" className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+              <Link to={`${basePath}/bmi`} className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
                 <IconHeartRateMonitor size={16} /> BMI Tracking
               </Link>
-              <Link to="challenges" className="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
+              <Link to={`${basePath}/challenges`} className="btn btn-outline-success btn-sm d-flex align-items-center gap-1">
                 <IconTrophy size={16} /> Challenges
               </Link>
-              <Link to="reports" className="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
+              <Link to={`${basePath}/reports`} className="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
                 <IconTrendingUp size={16} /> Reports
               </Link>
             </div>
@@ -231,17 +265,23 @@ export default function CorporateDashboard() {
                 </Card.Header>
                 <Card.Body className="pt-2">
                   <div className="d-flex flex-column gap-2">
-                    {(d.departmentBreakdown || []).map((dept, i) => (
-                      <div key={dept.dept} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ background: i % 2 === 0 ? "rgba(99,102,241,0.04)" : "transparent" }}>
-                        <div style={{ flex: 1 }}>
-                          <div className="d-flex justify-content-between mb-1">
-                            <span className="fw-semibold small">{dept.dept}</span>
-                            <span className="text-muted small">{dept.participants}/{dept.employees} · {dept.avgScore} pts</span>
-                          </div>
-                          <ProgressBar now={(dept.participants / dept.employees) * 100} variant="primary" style={{ height: 6 }} />
-                        </div>
+                    {(!d.departmentBreakdown || d.departmentBreakdown.length === 0) ? (
+                      <div className="text-center py-4 text-muted small">
+                        No departments found. Add employees with departments to view rankings.
                       </div>
-                    ))}
+                    ) : (
+                      d.departmentBreakdown.map((dept, i) => (
+                        <div key={dept.dept} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ background: i % 2 === 0 ? "rgba(99,102,241,0.04)" : "transparent" }}>
+                          <div style={{ flex: 1 }}>
+                            <div className="d-flex justify-content-between mb-1">
+                              <span className="fw-semibold small">{dept.dept}</span>
+                              <span className="text-muted small">{dept.participants}/{dept.employees} · {dept.avgScore} pts</span>
+                            </div>
+                            <ProgressBar now={dept.employees > 0 ? (dept.participants / dept.employees) * 100 : 0} variant="primary" style={{ height: 6 }} />
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </Card.Body>
               </Card>
@@ -250,21 +290,27 @@ export default function CorporateDashboard() {
               <Card className="border-0 shadow-sm h-100">
                 <Card.Header className="bg-transparent border-0 pb-0 pt-3 d-flex justify-content-between align-items-center">
                   <h6 className="fw-bold mb-0"><IconCalendarEvent size={16} className="me-1" /> Upcoming Challenges</h6>
-                  <Link to="challenges" className="small text-decoration-none">View all <IconChevronRight size={14} /></Link>
+                  <Link to={`${basePath}/challenges`} className="small text-decoration-none">View all <IconChevronRight size={14} /></Link>
                 </Card.Header>
                 <Card.Body className="pt-2">
                   <div className="d-flex flex-column gap-2">
-                    {(d.upcomingChallenges || []).map((ch) => (
-                      <div key={ch.id} className="d-flex align-items-center justify-content-between p-3 rounded-3 border">
-                        <div>
-                          <h6 className="fw-bold mb-1">{ch.name}</h6>
-                          <span className="text-muted small">{ch.participants} participants · {new Date(ch.startDate).toLocaleDateString()}</span>
-                        </div>
-                        <Badge bg={ch.id === 1 ? "success" : ch.id === 3 ? "primary" : "warning"} className="small">
-                          {ch.id === 1 ? "Active" : ch.id === 3 ? "Active" : "Upcoming"}
-                        </Badge>
+                    {(!d.upcomingChallenges || d.upcomingChallenges.length === 0) ? (
+                      <div className="text-center py-4 text-muted small">
+                        No active challenges. Create a challenge in the Challenges section.
                       </div>
-                    ))}
+                    ) : (
+                      d.upcomingChallenges.map((ch) => (
+                        <div key={ch.id} className="d-flex align-items-center justify-content-between p-3 rounded-3 border">
+                          <div>
+                            <h6 className="fw-bold mb-1">{ch.name}</h6>
+                            <span className="text-muted small">{ch.participants} participants · {new Date(ch.startDate).toLocaleDateString()}</span>
+                          </div>
+                          <Badge bg="success" className="small">
+                            Active
+                          </Badge>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </Card.Body>
               </Card>

@@ -134,6 +134,9 @@ export function AuthProvider({ children }) {
   };
 
   const hasPermission = (pageKey, action = "view") => {
+    // Every authenticated user has permission to view their personal profile/settings
+    if (pageKey === "profile") return true;
+
     const permission = permissionMap?.[pageKey];
     if (!permission) return false;
 
@@ -154,6 +157,7 @@ export function AuthProvider({ children }) {
       value={{
         isAuthenticated,
         user,
+        auth: user,
         loading,
         permissionsLoading,
         permissionMap,

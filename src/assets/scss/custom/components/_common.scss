@@ -31,16 +31,14 @@
     padding-right: 15px;      
 }
 .themebody-wrap{
-    margin-top: 105px;
-    margin-left: 245px;
-    transition: all 0.5s ease;
+    margin-top: 76px;
+    margin-left: var(--sidebar-width);
+    transition: all 0.3s ease;
     overflow: hidden;
 }
 .theme-body{
-    min-height: calc(100vh - 160px);
-    padding-left: 12px;
-    padding-right: 12px;
-    padding-bottom: 24px;
+    min-height: calc(100vh - 120px);
+    padding: 16px 20px 24px;
 }
 .apexcharts-legend-text{
     color: currentColor !important;

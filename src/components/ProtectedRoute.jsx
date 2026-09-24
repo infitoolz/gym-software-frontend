@@ -34,13 +34,21 @@ export default function ProtectedRoute() {
         return <Navigate to="/sign-in" replace />;
     }
 
-    const currentPage = findPageByPath(location.pathname);
-    if (currentPage && !hasPermission(currentPage.key, "view")) {
-        // If they navigate to the root dashboard but don't have permission, send COUNSELOR to sales-portal
-        if (location.pathname === "/" && user?.role === "COUNSELOR") {
-            return <Navigate to="/sales-portal" replace />;
+    // Every authenticated user is allowed to access their own profile & settings
+    if (location.pathname !== "/profile") {
+        const currentPage = findPageByPath(location.pathname);
+        if (currentPage && !hasPermission(currentPage.key, "view")) {
+            // If they navigate to the root dashboard but don't have permission, send to their specific portal
+            if (location.pathname === "/") {
+                if (user?.role === "COUNSELOR") {
+                    return <Navigate to="/sales-portal" replace />;
+                }
+                if (user?.role === "CORPORATE_HR") {
+                    return <Navigate to="/hr-portal" replace />;
+                }
+            }
+            return <Navigate to="/error-page" replace />;
         }
-        return <Navigate to="/error-page" replace />;
     }
 
     // If authenticated, render the nested routes (behind the PIN lock if enabled)

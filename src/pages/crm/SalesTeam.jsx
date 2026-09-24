@@ -14,6 +14,7 @@ import Swal from "sweetalert2";
 import { getLeads, updateLead } from "../../api/leadsApi";
 import { getCounselors, createCounselor, deleteCounselor, updateCounselor } from "../../api/userAdminApi";
 import { useAuth } from "../../context/AuthContext";
+import PhoneInputWithFlag from "../../components/PhoneInputWithFlag";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const AVG_REVENUE = 15000;
@@ -62,6 +63,15 @@ function SalesAccountsPanel({ trainers, userId, onRefresh, isMobile }) {
     e.preventDefault();
     if (!form.firstName || !form.email || !form.password || !form.phone) {
       setErrMsg('Name, Email, Password and Phone are required.');
+      return;
+    }
+    const phoneDigits = String(form.phone || '').replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      setErrMsg('Phone number must be exactly 10 digits.');
+      return;
+    }
+    if (!/^[6-9]/.test(phoneDigits)) {
+      setErrMsg('Mobile number must start with 6, 7, 8, or 9.');
       return;
     }
     const pwdRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
@@ -130,6 +140,17 @@ function SalesAccountsPanel({ trainers, userId, onRefresh, isMobile }) {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    if (editForm.phone) {
+      const editPhoneDigits = String(editForm.phone).replace(/\D/g, '');
+      if (editPhoneDigits.length !== 10) {
+        setErrMsg('Phone number must be exactly 10 digits.');
+        return;
+      }
+      if (!/^[6-9]/.test(editPhoneDigits)) {
+        setErrMsg('Mobile number must start with 6, 7, 8, or 9.');
+        return;
+      }
+    }
     setEditSaving(true);
     setErrMsg('');
     try {
@@ -184,9 +205,22 @@ function SalesAccountsPanel({ trainers, userId, onRefresh, isMobile }) {
               placeholder="counselor@gym.com" style={inputSt} required />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Phone *</label>
-            <input name="phone" value={form.phone} onChange={handle}
-              placeholder="10-digit phone" style={inputSt} required />
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', margin: 0 }}>Phone *</label>
+              {form.phone && (
+                <span style={{ fontSize: 11, color: form.phone.length === 10 ? '#16a34a' : '#94a3b8', fontWeight: 600 }}>
+                  {form.phone.length}/10
+                </span>
+              )}
+            </div>
+            <PhoneInputWithFlag
+              name="phone"
+              value={form.phone}
+              onChange={handle}
+              placeholder="9876543210"
+              size="sm"
+              required
+            />
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', display: 'block', marginBottom: 4 }}>Password *</label>
@@ -340,8 +374,21 @@ function SalesAccountsPanel({ trainers, userId, onRefresh, isMobile }) {
               <input style={inputSt} type="email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} required />
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4, display: 'block' }}>Phone *</label>
-              <input style={inputSt} value={editForm.phone} onChange={e => setEditForm({ ...editForm, phone: e.target.value })} required />
+              <div className="d-flex justify-content-between align-items-center mb-1">
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', margin: 0 }}>Phone *</label>
+                {editForm.phone && (
+                  <span style={{ fontSize: 11, color: editForm.phone.length === 10 ? '#16a34a' : '#94a3b8', fontWeight: 600 }}>
+                    {editForm.phone.length}/10
+                  </span>
+                )}
+              </div>
+              <PhoneInputWithFlag
+                value={editForm.phone}
+                onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                placeholder="9876543210"
+                size="sm"
+                required
+              />
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 4, display: 'block' }}>Reset Password</label>

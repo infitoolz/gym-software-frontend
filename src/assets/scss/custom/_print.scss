@@ -1,0 +1,135 @@
+// ==============================================================================
+// GLOBAL PRINT OPTIMIZATIONS & FIXES
+// Prevents sidebars, headers, backdrops, and navigation from overlapping printouts.
+// ==============================================================================
+
+@media print {
+  // ── 1. Hide all navigation bars, sidebars, headers, footers & floating tools ──
+  .sidebar-rail,
+  .sidebar-flyout-panel,
+  .flyout-backdrop,
+  .theme-sidebar,
+  .codex-header,
+  .header,
+  .theme-header,
+  .header-main,
+  header,
+  .codex-footer,
+  .theme-footer,
+  footer,
+  .breadcrumb,
+  nav[aria-label="breadcrumb"],
+  .customizer-layer,
+  .tap-top,
+  .theme-settings,
+  .no-print,
+  .btn-print-hide,
+  .wpd-topbar,
+  .btn-wpd-start,
+  .btn-wpd-outline,
+  .wpd-rest-timer-box,
+  .modal-footer,
+  .btn-close {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  // ── 2. Reset root and body for clean white background and 100% full width ──
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 12pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  // ── 3. Reset all layout wrappers that offset for the sidebar ──
+  .themebody-wrap,
+  .theme-body,
+  .main-wrapper,
+  .container-fluid,
+  .container,
+  [class*="-page-wrapper"],
+  .users-page-wrapper,
+  .branch-page-wrapper,
+  .designation-page-wrapper,
+  .department-page-wrapper,
+  .team-page-wrapper,
+  .head-office-page-wrapper,
+  .role-permissions-page-wrapper,
+  .diet-plan-page {
+    margin: 0 !important;
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  // ── 4. Modal handling: ensure printable modals appear cleanly without overlay ──
+  .modal-backdrop {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .modal {
+    position: static !important;
+    overflow: visible !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-dialog {
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    transform: none !important;
+  }
+
+  .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding: 12px 0 !important;
+  }
+
+  .modal-body {
+    padding: 16px 0 !important;
+  }
+
+  // ── 5. Page breaks and card styling for printable documents ──
+  .card,
+  table,
+  tr,
+  .wpd-exercise-card,
+  .wpd-hero-card {
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

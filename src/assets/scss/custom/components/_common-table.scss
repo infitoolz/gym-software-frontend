@@ -1,0 +1,753 @@
+/*************************************************
+  COMMON DATA TABLE COMPONENT STYLING
+  Matches Fitnexa Dark Theme & Reference UI
+**************************************************/
+
+.common-table-card {
+  background: #0f141f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  color: #e2e8f0;
+  overflow: visible;
+  position: relative;
+  font-family: inherit;
+
+  // ── Contrast Overrides for Dark Card Component ──────────────────────────
+  .text-dark {
+    color: #f8fafc !important;
+  }
+  .text-muted {
+    color: #94a3b8 !important;
+  }
+  .text-secondary {
+    color: #cbd5e1 !important;
+  }
+  .text-body {
+    color: #f8fafc !important;
+  }
+  .text-black {
+    color: #ffffff !important;
+  }
+  .badge.bg-light.text-dark,
+  .badge.bg-light {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  }
+
+  // ── Top Control Bar ──────────────────────────────────────────────────────────
+  .ct-topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    .ct-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1 1 260px;
+      max-width: 460px;
+    }
+
+    .ct-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  }
+
+  // Search input wrapper
+  .ct-search-box {
+    position: relative;
+    width: 100%;
+
+    .ct-search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+      pointer-events: none;
+    }
+
+    .ct-search-input {
+      width: 100%;
+      background: #141b27;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 9px 14px 9px 38px;
+      color: #f1f5f9;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s ease;
+
+      &::placeholder {
+        color: #64748b;
+      }
+
+      &:focus {
+        border-color: #0066ff;
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+        background: #182232;
+      }
+    }
+  }
+
+  // Bulk selection bar (shown when items are selected)
+  .ct-bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: ctFadeIn 0.2s ease-out;
+
+    .ct-selected-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 102, 255, 0.18);
+      border: 1px solid rgba(0, 102, 255, 0.4);
+      color: #38bdf8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+
+      .ct-clear-btn {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 12px;
+        margin-left: 4px;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+
+        &:hover {
+          color: #ffffff;
+        }
+      }
+    }
+  }
+
+  // Top action buttons (Columns, Filter, Export)
+  .ct-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #141b27;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+
+    &:hover {
+      background: #1c2637;
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    &.ct-btn-delete {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.25);
+        color: #ffffff;
+      }
+    }
+
+    &.ct-btn-clear {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #94a3b8;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.08);
+        color: #f1f5f9;
+        border-color: rgba(255, 255, 255, 0.25);
+      }
+    }
+  }
+
+  // View toggle pill (List / Cards)
+  .ct-view-switch {
+    display: inline-flex;
+    background: #141b27;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+
+    .ct-view-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+
+      &:hover {
+        color: #ffffff;
+      }
+
+      &.active {
+        background: #0066ff;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.35);
+      }
+    }
+  }
+
+  // ── Dropdown Menus (Columns & Filters) ─────────────────────────────────────────
+  .ct-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 6px;
+    background: #141b27;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+    padding: 8px;
+    z-index: 50;
+    min-width: 190px;
+    animation: ctFadeDown 0.18s ease-out;
+
+    .ct-dropdown-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748b;
+      padding: 6px 10px 4px 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .ct-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      color: #cbd5e1;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+      }
+
+      input[type="checkbox"] {
+        cursor: pointer;
+      }
+    }
+
+    .ct-dropdown-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 6px 0;
+    }
+
+    .ct-dropdown-reset-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: #00a2ff;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: rgba(0, 162, 255, 0.1);
+        color: #00d2f4;
+      }
+
+      svg {
+        stroke-width: 2.2;
+      }
+    }
+  }
+
+  // ── Table Styling ─────────────────────────────────────────────────────────────
+  .ct-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+
+  .ct-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 980px;
+    font-size: 13px;
+
+    thead th {
+      background: #0b1019;
+      color: #94a3b8;
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      white-space: nowrap;
+      user-select: none;
+
+      &.sortable {
+        cursor: pointer;
+        &:hover {
+          color: #ffffff;
+        }
+      }
+
+      .ct-sort-icon {
+        display: inline-block;
+        margin-left: 4px;
+        opacity: 0.6;
+      }
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #cbd5e1;
+      vertical-align: middle;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    tbody tr {
+      transition: background-color 0.15s ease;
+
+      &:hover td {
+        background-color: rgba(255, 255, 255, 0.03);
+      }
+
+      &.ct-row-selected td {
+        background-color: rgba(0, 102, 255, 0.08) !important;
+      }
+    }
+
+    // Checkbox column
+    .ct-col-checkbox {
+      width: 44px;
+      text-align: center;
+      padding-left: 18px;
+      padding-right: 8px;
+    }
+
+    // Row number column (#)
+    .ct-col-index {
+      width: 50px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    // Actions column (Fixed / Sticky with horizontal scroll support)
+    .ct-col-actions {
+      text-align: right;
+      padding-right: 20px;
+      white-space: nowrap;
+      position: sticky;
+      right: 0;
+      z-index: 3;
+      background: #0f141f;
+      box-shadow: -6px 0 14px rgba(0, 0, 0, 0.35);
+    }
+
+    thead th.ct-col-actions {
+      background: #0b1019;
+      z-index: 4;
+    }
+
+    tbody tr:hover td.ct-col-actions {
+      background: #17202f;
+    }
+
+    tbody tr.ct-row-selected td.ct-col-actions {
+      background: #152238;
+    }
+  }
+
+  // Checkbox custom styling
+  .ct-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    background: #0f1722;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 0;
+    transition: all 0.15s ease;
+    vertical-align: middle;
+    flex-shrink: 0;
+
+    &:hover {
+      border-color: #0066ff;
+      box-shadow: 0 0 6px rgba(0, 102, 255, 0.35);
+    }
+
+    &:checked {
+      background: #0066ff;
+      border-color: #0066ff;
+
+      &::after {
+        content: "";
+        width: 4px;
+        height: 8px;
+        border: solid #ffffff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        margin-bottom: 2px;
+      }
+    }
+  }
+
+  // Status badges
+  .ct-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+
+    &.status-active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    &.status-inactive {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+  }
+
+  // Row Action buttons (Edit & Delete square buttons matching reference)
+  .ct-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    margin-left: 6px;
+
+    &.ct-btn-edit {
+      background: rgba(0, 102, 255, 0.15);
+      border: 1px solid rgba(0, 102, 255, 0.3);
+      color: #0066ff;
+
+      &:hover {
+        background: #0066ff;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.4);
+      }
+    }
+
+    &.ct-btn-delete {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+
+      &:hover {
+        background: #dc2626;
+        color: #ffffff;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+      }
+    }
+
+    &.ct-btn-view {
+      background: rgba(0, 210, 244, 0.15);
+      border: 1px solid rgba(0, 210, 244, 0.3);
+      color: #00d2f4;
+
+      &:hover {
+        background: #00d2f4;
+        color: #090e18;
+        box-shadow: 0 2px 8px rgba(0, 210, 244, 0.4);
+      }
+    }
+  }
+
+  // ── Cards View Grid ───────────────────────────────────────────────────────────
+  .ct-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+    gap: 16px;
+    padding: 20px;
+
+    .ct-card-item {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px 18px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+      &:hover {
+        border-color: rgba(0, 102, 255, 0.45);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        transform: translateY(-2px);
+      }
+
+      &.ct-card-selected {
+        border-color: #0066ff;
+        background: rgba(0, 102, 255, 0.07);
+      }
+
+      .ct-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+        .ct-card-header-left {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .ct-card-badge-index {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2px 8px;
+          border-radius: 6px;
+          background: rgba(255, 255, 255, 0.06);
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          line-height: 1.4;
+        }
+      }
+
+      .ct-card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        flex: 1;
+      }
+
+      .ct-card-field {
+        display: grid;
+        grid-template-columns: 105px 1fr;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 9px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .ct-card-label {
+          color: #94a3b8;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+          line-height: 1.5;
+          user-select: none;
+          padding-top: 1px;
+        }
+
+        .ct-card-value {
+          color: #f8fafc;
+          font-size: 13px;
+          font-weight: 500;
+          line-height: 1.55;
+          text-align: left;
+          word-break: break-word;
+
+          .text-white {
+            color: #ffffff !important;
+          }
+
+          .text-dark {
+            color: #f8fafc !important;
+          }
+
+          .text-muted {
+            color: #94a3b8 !important;
+          }
+
+          .text-secondary {
+            color: #cbd5e1 !important;
+          }
+
+          .badge {
+            font-size: 11px;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .ct-card-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        margin-top: auto;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+    }
+  }
+
+  // ── Bottom Pagination Footer ──────────────────────────────────────────────────
+  .ct-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+    color: #94a3b8;
+
+    .ct-footer-info {
+      font-weight: 500;
+    }
+
+    .ct-pagination {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+
+      .ct-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 6px;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+
+        &:hover:not(:disabled) {
+          color: #ffffff;
+          background: rgba(255, 255, 255, 0.08);
+        }
+
+        &.active {
+          background: #ffffff;
+          color: #0b1019;
+          font-weight: 700;
+        }
+
+        &:disabled {
+          opacity: 0.35;
+          cursor: not-allowed;
+        }
+      }
+    }
+
+    .ct-page-size {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      select {
+        background: #141b27;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: #f1f5f9;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 4px 8px;
+        outline: none;
+        cursor: pointer;
+
+        &:focus {
+          border-color: #0066ff;
+        }
+      }
+    }
+  }
+
+  // ── Empty & Loading States ───────────────────────────────────────────────────
+  .ct-empty-state,
+  .ct-loading-state {
+    text-align: center;
+    padding: 48px 16px;
+    color: #64748b;
+  }
+
+  @media (max-width: 480px) {
+    .ct-cards-grid {
+      grid-template-columns: 1fr;
+      padding: 12px;
+
+      .ct-card-field {
+        grid-template-columns: 85px 1fr;
+        gap: 8px;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes ctFadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ctFadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

@@ -22,7 +22,7 @@ const leadsToSeed = [
 
 async function seed() {
     console.log("Authenticating...");
-    const authRes = await fetch('http://localhost:8082/api/auth/login', {
+    const authRes = await fetch('http://localhost:8083/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(authPayload)
@@ -43,7 +43,7 @@ async function seed() {
     console.log("Got token. Seeding leads...");
 
     for (const lead of leadsToSeed) {
-        const res = await fetch('http://localhost:8082/api/leads', {
+        const res = await fetch('http://localhost:8083/api/leads', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',

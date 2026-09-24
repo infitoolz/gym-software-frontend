@@ -1,7 +1,25 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Modal, Button } from "react-bootstrap";
-import { IconHome, IconEdit, IconTrash, IconPlus, IconPhoto } from "@tabler/icons-react";
+import { 
+  IconHome, 
+  IconEdit, 
+  IconTrash, 
+  IconPlus, 
+  IconPhoto,
+  IconEye,
+  IconClock,
+  IconFlame,
+  IconBarbell,
+  IconRepeat,
+  IconBolt,
+  IconUserStar,
+  IconTools,
+  IconVideo,
+  IconExternalLink,
+  IconInfoCircle,
+  IconCheck
+} from "@tabler/icons-react";
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
@@ -16,6 +34,7 @@ import {
 } from "../../api/workoutApi";
 import { arrayToText, normalizeBodyPart, normalizeExercise, normalizeWorkoutType, textToArray } from "./workoutUtils";
 import { resolveDietImage } from "../../utils/dietImages";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -56,9 +75,20 @@ export default function ExerciseMaster() {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null);
   const [uploading, setUploading] = useState(false);
+
+  const clearFieldError = (field) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const canCreate = hasPermission("exercise-master", "create");
   const canEdit = hasPermission("exercise-master", "edit");
@@ -103,6 +133,7 @@ export default function ExerciseMaster() {
     setIsEdit(false);
     setSelectedId(null);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -128,6 +159,7 @@ export default function ExerciseMaster() {
     setSelectedId(row?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -135,6 +167,7 @@ export default function ExerciseMaster() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -144,7 +177,13 @@ export default function ExerciseMaster() {
     const response = await api.post("/uploads/diet-images", data, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data?.data?.path || response.data?.path || "";
+    return (
+      response.data?.data?.url ||
+      response.data?.data?.path ||
+      response.data?.url ||
+      response.data?.path ||
+      ""
+    );
   };
 
   const handleFileChange = async (event) => {
@@ -154,12 +193,15 @@ export default function ExerciseMaster() {
     setModalError("");
     try {
       const path = await uploadImage(file);
+      if (!path) {
+        setModalError("No file path returned from server");
+        return;
+      }
       setForm((prev) => ({ ...prev, image: path }));
     } catch (err) {
-      setModalError("Image upload failed");
+      setModalError(extractApiErrorMessage(err, "Image upload failed"));
     } finally {
       setUploading(false);
-      event.target.value = "";
     }
   };
 
@@ -177,19 +219,21 @@ export default function ExerciseMaster() {
 
   const goToNextStep = () => {
     setModalError("");
+    const errors = {};
     if (modalTab === "basic" && !form.name?.trim()) {
-      setModalError("Exercise name is required");
-      return;
+      errors.name = "Exercise name is required";
     }
     if (modalTab === "mapping") {
       if (!form.workoutTypeId) {
-        setModalError("Workout type is required");
-        return;
+        errors.workoutTypeId = "Workout type is required";
       }
       if (!form.bodyPartId) {
-        setModalError("Body part is required");
-        return;
+        errors.bodyPartId = "Body part is required";
       }
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...errors }));
+      return;
     }
     if (modalStepIndex < STEP_FIELDS.length - 1) {
       setModalTab(STEP_FIELDS[modalStepIndex + 1].key);
@@ -205,9 +249,14 @@ export default function ExerciseMaster() {
 
   const handleSubmit = async () => {
     setModalError("");
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
+    const errors = {};
+    if (!form.name?.trim()) errors.name = "Exercise name is required";
+    if (!form.workoutTypeId) errors.workoutTypeId = "Workout type is required";
+    if (!form.bodyPartId) errors.bodyPartId = "Body part is required";
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name) setModalTab("basic");
+      else if (errors.workoutTypeId || errors.bodyPartId) setModalTab("mapping");
       return;
     }
 
@@ -291,75 +340,78 @@ export default function ExerciseMaster() {
           )}
         </div>
 
-        <div className="card">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center py-4">Loading...</div>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Exercise</th>
-                      <th>Type</th>
-                      <th>Body Part</th>
-                      <th>Difficulty</th>
-                      <th>Status</th>
-                      <th className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageRows.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center py-4">No exercises found</td>
-                      </tr>
-                    ) : (
-                      pageRows.map((row) => (
-                        <tr key={row.id}>
-                          <td>
-                            <div className="d-flex align-items-center gap-2">
-                              {row.image ? (
-                                <img src={resolveDietImage(row.image)} alt="" style={{ width: 42, height: 42, borderRadius: 8, objectFit: "cover" }} />
-                              ) : (
-                                <div className="bg-light rounded-2 d-flex align-items-center justify-content-center" style={{ width: 42, height: 42 }}>
-                                  <IconPhoto size={16} />
-                                </div>
-                              )}
-                              <div>
-                                <div className="fw-semibold">{row.name}</div>
-                                <small className="text-muted">{row.equipment || "No equipment listed"}</small>
-                              </div>
-                            </div>
-                          </td>
-                          <td>{row.workoutType?.name || "-"}</td>
-                          <td>{row.bodyPart?.name || "-"}</td>
-                          <td>{row.difficulty || "-"}</td>
-                          <td>
-                            <span className={`badge ${String(row.status).toUpperCase() === "ACTIVE" ? "bg-success" : "bg-secondary"}`}>
-                              {row.status || "ACTIVE"}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            {canEdit && (
-                              <button type="button" className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(row)}>
-                                <IconEdit size={14} />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(row)}>
-                                <IconTrash size={14} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+        <CommonTable
+          columns={[
+            {
+              key: "name",
+              label: "EXERCISE",
+              sortable: true,
+              render: (val, row) => (
+                <div className="d-flex align-items-center gap-2">
+                  {row.image ? (
+                    <img src={resolveDietImage(row.image)} alt="" style={{ width: 38, height: 38, borderRadius: 8, objectFit: "cover" }} />
+                  ) : (
+                    <div className="rounded-2 d-flex align-items-center justify-content-center" style={{ width: 38, height: 38, background: "rgba(255,255,255,0.06)" }}>
+                      <IconPhoto size={16} />
+                    </div>
+                  )}
+                  <div>
+                    <div className="fw-semibold text-white">{row.name}</div>
+                    <small className="text-muted">{row.equipment || "No equipment listed"}</small>
+                  </div>
+                </div>
+              ),
+              cardRender: (val, row) => row.name,
+            },
+            {
+              key: "workoutType",
+              label: "TYPE",
+              sortable: true,
+              render: (val, row) => row.workoutType?.name || "-",
+            },
+            {
+              key: "bodyPart",
+              label: "BODY PART",
+              sortable: true,
+              render: (val, row) => row.bodyPart?.name || "-",
+            },
+            {
+              key: "difficulty",
+              label: "DIFFICULTY",
+              sortable: true,
+              render: (val, row) => row.difficulty || "-",
+            },
+            {
+              key: "status",
+              label: "STATUS",
+              sortable: true,
+            },
+          ]}
+          data={pageRows}
+          entityName="exercise"
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={confirmDelete}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try { await deleteExercise(id); } catch (e) {}
+            }
+            setNotice(`${ids.length} exercises deleted successfully`);
+            await loadData();
+          }}
+          customActions={(row) => (
+            <button
+              type="button"
+              className="ct-action-btn ct-btn-view"
+              title="View Exercise Details"
+              onClick={() => setViewTarget(row)}
+            >
+              <IconEye size={14} />
+            </button>
+          )}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       </div>
 
       <WizardPopup
@@ -378,8 +430,16 @@ export default function ExerciseMaster() {
         {modalTab === "basic" && (
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Name</label>
-              <input className="form-control" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
+              <label className="form-label">Name <span className="req">*</span></label>
+              <input
+                className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
+                value={form.name}
+                onChange={(e) => {
+                  clearFieldError("name");
+                  setForm((prev) => ({ ...prev, name: e.target.value }));
+                }}
+              />
+              {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Difficulty</label>
@@ -399,22 +459,38 @@ export default function ExerciseMaster() {
         {modalTab === "mapping" && (
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Workout Type</label>
-              <select className="form-select" value={form.workoutTypeId} onChange={(e) => setForm((prev) => ({ ...prev, workoutTypeId: e.target.value }))}>
+              <label className="form-label">Workout Type <span className="req">*</span></label>
+              <select
+                className={`form-select ${fieldErrors.workoutTypeId ? "is-invalid" : ""}`}
+                value={form.workoutTypeId}
+                onChange={(e) => {
+                  clearFieldError("workoutTypeId");
+                  setForm((prev) => ({ ...prev, workoutTypeId: e.target.value }));
+                }}
+              >
                 <option value="">Select workout type</option>
                 {workoutTypes.map((item) => (
                   <option key={item.id} value={item.id}>{item.name}</option>
                 ))}
               </select>
+              {fieldErrors.workoutTypeId && <div className="avm-field-error">{fieldErrors.workoutTypeId}</div>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">Body Part</label>
-              <select className="form-select" value={form.bodyPartId} onChange={(e) => setForm((prev) => ({ ...prev, bodyPartId: e.target.value }))}>
+              <label className="form-label">Body Part <span className="req">*</span></label>
+              <select
+                className={`form-select ${fieldErrors.bodyPartId ? "is-invalid" : ""}`}
+                value={form.bodyPartId}
+                onChange={(e) => {
+                  clearFieldError("bodyPartId");
+                  setForm((prev) => ({ ...prev, bodyPartId: e.target.value }));
+                }}
+              >
                 <option value="">Select body part</option>
                 {bodyParts.map((item) => (
                   <option key={item.id} value={item.id}>{item.name}</option>
                 ))}
               </select>
+              {fieldErrors.bodyPartId && <div className="avm-field-error">{fieldErrors.bodyPartId}</div>}
             </div>
             <div className="col-12">
               <label className="form-label">Equipment</label>
@@ -456,10 +532,21 @@ export default function ExerciseMaster() {
             <div className="col-12">
               <label className="form-label">Image</label>
               <input type="file" accept="image/*" className="form-control" onChange={handleFileChange} />
-              {uploading && <small className="text-muted d-block mt-2">Uploading...</small>}
+              {uploading && <small className="text-primary d-block mt-2">Uploading image...</small>}
               {form.image && (
-                <div className="mt-2">
-                  <img src={resolveDietImage(form.image)} alt="Exercise" style={{ maxWidth: 180, borderRadius: 8 }} />
+                <div className="mt-2 d-flex align-items-center gap-3">
+                  <img
+                    src={resolveDietImage(form.image)}
+                    alt="Exercise"
+                    style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)" }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => setForm((prev) => ({ ...prev, image: "" }))}
+                  >
+                    Remove Image
+                  </button>
                 </div>
               )}
             </div>
@@ -492,6 +579,182 @@ export default function ExerciseMaster() {
           <Button variant="danger" onClick={handleDelete} disabled={saving} type="button">
             {saving ? "Deleting..." : "Delete"}
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ── View Exercise Details Modal ── */}
+      <Modal show={Boolean(viewTarget)} onHide={() => setViewTarget(null)} size="lg" centered className="exercise-view-modal">
+        <Modal.Header closeButton>
+          <Modal.Title className="d-flex align-items-center gap-2 flex-wrap">
+            <span>{viewTarget?.name}</span>
+            <span
+              className={`badge ${
+                String(viewTarget?.status).toUpperCase() === "ACTIVE"
+                  ? "bg-success"
+                  : "bg-danger"
+              }`}
+              style={{ fontSize: "0.75rem" }}
+            >
+              {viewTarget?.status || "ACTIVE"}
+            </span>
+            {viewTarget?.difficulty && (
+              <span className="badge bg-secondary" style={{ fontSize: "0.75rem" }}>
+                {viewTarget.difficulty}
+              </span>
+            )}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {viewTarget && (
+            <div className="d-flex flex-column gap-3">
+              {/* Media & Key Tags */}
+              <div className="row g-3 align-items-center">
+                <div className="col-md-5 text-center">
+                  {viewTarget.image ? (
+                    <img
+                      src={resolveDietImage(viewTarget.image)}
+                      alt={viewTarget.name}
+                      className="exercise-view-thumb img-fluid"
+                    />
+                  ) : (
+                    <div className="exercise-no-thumb">
+                      <IconPhoto size={42} stroke={1.5} />
+                      <span className="small mt-2">No demonstration image</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="col-md-7">
+                  <div className="exercise-tags-wrap">
+                    <div className="tag-row">
+                      <span className="tag-label">
+                        <IconBolt size={15} className="text-warning" /> Workout Type:
+                      </span>
+                      <span className="tag-val">
+                        {viewTarget.workoutType?.name || "General"}
+                      </span>
+                    </div>
+
+                    <div className="tag-row">
+                      <span className="tag-label">
+                        <IconUserStar size={15} className="text-primary" /> Body Part:
+                      </span>
+                      <span className="tag-val">
+                        {viewTarget.bodyPart?.name || "Full Body"}
+                      </span>
+                    </div>
+
+                    <div className="tag-row">
+                      <span className="tag-label">
+                        <IconTools size={15} className="text-info" /> Equipment:
+                      </span>
+                      <span className="tag-val">
+                        {viewTarget.equipment || "Bodyweight / None"}
+                      </span>
+                    </div>
+
+                    {viewTarget.videoUrl && (
+                      <div className="mt-2">
+                        <a
+                          href={viewTarget.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                        >
+                          <IconVideo size={15} /> Watch Tutorial Video <IconExternalLink size={13} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4 Performance Metric Chips */}
+              <div className="row g-2 text-center pt-2">
+                <div className="col-6 col-sm-3">
+                  <div className="exercise-metric-chip">
+                    <div className="metric-label">
+                      <IconBarbell size={14} className="text-primary" /> Sets
+                    </div>
+                    <div className="metric-value">{viewTarget.sets || 0}</div>
+                  </div>
+                </div>
+                <div className="col-6 col-sm-3">
+                  <div className="exercise-metric-chip">
+                    <div className="metric-label">
+                      <IconRepeat size={14} className="text-info" /> Reps
+                    </div>
+                    <div className="metric-value">{viewTarget.reps || 0}</div>
+                  </div>
+                </div>
+                <div className="col-6 col-sm-3">
+                  <div className="exercise-metric-chip">
+                    <div className="metric-label">
+                      <IconClock size={14} className="text-warning" /> Duration
+                    </div>
+                    <div className="metric-value">{viewTarget.durationMinutes || 0} min</div>
+                  </div>
+                </div>
+                <div className="col-6 col-sm-3">
+                  <div className="exercise-metric-chip">
+                    <div className="metric-label">
+                      <IconFlame size={14} className="text-danger" /> Calories
+                    </div>
+                    <div className="metric-value">{viewTarget.caloriesBurned || 0} kcal</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              {viewTarget.description && (
+                <div>
+                  <h6 className="fw-bold mb-1 d-flex align-items-center gap-1">
+                    <IconInfoCircle size={16} className="text-primary" /> Description
+                  </h6>
+                  <p className="exercise-desc-box">
+                    {viewTarget.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Step-by-Step Instructions */}
+              <div>
+                <h6 className="fw-bold mb-2">Step-by-Step Instructions</h6>
+                {viewTarget.instructions && viewTarget.instructions.length > 0 ? (
+                  <div className="d-flex flex-column">
+                    {viewTarget.instructions.map((step, idx) => (
+                      <div key={idx} className="exercise-step-item">
+                        <span className="step-number">{idx + 1}</span>
+                        <div className="step-text">{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted small mb-0 fst-italic">
+                    No detailed step instructions provided for this exercise.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="light" onClick={() => setViewTarget(null)} type="button">
+            Close
+          </Button>
+          {canEdit && (
+            <Button
+              variant="primary"
+              onClick={() => {
+                const target = viewTarget;
+                setViewTarget(null);
+                openEdit(target);
+              }}
+              type="button"
+            >
+              <IconEdit size={16} className="me-1" /> Edit Exercise
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </div>

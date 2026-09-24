@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Flag from "react-world-flags";
 import { COUNTRY_CODE_OPTIONS, ensureCountryCodeValue, sanitizePhoneDigits } from "../utils/phoneUtils";
 
 const COUNTRY_META = {
@@ -33,7 +34,7 @@ const getCountryItems = () =>
     };
   });
 
-const PhoneField = ({ id, label, required = false, countryCode = "+91", value = "", onChange }) => {
+const PhoneField = ({ id, label, required = false, countryCode = "+91", value = "", onChange, error }) => {
   const wrapperRef = useRef(null);
   const triggerRef = useRef(null);
   const searchRef = useRef(null);
@@ -152,16 +153,19 @@ const PhoneField = ({ id, label, required = false, countryCode = "+91", value = 
         </label>
       ) : null}
 
-      <div className={`fit-phone-shell${isFocused || isOpen ? " active" : ""}`}>
+      <div
+        className={`fit-phone-shell${isFocused || isOpen ? " active" : ""}${error ? " is-invalid border-danger" : ""}`}
+        style={error ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
+      >
         <button
           ref={triggerRef}
           type="button"
           className="fit-phone-trigger"
           onClick={() => setIsOpen((open) => !open)}
         >
-          <span>{selectedCountry.flag}</span>
+          <Flag code={selectedCountry.iso || "IN"} style={{ width: 18, height: 13, borderRadius: 2, objectFit: "cover", boxShadow: "0 1px 2px rgba(0,0,0,0.12)" }} />
           <span>{selectedCountry.code}</span>
-          <span className="fit-phone-caret">v</span>
+          <span className="fit-phone-caret">▾</span>
         </button>
 
         <input
@@ -199,8 +203,8 @@ const PhoneField = ({ id, label, required = false, countryCode = "+91", value = 
                       className={`fit-phone-option${country.code === selectedCountry.code ? " selected" : ""}`}
                       onClick={() => handleCountrySelect(country)}
                     >
-                      <span className="fit-phone-country">
-                        <span>{country.flag}</span>
+                      <span className="fit-phone-country d-flex align-items-center gap-2">
+                        <Flag code={country.iso || "IN"} style={{ width: 18, height: 13, borderRadius: 2, objectFit: "cover", boxShadow: "0 1px 2px rgba(0,0,0,0.12)", flexShrink: 0 }} />
                         <span>{country.country}</span>
                       </span>
                       <span>{country.code}</span>
@@ -212,6 +216,7 @@ const PhoneField = ({ id, label, required = false, countryCode = "+91", value = 
             )
           : null}
       </div>
+      {error && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {error}</div>}
     </div>
   );
 };

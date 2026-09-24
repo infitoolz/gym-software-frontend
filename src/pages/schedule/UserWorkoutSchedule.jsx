@@ -6,9 +6,20 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
-import { IconCalendarEvent, IconEdit, IconHome, IconPlus, IconTrash } from "@tabler/icons-react";
+import {
+  IconCalendarEvent,
+  IconEdit,
+  IconHome,
+  IconPlus,
+  IconTrash,
+  IconBarbell,
+  IconCheck,
+  IconClock,
+  IconActivity,
+} from "@tabler/icons-react";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
+import CommonTable from "../../components/CommonTable";
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { getWorkoutPlans, getWorkoutTypes } from "../../api/workoutApi";
 import { getCustomersAssignedToTrainer, getVisibleTrainers } from "../../api/scheduleApi";
@@ -18,7 +29,12 @@ import {
   getUserWorkoutSchedules,
   updateUserWorkoutSchedule,
 } from "../../api/scheduleApi";
-import { normalizeUserWorkoutSchedule, getWorkoutEventColor, formatDateTimeForInput } from "./scheduleUtils";
+import {
+  normalizeUserWorkoutSchedule,
+  getWorkoutEventColor,
+  formatDateTimeForInput,
+  formatTimeRange,
+} from "./scheduleUtils";
 
 const EMPTY_FORM = {
   trainerId: "",
@@ -76,8 +92,18 @@ export default function UserWorkoutSchedule() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("assignment");
   const [form, setForm] = useState(EMPTY_FORM);
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const canView = hasPermission("user-workout-schedule", "view");
   const canCreate = hasPermission("user-workout-schedule", "create");
@@ -161,6 +187,35 @@ export default function UserWorkoutSchedule() {
     extendedProps: { schedule: item },
   })), [rows]);
 
+  const kpiStats = useMemo(() => {
+    const total = rows.length;
+    const completed = rows.filter((r) => String(r.completionStatus).toUpperCase() === "COMPLETED").length;
+    const inProgress = rows.filter((r) => String(r.completionStatus).toUpperCase() === "IN_PROGRESS").length;
+    const pending = rows.filter((r) => {
+      const s = String(r.completionStatus || "").toUpperCase();
+      return s === "PENDING" || !s;
+    }).length;
+    return { total, completed, inProgress, pending };
+  }, [rows]);
+
+  const renderEventContent = (eventInfo) => {
+    const schedule = eventInfo.event.extendedProps?.schedule;
+    const completion = String(schedule?.completionStatus || "PENDING").toLowerCase();
+    const timeText = eventInfo.timeText;
+    const userName = schedule?.user?.name;
+    return (
+      <div
+        className={`workout-event-capsule status-${completion}`}
+        title={`${eventInfo.event.title}${userName ? ` • Member: ${userName}` : ""}`}
+      >
+        <span className="event-status-dot" />
+        {timeText && <span className="event-time-pill">{timeText}</span>}
+        <span className="event-title-text">{eventInfo.event.title}</span>
+        {userName && <span className="event-user-badge">({userName})</span>}
+      </div>
+    );
+  };
+
   const trainerOptions = useMemo(() => trainers.map((trainer) => ({
     id: trainer.id,
     label: [trainer.firstName, trainer.lastName].filter(Boolean).join(" ") || trainer.name || trainer.email || `Trainer ${trainer.id}`,
@@ -185,16 +240,78 @@ export default function UserWorkoutSchedule() {
     label: type.name || `Workout Type ${type.id}`,
   })), [workoutTypes]);
 
+  const tableData = useMemo(() => rows.map((row) => ({
+    ...row,
+    trainerName: row.trainer?.name || "-",
+    userName: row.user?.name || "-",
+    workoutPlanName: row.workoutPlan?.name || "-",
+    workoutTypeName: row.workoutType?.name || "-",
+  })), [rows]);
+
+  const columns = useMemo(() => [
+    {
+      key: "title",
+      label: "Session",
+      sortable: true,
+      render: (val, row) => (
+        <div>
+          <div className="fw-semibold text-dark">{row.title}</div>
+          <small className="text-muted">{row.repeatType || "No repeat"}</small>
+        </div>
+      ),
+    },
+    {
+      key: "trainerName",
+      label: "Trainer",
+      sortable: true,
+      render: (val, row) => row.trainerName,
+    },
+    {
+      key: "userName",
+      label: "User",
+      sortable: true,
+      render: (val, row) => row.userName,
+    },
+    {
+      key: "workoutPlanName",
+      label: "Workout Plan",
+      sortable: true,
+      render: (val, row) => row.workoutPlanName,
+    },
+    {
+      key: "workoutTypeName",
+      label: "Workout Type",
+      sortable: true,
+      render: (val, row) => row.workoutTypeName,
+    },
+    {
+      key: "completionStatus",
+      label: "Status",
+      sortable: true,
+      render: (val, row) => {
+        const status = String(row.completionStatus || "PENDING").toUpperCase();
+        const badgeClass =
+          status === "COMPLETED"
+            ? "bg-success"
+            : status === "IN_PROGRESS"
+            ? "bg-info"
+            : "bg-warning text-dark";
+        return <span className={`badge ${badgeClass}`}>{status}</span>;
+      },
+    },
+  ], []);
+
   const currentTrainerId = String(user?.userId || "");
 
   const openAdd = () => {
     setForm({
       ...EMPTY_FORM,
-      trainerId: user?.role === "TRAINER" ? currentTrainerId : "",
+      trainerId: user?.role === "TRAINER" && user?.userId ? String(user.userId) : "",
     });
     setIsEdit(false);
     setSelectedId(null);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
     setShowModal(true);
   };
@@ -219,6 +336,7 @@ export default function UserWorkoutSchedule() {
     setIsEdit(true);
     setSelectedId(row?.id);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
     setShowModal(true);
   };
@@ -226,24 +344,34 @@ export default function UserWorkoutSchedule() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("assignment");
   };
 
   const validate = () => {
-    if (user?.role !== "TRAINER" && !form.trainerId) return "Trainer is required";
-    if (!form.userId) return "User is required";
-    if (!form.workoutPlanId) return "Workout plan is required";
-    if (!form.title.trim()) return "Title is required";
-    if (!form.startDateTime || !form.endDateTime) return "Start and end time are required";
-    if (form.endDateTime < form.startDateTime) return "End time must be after start time";
-    return null;
+    const errors = {};
+    if (user?.role !== "TRAINER" && !form.trainerId) errors.trainerId = "Trainer is required";
+    if (!form.userId) errors.userId = "User is required";
+    if (!form.workoutPlanId) errors.workoutPlanId = "Workout plan is required";
+    if (!form.title.trim()) errors.title = "Title is required";
+    if (!form.startDateTime) errors.startDateTime = "Start date time is required";
+    if (!form.endDateTime) errors.endDateTime = "End date time is required";
+    if (form.startDateTime && form.endDateTime && form.endDateTime < form.startDateTime) {
+      errors.endDateTime = "End time must be after start time";
+    }
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
-    const validation = validate();
-    if (validation) {
-      setModalError(validation);
+    const errors = validate();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.trainerId || errors.userId || errors.workoutPlanId || errors.title) {
+        setModalTab("assignment");
+      } else {
+        setModalTab("timing");
+      }
       return;
     }
 
@@ -318,14 +446,14 @@ export default function UserWorkoutSchedule() {
   };
 
   return (
-    <div className="page-wrapper users-page-wrapper">
+    <div className="page-wrapper users-page-wrapper workout-schedule-page">
       <div className="content">
         {error && <div className="alert alert-danger">{error}</div>}
         {notice && <div className="alert alert-success">{notice}</div>}
 
-        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
           <div>
-            <h2 className="mb-1">User Workout Schedule</h2>
+            <h2 className="mb-1 fw-bold">User Workout Schedule</h2>
             <nav>
               <ol className="breadcrumb mb-0">
                 <li className="breadcrumb-item"><Link to="/"><IconHome size={16} /></Link></li>
@@ -334,17 +462,70 @@ export default function UserWorkoutSchedule() {
             </nav>
           </div>
           {canCreate && (
-            <button type="button" className="btn btn-primary" onClick={openAdd}>
-              <IconPlus size={16} className="me-1" />
-              Add Workout Session
+            <button type="button" className="btn btn-primary d-inline-flex align-items-center gap-2 px-3 py-2 fw-semibold" onClick={openAdd}>
+              <IconPlus size={18} />
+              <span>Add Workout Session</span>
             </button>
           )}
         </div>
 
-        <div className="card mb-3">
+        {/* KPI Stats Overview Cards */}
+        <div className="row g-3 mb-4">
+          <div className="col-sm-6 col-xl-3">
+            <div className="workout-kpi-card">
+              <div className="kpi-icon-wrap" style={{ background: "#eff6ff", color: "#2563eb" }}>
+                <IconBarbell size={24} />
+              </div>
+              <div>
+                <div className="kpi-value">{kpiStats.total}</div>
+                <div className="kpi-label">Total Sessions</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="workout-kpi-card">
+              <div className="kpi-icon-wrap" style={{ background: "#ecfdf5", color: "#10b981" }}>
+                <IconCheck size={24} />
+              </div>
+              <div>
+                <div className="kpi-value">{kpiStats.completed}</div>
+                <div className="kpi-label">Completed Sessions</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="workout-kpi-card">
+              <div className="kpi-icon-wrap" style={{ background: "#f0f9ff", color: "#0284c7" }}>
+                <IconActivity size={24} />
+              </div>
+              <div>
+                <div className="kpi-value">{kpiStats.inProgress}</div>
+                <div className="kpi-label">In Progress</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="workout-kpi-card">
+              <div className="kpi-icon-wrap" style={{ background: "#fff7ed", color: "#f97316" }}>
+                <IconClock size={24} />
+              </div>
+              <div>
+                <div className="kpi-value">{kpiStats.pending}</div>
+                <div className="kpi-label">Pending / Scheduled</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="workout-calendar-card">
           <div className="card-body">
             {loading ? (
-              <div className="text-center py-4">Loading...</div>
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <div className="mt-2 text-muted fw-medium">Loading schedule calendar...</div>
+              </div>
             ) : (
               <FullCalendar
                 plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
@@ -353,64 +534,46 @@ export default function UserWorkoutSchedule() {
                 editable={canEdit}
                 selectable={canEdit}
                 events={calendarEvents}
+                eventContent={renderEventContent}
                 eventClick={eventClick}
                 eventDrop={handleMove}
                 eventResize={handleMove}
-                height="auto"
+                height={530}
               />
             )}
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-hover mb-0 align-middle">
-                <thead>
-                  <tr>
-                    <th>Session</th>
-                    <th>Trainer</th>
-                    <th>User</th>
-                    <th>Plan</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th className="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-4">No workout schedules found</td></tr>
-                  ) : (
-                    rows.map((row) => (
-                      <tr key={row.id}>
-                        <td>
-                          <div className="fw-semibold">{row.title}</div>
-                          <small className="text-muted">{row.repeatType || "-"}</small>
-                        </td>
-                        <td>{row.trainer?.name || "-"}</td>
-                        <td>{row.user?.name || "-"}</td>
-                        <td>{row.workoutPlan?.name || "-"}</td>
-                        <td>{row.workoutType?.name || "-"}</td>
-                        <td>
-                          <span className={`badge ${row.completionStatus === "COMPLETED" ? "bg-success" : row.completionStatus === "IN_PROGRESS" ? "bg-info" : "bg-warning text-dark"}`}>
-                            {row.completionStatus || "PENDING"}
-                          </span>
-                        </td>
-                        <td className="text-end">
-                          {canEdit && (
-                            <button type="button" className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(row)}><IconEdit size={14} /></button>
-                          )}
-                          {canDelete && (
-                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setDeleteTarget(row)}><IconTrash size={14} /></button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+        <div className="workout-table-section mt-4">
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <div>
+              <h5 className="mb-0 fw-bold d-flex align-items-center gap-2">
+                <IconCalendarEvent size={20} className="text-primary" />
+                <span>Workout Sessions Overview</span>
+              </h5>
+              <small className="text-muted">Search, filter, and manage scheduled workout sessions</small>
             </div>
           </div>
+
+          <CommonTable
+            columns={columns}
+            data={tableData}
+            entityName="workout schedule"
+            searchPlaceholder="Search session, trainer, user, plan..."
+            searchKeys={["title", "trainerName", "userName", "workoutPlanName", "workoutTypeName", "completionStatus"]}
+            loading={loading}
+            onEdit={canEdit ? openEdit : null}
+            onDelete={canDelete ? (row) => setDeleteTarget(row) : null}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            defaultPageSize={10}
+            filterOptions={[
+              { label: "All Status", value: "ALL" },
+              { label: "Pending", value: "PENDING" },
+              { label: "In Progress", value: "IN_PROGRESS" },
+              { label: "Completed", value: "COMPLETED" },
+            ]}
+          />
         </div>
       </div>
 
@@ -426,9 +589,28 @@ export default function UserWorkoutSchedule() {
         }}
         onNext={() => {
           setModalError("");
-          if (modalTab === "assignment" && (!form.userId || !form.workoutPlanId)) {
-            setModalError("User and workout plan are required");
-            return;
+          if (modalTab === "assignment") {
+            const errs = {};
+            if (user?.role !== "TRAINER" && !form.trainerId) errs.trainerId = "Trainer is required";
+            if (!form.userId) errs.userId = "User is required";
+            if (!form.workoutPlanId) errs.workoutPlanId = "Workout plan is required";
+            if (!form.title.trim()) errs.title = "Title is required";
+            if (Object.keys(errs).length > 0) {
+              setFieldErrors((prev) => ({ ...prev, ...errs }));
+              return;
+            }
+          }
+          if (modalTab === "timing") {
+            const errs = {};
+            if (!form.startDateTime) errs.startDateTime = "Start date time is required";
+            if (!form.endDateTime) errs.endDateTime = "End date time is required";
+            if (form.startDateTime && form.endDateTime && form.endDateTime < form.startDateTime) {
+              errs.endDateTime = "End time must be after start time";
+            }
+            if (Object.keys(errs).length > 0) {
+              setFieldErrors((prev) => ({ ...prev, ...errs }));
+              return;
+            }
           }
           if (modalTab === "assignment") setModalTab("timing");
           else if (modalTab === "timing") setModalTab("progress");
@@ -445,32 +627,42 @@ export default function UserWorkoutSchedule() {
               {user?.role === "TRAINER" ? (
                 <input className="form-control" value={user?.name || "Current trainer"} disabled />
               ) : (
-                <select
-                  className="form-select"
-                  value={form.trainerId}
-                  onChange={(e) => setForm((prev) => ({ ...prev, trainerId: e.target.value, userId: "" }))}
-                >
-                  <option value="">Select trainer</option>
-                  {trainerOptions.map((trainer) => <option key={trainer.id} value={trainer.id}>{trainer.label}</option>)}
-                </select>
+                <>
+                  <select
+                    className={`form-select ${fieldErrors.trainerId ? "is-invalid" : ""}`}
+                    value={form.trainerId}
+                    onChange={(e) => {
+                      setForm((prev) => ({ ...prev, trainerId: e.target.value, userId: "" }));
+                      clearFieldError("trainerId");
+                    }}
+                  >
+                    <option value="">Select trainer</option>
+                    {trainerOptions.map((trainer) => <option key={trainer.id} value={trainer.id}>{trainer.label}</option>)}
+                  </select>
+                  {fieldErrors.trainerId && <div className="avm-field-error">{fieldErrors.trainerId}</div>}
+                </>
               )}
             </div>
             <div className="col-md-6">
-              <label className="form-label">User</label>
+              <label className="form-label">User *</label>
               <select
-                className="form-select"
+                className={`form-select ${fieldErrors.userId ? "is-invalid" : ""}`}
                 value={form.userId}
-                onChange={(e) => setForm((prev) => ({ ...prev, userId: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, userId: e.target.value }));
+                  clearFieldError("userId");
+                }}
                 disabled={user?.role !== "TRAINER" && !form.trainerId}
               >
                 <option value="">Select user</option>
                 {userOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
               </select>
+              {fieldErrors.userId && <div className="avm-field-error">{fieldErrors.userId}</div>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">Workout Plan</label>
+              <label className="form-label">Workout Plan *</label>
               <select
-                className="form-select"
+                className={`form-select ${fieldErrors.workoutPlanId ? "is-invalid" : ""}`}
                 value={form.workoutPlanId}
                 onChange={(e) => {
                   const selectedPlanId = e.target.value;
@@ -480,11 +672,13 @@ export default function UserWorkoutSchedule() {
                     workoutPlanId: selectedPlanId,
                     workoutTypeId: selectedPlan?.workoutTypeId ? String(selectedPlan.workoutTypeId) : prev.workoutTypeId,
                   }));
+                  clearFieldError("workoutPlanId");
                 }}
               >
                 <option value="">Select workout plan</option>
                 {workoutPlanOptions.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
               </select>
+              {fieldErrors.workoutPlanId && <div className="avm-field-error">{fieldErrors.workoutPlanId}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Workout Type</label>
@@ -494,8 +688,16 @@ export default function UserWorkoutSchedule() {
               </select>
             </div>
             <div className="col-12">
-              <label className="form-label">Title</label>
-              <input className="form-control" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} />
+              <label className="form-label">Title *</label>
+              <input
+                className={`form-control ${fieldErrors.title ? "is-invalid" : ""}`}
+                value={form.title}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, title: e.target.value }));
+                  clearFieldError("title");
+                }}
+              />
+              {fieldErrors.title && <div className="avm-field-error">{fieldErrors.title}</div>}
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>
@@ -507,12 +709,30 @@ export default function UserWorkoutSchedule() {
         {modalTab === "timing" && (
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Start Date Time</label>
-              <input type="datetime-local" className="form-control" value={form.startDateTime} onChange={(e) => setForm((prev) => ({ ...prev, startDateTime: e.target.value }))} />
+              <label className="form-label">Start Date Time *</label>
+              <input
+                type="datetime-local"
+                className={`form-control ${fieldErrors.startDateTime ? "is-invalid" : ""}`}
+                value={form.startDateTime}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, startDateTime: e.target.value }));
+                  clearFieldError("startDateTime");
+                }}
+              />
+              {fieldErrors.startDateTime && <div className="avm-field-error">{fieldErrors.startDateTime}</div>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">End Date Time</label>
-              <input type="datetime-local" className="form-control" value={form.endDateTime} onChange={(e) => setForm((prev) => ({ ...prev, endDateTime: e.target.value }))} />
+              <label className="form-label">End Date Time *</label>
+              <input
+                type="datetime-local"
+                className={`form-control ${fieldErrors.endDateTime ? "is-invalid" : ""}`}
+                value={form.endDateTime}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, endDateTime: e.target.value }));
+                  clearFieldError("endDateTime");
+                }}
+              />
+              {fieldErrors.endDateTime && <div className="avm-field-error">{fieldErrors.endDateTime}</div>}
             </div>
             <div className="col-md-6">
               <label className="form-label">Repeat Type</label>

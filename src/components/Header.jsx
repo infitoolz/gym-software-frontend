@@ -6,14 +6,18 @@ import { Dropdown, Form } from 'react-bootstrap';
 import SimpleBar from 'simplebar-react';
 import { Link } from 'react-router-dom';
 import { useSidebarContext } from '../context/useSidebarContext';
+import HeaderSearch from './HeaderSearch';
 
 import logo from '/src/assets/images/logo/logo.png';
 import { getNotifications } from '../api/notificationApi';
 import { getTheme, setTheme, getNotificationsEnabled, PREFERENCES_EVENT } from '../utils/preferences';
-import { IconBellRinging, IconBarbell, IconCalendarEvent, IconChefHat, IconChevronRight, IconLayout, IconLayoutGrid, IconMoon, IconSearch, IconSettings, IconSun, IconUser, IconUserCheck, IconInfoCircle } from '@tabler/icons-react';
+import { IconBellRinging, IconBarbell, IconCalendarEvent, IconChefHat, IconChevronRight, IconLayout, IconLayoutGrid, IconMoon, IconSearch, IconSettings, IconSun, IconUser, IconUserCheck, IconInfoCircle, IconMenu2, IconBuildingCommunity } from '@tabler/icons-react';
 export default function Header() {
     const navigate = useNavigate();
     const { logout, user } = useAuth();
+    const role = String(user?.role || "").toUpperCase();
+    const isStaff = ["SUPER_ADMIN", "ADMIN", "MANAGER", "TRAINER"].includes(role);
+    const isCorporateHr = role === "CORPORATE_HR";
 
     // Theme — backed by the shared preference so it persists and stays in sync
     // with the Dark Mode toggle on the Profile page.
@@ -30,14 +34,6 @@ export default function Header() {
         window.addEventListener(PREFERENCES_EVENT, sync);
         return () => window.removeEventListener(PREFERENCES_EVENT, sync);
     }, []);
-
-    const [navsearchData, setnavsearchData] = useState({
-        navsearch: '',
-    });
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setnavsearchData({ ...navsearchData, [name]: value, });
-    };
 
     // Notifications — only fetched when the user keeps them enabled (Profile preference).
     const [notifications, setNotifications] = useState([]);
@@ -123,21 +119,16 @@ export default function Header() {
             <header className="codex-header">
                 <div className="header-contian d-flex justify-content-between align-items-center">
                     <div className="header-left d-flex align-items-center">
-                        <div className='codex-brand me-3'>
-                            <Link className="d-flex align-items-center" to="/">
-                                <img className="img-fluid" src={logo} alt="theeme-logo" />
-                                <span className="fs-3 align-middle ms-2 lh-1">FitNexus</span>
-                            </Link>
+                        <div 
+                            className="sidebar-action navicon-wrap me-3" 
+                            onClick={toggleSidebar}
+                            role="button"
+                            title="Toggle Sidebar"
+                            style={{ cursor: "pointer" }}
+                        >
+                            <IconMenu2 size={20}/>
                         </div>
-                        <div className="sidebar-action navicon-wrap me-3 d-xl-none" onClick={toggleSidebar}>
-                            <IconLayoutGrid/>
-                        </div>
-                        <div className="input-group">
-                            <span className="input-group-text pe-0">                               
-                                <IconSearch/>
-                            </span>
-                            <Form.Control type="text" placeholder="Search Here" name="navsearch" value={navsearchData.navsearch} onChange={handleChange} />
-                        </div>
+                        <HeaderSearch theme={theme} toggleTheme={toggleTheme} onLogout={handleLogout} />
                     </div>
                     <div className="header-right d-flex align-items-center justify-content-end">
                         <ul className="nav-iconlist">
@@ -199,31 +190,146 @@ export default function Header() {
                                 </Dropdown>
                             </li>
                             <li className="nav-profile action-menu dropdown">
-                                <Dropdown>
-                                    <Dropdown.Toggle className="navicon-wrap p-0">
-                                        <IconUser stroke={1.5} />
+                                <Dropdown align="end">
+                                    <Dropdown.Toggle 
+                                        as="div" 
+                                        className="navicon-wrap p-0 border-0 bg-transparent" 
+                                        style={{ cursor: "pointer" }}
+                                    >
+                                        <div
+                                            className="d-flex align-items-center justify-content-center text-white fw-bold rounded-circle"
+                                            style={{
+                                                width: 38,
+                                                height: 38,
+                                                background: "linear-gradient(135deg, #0066ff 0%, #00d2f4 100%)",
+                                                fontSize: "14px",
+                                                boxShadow: "0 2px 8px rgba(0, 102, 255, 0.28)",
+                                                letterSpacing: "0.5px"
+                                            }}
+                                        >
+                                            {(user?.name || user?.email || "U")[0]?.toUpperCase()}
+                                        </div>
                                     </Dropdown.Toggle>
-                                    <Dropdown.Menu className="navprofile-drop action-dropdown">
-                                        <ul>
-                                            <li>
-                                                <div className="media-body text-center">
-                                                    <IconUser size={48} stroke={1.5} />
-                                                    <h6 className="mt-2 fw-bold">Hello {user?.name || "User"}</h6>
+                                    <Dropdown.Menu 
+                                        className="border-0 shadow-lg p-0"
+                                        style={{
+                                            minWidth: "265px",
+                                            borderRadius: "14px",
+                                            overflow: "hidden",
+                                            backgroundColor: theme === "dark" ? "#162235" : "#ffffff",
+                                            boxShadow: "0 14px 35px rgba(0, 0, 0, 0.16)",
+                                            marginTop: "8px"
+                                        }}
+                                    >
+                                        {/* User Identity Header */}
+                                        <div 
+                                            className="p-3 border-bottom d-flex align-items-center gap-3"
+                                            style={{ 
+                                                borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)",
+                                                background: theme === "dark" ? "rgba(255, 255, 255, 0.02)" : "rgba(0, 102, 255, 0.03)"
+                                            }}
+                                        >
+                                            <div
+                                                className="d-flex align-items-center justify-content-center text-white fw-bold rounded-circle flex-shrink-0"
+                                                style={{
+                                                    width: 44,
+                                                    height: 44,
+                                                    background: "linear-gradient(135deg, #0052cc 0%, #00d2f4 100%)",
+                                                    fontSize: "17px",
+                                                    boxShadow: "0 4px 12px rgba(0, 102, 255, 0.25)"
+                                                }}
+                                            >
+                                                {(user?.name || user?.email || "U")[0]?.toUpperCase()}
+                                            </div>
+                                            <div className="overflow-hidden flex-grow-1">
+                                                <div 
+                                                    className="fw-bold text-truncate" 
+                                                    style={{ 
+                                                        fontSize: "14.5px", 
+                                                        color: theme === "dark" ? "#f1f5f9" : "#0f172a" 
+                                                    }}
+                                                    title={user?.name || "User"}
+                                                >
+                                                    {user?.name || "User"}
                                                 </div>
-                                            </li>
-                                            <li>
-                                                <Dropdown.Item as={Link} to="/profile">                                                   
-                                                    <IconSettings className='me-2 align-middle'/>
-                                                    setting
+                                                <div 
+                                                    className="text-truncate small text-muted mb-1" 
+                                                    style={{ fontSize: "11.5px" }}
+                                                    title={user?.email || ""}
+                                                >
+                                                    {user?.email || ""}
+                                                </div>
+                                                <span 
+                                                    className="badge" 
+                                                    style={{
+                                                        background: isCorporateHr ? "rgba(0, 210, 244, 0.15)" : "rgba(0, 102, 255, 0.12)",
+                                                        color: isCorporateHr ? "#00b4d8" : "#0066ff",
+                                                        border: `1px solid ${isCorporateHr ? "rgba(0, 210, 244, 0.3)" : "rgba(0, 102, 255, 0.25)"}`,
+                                                        fontSize: "10px",
+                                                        fontWeight: 600,
+                                                        letterSpacing: "0.4px",
+                                                        padding: "3px 8px",
+                                                        borderRadius: "6px"
+                                                    }}
+                                                >
+                                                    {role === "CORPORATE_HR" ? "Corporate HR" : role || "User"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="p-2 d-flex flex-column gap-1">
+                                            {isCorporateHr && (
+                                                <Dropdown.Item 
+                                                    as={Link} 
+                                                    to="/hr-portal" 
+                                                    className="rounded-3 px-3 py-2 d-flex align-items-center gap-2 text-decoration-none"
+                                                    style={{ fontSize: "13.5px", fontWeight: 500 }}
+                                                >
+                                                    <span 
+                                                        className="d-flex align-items-center justify-content-center rounded-2"
+                                                        style={{ width: 28, height: 28, background: "rgba(0, 102, 255, 0.08)", color: "#0066ff" }}
+                                                    >
+                                                        <IconBuildingCommunity size={16} />
+                                                    </span>
+                                                    <span>Corporate Portal</span>
                                                 </Dropdown.Item>
-                                            </li>
-                                            <li>
-                                                <Dropdown.Item onClick={handleLogout}>                                                   
-                                                    <IconLogout className='me-2 align-middle'/>
-                                                    Logout
-                                                </Dropdown.Item>
-                                            </li>
-                                        </ul>
+                                            )}
+
+                                            <Dropdown.Item 
+                                                as={Link} 
+                                                to={isCorporateHr ? "/hr-portal/profile" : "/profile"} 
+                                                className="rounded-3 px-3 py-2 d-flex align-items-center gap-2 text-decoration-none"
+                                                style={{ fontSize: "13.5px", fontWeight: 500 }}
+                                            >
+                                                <span 
+                                                    className="d-flex align-items-center justify-content-center rounded-2"
+                                                    style={{ width: 28, height: 28, background: "rgba(100, 116, 139, 0.1)", color: "#475569" }}
+                                                >
+                                                    <IconSettings size={16} />
+                                                </span>
+                                                <span>Account Settings</span>
+                                            </Dropdown.Item>
+
+                                            <div 
+                                                className="my-1 border-top" 
+                                                style={{ borderColor: theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.06)" }} 
+                                            />
+
+                                            <Dropdown.Item 
+                                                onClick={handleLogout} 
+                                                className="rounded-3 px-3 py-2 d-flex align-items-center gap-2 text-danger text-decoration-none"
+                                                style={{ fontSize: "13.5px", fontWeight: 500 }}
+                                            >
+                                                <span 
+                                                    className="d-flex align-items-center justify-content-center rounded-2"
+                                                    style={{ width: 28, height: 28, background: "rgba(239, 68, 68, 0.1)", color: "#ef4444" }}
+                                                >
+                                                    <IconLogout size={16} />
+                                                </span>
+                                                <span>Sign Out</span>
+                                            </Dropdown.Item>
+                                        </div>
                                     </Dropdown.Menu>
                                 </Dropdown>
                             </li>

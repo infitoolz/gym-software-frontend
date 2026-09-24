@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Modal, Button } from "react-bootstrap";
-import { IconHome, IconEdit, IconTrash, IconPlus, IconChefHat, IconBarbell, IconEye, IconEyeOff, IconCamera, IconUpload, IconUserCircle } from "@tabler/icons-react";
+import { IconHome, IconEdit, IconTrash, IconPlus, IconChefHat, IconBarbell, IconEye, IconEyeOff, IconCamera, IconUpload, IconUserCircle, IconAlertCircle, IconUsers, IconUserCheck, IconUserOff, IconShieldCheck, IconTarget, IconBolt } from "@tabler/icons-react";
+import CommonTable from "../../components/CommonTable";
 import api from "../../utils/api";
 import {
   getAllHeadOffices,
@@ -18,27 +19,32 @@ import {
   getCountryOptionByValue,
   sanitizePhoneDigits,
   validatePhoneNumber,
+  isValidIndianMobile,
 } from "../../utils/phoneUtils";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
 import PhoneField from "../../components/PhoneField";
+import PhoneInputWithFlag from "../../components/PhoneInputWithFlag";
 import { getWorkoutPlans, assignWorkoutPlan } from "../../api/workoutApi";
 import { getMemberProgressEntries } from "../../api/progressApi";
 import { normalizeWorkoutPlan } from "../workout/workoutUtils";
 import { getMembershipPlans } from "../../api/membershipPlansApi";
 import { assignMembership } from "../../api/membershipApi";
+import { getMemberGoals, createGoalForMember, loadGoalPresets } from "../../api/goalsApi";
 import adminAvatar from "/src/assets/images/avtar/profile.png";
 import superAdminAvatar from "/src/assets/images/avtar/profile-img.png";
 import userAvatar from "/src/assets/images/avtar/samantha-lee.png";
 import managerAvatar from "/src/assets/images/trainer/trainer1-avtar.png";
 import trainerAvatar from "/src/assets/images/trainer/trainer2-avtar.png";
 import { formatMemberCode } from "../../utils/memberCode";
+import { resolveUploadUrl } from "../../utils/mediaUrl";
 
 const ROLE_OPTIONS = [
   { value: "SUPER_ADMIN", label: "Super Admin" },
   { value: "ADMIN", label: "Admin" },
   { value: "MANAGER", label: "Manager" },
   { value: "TRAINER", label: "Trainer" },
+  { value: "COUNSELOR", label: "Counselor" },
   { value: "USER", label: "Member" },
 ];
 
@@ -91,6 +97,16 @@ function getOrganizationVisibility(role) {
     };
   }
 
+  if (normalizedRole === "COUNSELOR") {
+    return {
+      headOffice: true,
+      branch: true,
+      department: true,
+      team: false,
+      designation: false,
+    };
+  }
+
   if (normalizedRole === "USER") {
     // Members skip the Department step — they're assigned straight to a Team
     // (whose department/branch is derived automatically) plus its trainer.
@@ -129,6 +145,7 @@ const ROLE_COLORS = {
   ADMIN: "bg-primary",
   MANAGER: "bg-info",
   TRAINER: "bg-success",
+  COUNSELOR: "bg-warning text-dark",
   USER: "bg-secondary",
 };
 
@@ -147,6 +164,7 @@ const ROLE_AVATARS = {
   ADMIN: adminAvatar,
   MANAGER: managerAvatar,
   TRAINER: trainerAvatar,
+  COUNSELOR: managerAvatar,
   USER: userAvatar,
 };
 
@@ -164,6 +182,7 @@ function normalizeDietPlan(plan) {
 
 const DIET_ASSIGN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MANAGER", "TRAINER"]);
 const WORKOUT_ASSIGN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MANAGER", "TRAINER"]);
+const GOAL_ASSIGN_ROLES = new Set(["SUPER_ADMIN", "ADMIN", "MANAGER", "TRAINER"]);
 
 function normalizeLookupText(value) {
   return String(value || "").trim().toLowerCase();
@@ -325,20 +344,25 @@ function getCreateRoleAvailability(currentRole) {
     ADMIN: false,
     MANAGER: false,
     TRAINER: false,
+    COUNSELOR: false,
     USER: false,
   };
 
   if (role === "SUPER_ADMIN") {
+    availability.SUPER_ADMIN = true;
     availability.ADMIN = true;
     availability.MANAGER = true;
     availability.TRAINER = true;
+    availability.COUNSELOR = true;
     availability.USER = true;
   } else if (role === "ADMIN") {
     availability.MANAGER = true;
     availability.TRAINER = true;
+    availability.COUNSELOR = true;
     availability.USER = true;
   } else if (role === "MANAGER") {
     availability.TRAINER = true;
+    availability.COUNSELOR = true;
     availability.USER = true;
   } else if (role === "TRAINER") {
     availability.USER = true;
@@ -445,6 +469,8 @@ function createEmptyForm(role = "ADMIN") {
     membershipAccessEndTime: "22:00",
     membershipMonths: "",
     workoutPlanId: "",
+    assignedCorporateHrId: "",
+    corporateDepartment: "",
     img: ROLE_AVATARS[normalizeRole(role)] || userAvatar,
   };
 }
@@ -465,47 +491,95 @@ function splitName(fullName = "") {
   };
 }
 
+function buildOrgHierarchyTooltip(item, orgLists) {
+  if (!item || !orgLists) return "";
+  const parts = [];
+  const headOfficeId = item.headOfficeId ?? item.headOffice?.id;
+  const branchId = item.branchId ?? item.branch?.id;
+  const departmentId = item.departmentId ?? item.department?.id;
+  const teamId = item.teamId ?? item.team?.id;
+
+  if (headOfficeId) {
+    const ho = orgLists.headOffices?.find((e) => String(e.id) === String(headOfficeId));
+    if (ho?.name) parts.push(ho.name);
+  }
+  if (branchId) {
+    const br = orgLists.branches?.find((e) => String(e.id) === String(branchId));
+    if (br?.name) parts.push(br.name);
+  }
+  if (departmentId) {
+    const dp = orgLists.departments?.find((e) => String(e.id) === String(departmentId));
+    if (dp?.name) parts.push(dp.name);
+  }
+  if (teamId) {
+    const tm = orgLists.teams?.find((e) => String(e.id) === String(teamId));
+    if (tm?.name) parts.push(tm.name);
+  }
+  return parts.length > 1 ? parts.join(" > ") : "";
+}
+
 function buildOrgLabel(item, orgLists, role) {
   if (!item) return "-";
-  const parts = [];
-
-  // Members aren't assigned a department (it's derived from their team), so keep
-  // it out of their org-scope label.
-  const isMember = normalizeRole(role) === "USER";
+  const normRole = normalizeRole(role);
 
   const headOfficeId = item.headOfficeId ?? item.headOffice?.id;
   const branchId = item.branchId ?? item.branch?.id;
-  const departmentId = isMember ? null : (item.departmentId ?? item.department?.id);
+  const departmentId = item.departmentId ?? item.department?.id;
   const teamId = item.teamId ?? item.team?.id;
-  const designationId = isMember ? null : (item.designationId ?? item.designation?.id);
+  const designationId = item.designationId ?? item.designation?.id;
 
-  if (headOfficeId) {
-    const headOffice = orgLists.headOffices.find((entry) => String(entry.id) === String(headOfficeId));
-    if (headOffice?.name) parts.push(headOffice.name);
+  const branch = branchId ? orgLists?.branches?.find((entry) => String(entry.id) === String(branchId)) : null;
+  const department = departmentId ? orgLists?.departments?.find((entry) => String(entry.id) === String(departmentId)) : null;
+  const team = teamId ? orgLists?.teams?.find((entry) => String(entry.id) === String(teamId)) : null;
+  const headOffice = headOfficeId ? orgLists?.headOffices?.find((entry) => String(entry.id) === String(headOfficeId)) : null;
+  const designation = designationId ? orgLists?.designations?.find((entry) => String(entry.id) === String(designationId)) : null;
+
+  if (normRole === "SUPER_ADMIN") {
+    return headOffice?.name || "All Branches";
   }
 
-  if (branchId) {
-    const branch = orgLists.branches.find((entry) => String(entry.id) === String(branchId));
-    if (branch?.name) parts.push(branch.name);
+  if (normRole === "ADMIN") {
+    return branch?.name || (typeof item.branch === "string" ? item.branch : "") || headOffice?.name || "-";
   }
 
-  if (departmentId) {
-    const department = orgLists.departments.find((entry) => String(entry.id) === String(departmentId));
-    if (department?.name) parts.push(department.name);
+  if (normRole === "MANAGER") {
+    if (department?.name && branch?.name) {
+      return `${department.name} (${branch.name})`;
+    }
+    return department?.name || branch?.name || "-";
   }
 
-  if (teamId) {
-    const team = orgLists.teams.find((entry) => String(entry.id) === String(teamId));
-    if (team?.name) parts.push(team.name);
+  if (normRole === "TRAINER") {
+    if (team?.name) return team.name;
+    if (department?.name) return department.name;
+    return branch?.name || "-";
   }
 
-  if (designationId) {
-    const designation = orgLists.designations.find((entry) => String(entry.id) === String(designationId));
-    if (designation?.name) parts.push(designation.name);
+  if (normRole === "COUNSELOR") {
+    if (department?.name) return department.name;
+    return branch?.name || "-";
   }
 
-  if (parts.length) return parts.join(" > ");
-  return (isMember ? item.branch : (item.department || item.branch || item.designation)) || "-";
+  if (normRole === "USER") {
+    if (branch?.name) return branch.name;
+    if (team?.name) return team.name;
+    return (typeof item.branch === "string" ? item.branch : "") || "-";
+  }
+
+  return team?.name || department?.name || branch?.name || headOffice?.name || designation?.name || "-";
+}
+
+function resolveRowAvatar(item) {
+  if (!item) return "";
+  const photo =
+    item.candidatePhotoPath ||
+    item.photoPath ||
+    item.candidate_photo_path ||
+    item.photo_path ||
+    item.profilePhoto ||
+    item.avatar ||
+    "";
+  return photo ? resolveUploadUrl(photo) : "";
 }
 
 function mapAdminRow(item) {
@@ -522,7 +596,7 @@ function mapAdminRow(item) {
     qualification: item?.qualification || "",
     status: item?.isActive ? "ACTIVE" : "INACTIVE",
     createdByName: item?.createdByName || "",
-    img: ROLE_AVATARS.ADMIN,
+    img: resolveRowAvatar(item),
     raw: item,
   };
 }
@@ -540,7 +614,7 @@ function mapSuperAdminRow(item) {
     qualification: "",
     status: item?.isActive ? "ACTIVE" : "INACTIVE",
     createdByName: "",
-    img: ROLE_AVATARS.SUPER_ADMIN,
+    img: resolveRowAvatar(item),
     raw: item,
   };
 }
@@ -550,7 +624,7 @@ function mapManagerRow(item) {
   return {
     ...row,
     role: "MANAGER",
-  img: ROLE_AVATARS.MANAGER,
+    img: resolveRowAvatar(item),
   };
 }
 
@@ -568,7 +642,26 @@ function mapTrainerRow(item) {
     qualification: item?.qualification || "",
     status: item?.isActive ? "ACTIVE" : "INACTIVE",
     createdByName: item?.createdByName || "",
-    img: ROLE_AVATARS.TRAINER,
+    img: resolveRowAvatar(item),
+    raw: item,
+  };
+}
+
+function mapCounselorRow(item) {
+  const { countryCode, phone } = splitPhoneWithCountryCode(item?.phone);
+  return {
+    id: item?.id ?? null,
+    role: "COUNSELOR",
+    name: [item?.firstName, item?.lastName].filter(Boolean).join(" "),
+    email: item?.email || "",
+    phone,
+    countryCode,
+    employeeCode: "",
+    department: "Counseling",
+    qualification: "",
+    status: item?.isActive ? "ACTIVE" : "INACTIVE",
+    createdByName: item?.createdByName || "",
+    img: resolveRowAvatar(item),
     raw: item,
   };
 }
@@ -598,7 +691,9 @@ function mapCustomerRow(item) {
     teamId: item?.teamId ?? "",
     designationId: item?.designationId ?? "",
     assignedTrainerId: item?.assignedTrainerId ?? "",
-    img: ROLE_AVATARS.USER,
+    assignedCorporateHrId: item?.assignedCorporateHrId ?? "",
+    corporateDepartment: item?.corporateDepartment ?? "",
+    img: resolveRowAvatar(item),
     raw: item,
   };
 }
@@ -639,14 +734,17 @@ function SectionHeader({ label }) {
   );
 }
 
-function StatCard({ value, label }) {
+function StatCard({ value, label, icon: Icon, variant = "stat-total" }) {
   return (
-    <div className="col-md-3">
-      <div className="card h-100">
-        <div className="card-body text-center">
-          <h3 className="mb-0">{value}</h3>
-          <p className="text-muted small mb-0">{label}</p>
+    <div className={`um-stat-card ${variant}`}>
+      {Icon && (
+        <div className="um-stat-icon">
+          <Icon size={19} strokeWidth={2} />
         </div>
+      )}
+      <div className="um-stat-content">
+        <h4 className="um-stat-value">{value}</h4>
+        <p className="um-stat-label">{label}</p>
       </div>
     </div>
   );
@@ -655,7 +753,7 @@ function StatCard({ value, label }) {
 // Member photo field: lets staff either upload an image file or capture one live
 // from the device camera (getUserMedia). On capture the frame is encoded to a JPEG
 // File and handed to onFile, which uploads it the same way as a file selection.
-function PhotoCaptureField({ label, required, value, href, uploading, onFile }) {
+function PhotoCaptureField({ label, required, value, href, uploading, onFile, error }) {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const videoRef = useRef(null);
@@ -717,8 +815,8 @@ function PhotoCaptureField({ label, required, value, href, uploading, onFile }) 
       <label className="form-label">{label}{required ? " *" : ""}</label>
       <div className="d-flex align-items-start gap-3 flex-wrap">
         <div
-          className="border rounded-3 d-flex align-items-center justify-content-center bg-light overflow-hidden"
-          style={{ width: 96, height: 96, flex: "0 0 auto" }}
+          className={`border rounded-3 d-flex align-items-center justify-content-center bg-light overflow-hidden ${error ? "border-danger" : ""}`}
+          style={{ width: 96, height: 96, flex: "0 0 auto", ...(error ? { borderColor: "#ef4444", borderWidth: "2px", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}) }}
         >
           {value ? (
             <img src={href} alt="Member" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -763,8 +861,77 @@ function PhotoCaptureField({ label, required, value, href, uploading, onFile }) 
             {uploading ? "Uploading…" : value ? <a href={href} target="_blank" rel="noreferrer">View photo</a> : "Upload an image or capture one from your camera."}
           </small>
           {cameraError && <small className="text-danger d-block">{cameraError}</small>}
+          {error && <small className="text-danger d-block fw-semibold mt-1" style={{ fontSize: "0.82rem" }}>● {error}</small>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function UserAvatar({ src, name, role, size = 32, className = "" }) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
+  const initials = useMemo(() => {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) return "?";
+    const parts = trimmed.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return parts[0].slice(0, 2).toUpperCase();
+  }, [name]);
+
+  const roleGradients = {
+    SUPER_ADMIN: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
+    ADMIN: "linear-gradient(135deg, #2563eb 0%, #38bdf8 100%)",
+    MANAGER: "linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)",
+    TRAINER: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+    COUNSELOR: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+    USER: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+  };
+
+  const bg = roleGradients[normalizeRole(role)] || "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)";
+
+  if (src && !imgError) {
+    return (
+      <img
+        src={src}
+        alt={name || "User"}
+        onError={() => setImgError(true)}
+        className={`rounded-circle flex-shrink-0 ${className}`}
+        style={{
+          width: size,
+          height: size,
+          minWidth: size,
+          minHeight: size,
+          objectFit: "cover",
+          border: "1.5px solid rgba(255,255,255,0.2)",
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`rounded-circle d-inline-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0 ${className}`}
+      style={{
+        width: size,
+        height: size,
+        minWidth: size,
+        minHeight: size,
+        background: bg,
+        fontSize: Math.max(11, Math.round(size * 0.38)),
+        letterSpacing: "0.5px",
+        userSelect: "none",
+        boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+      }}
+      title={name || "User"}
+    >
+      {initials}
     </div>
   );
 }
@@ -825,12 +992,38 @@ export default function User() {
   const [allAttendance, setAllAttendance] = useState([]);
   const [memberProgress, setMemberProgress] = useState([]);
   const [memberProgressLoading, setMemberProgressLoading] = useState(false);
+  const [memberGoals, setMemberGoals] = useState([]);
+  const [memberGoalsLoading, setMemberGoalsLoading] = useState(false);
+  const [showMemberGoalModal, setShowMemberGoalModal] = useState(false);
+  const [memberGoalSaving, setMemberGoalSaving] = useState(false);
+  const [memberGoalPresetSaving, setMemberGoalPresetSaving] = useState(false);
+  const [showPresetMenu, setShowPresetMenu] = useState(false);
+  const [memberGoalForm, setMemberGoalForm] = useState({
+    title: "",
+    category: "General Fitness",
+    currentValue: "0",
+    targetValue: "",
+    targetUnit: "kg",
+    targetDate: "",
+    notes: "",
+  });
   const [allMembershipPlans, setAllMembershipPlans] = useState([]);
   const [allWorkoutPlans, setAllWorkoutPlans] = useState([]);
+  const [corporatePartners, setCorporatePartners] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("identity");
   const [showPassword, setShowPassword] = useState(false);
+
+  const clearFieldError = (fieldName) => {
+    setFieldErrors((prev) => {
+      if (!prev[fieldName]) return prev;
+      const next = { ...prev };
+      delete next[fieldName];
+      return next;
+    });
+  };
 
   const [form, setForm] = useState(createEmptyForm(getDefaultCreateRole(currentRole)));
 
@@ -854,10 +1047,10 @@ export default function User() {
   const canCreateAnything = useMemo(() => Object.values(createAvailability).some(Boolean), [createAvailability]);
   const canAssignDietPlan = DIET_ASSIGN_ROLES.has(currentRole);
   const canAssignWorkoutPlan = WORKOUT_ASSIGN_ROLES.has(currentRole);
+  const canAssignGoal = GOAL_ASSIGN_ROLES.has(currentRole);
   const canCreateInCurrentView = useMemo(() => {
-    if (viewMode === "users") return Boolean(createAvailability.USER);
-    return ROLE_OPTIONS.some((item) => item.value !== "USER" && createAvailability[item.value]);
-  }, [createAvailability, viewMode]);
+    return Boolean(canCreateAnything);
+  }, [canCreateAnything]);
 
   const modalRole = useMemo(() => normalizeRole(isEdit ? selectedRow?.role : form.role), [isEdit, selectedRow?.role, form.role]);
   const modalSteps = useMemo(() => getModalStepsForRole(modalRole), [modalRole]);
@@ -865,10 +1058,10 @@ export default function User() {
 
   const creatableRolesForCurrentView = useMemo(() => {
     return ROLE_OPTIONS.filter((item) => {
-      if (!createAvailability[item.value]) return false;
-      return viewMode === "users" ? item.value === "USER" : item.value !== "USER";
+      if (item.value === "SUPER_ADMIN" && currentRole !== "SUPER_ADMIN") return false;
+      return Boolean(createAvailability[item.value]);
     });
-  }, [createAvailability, viewMode]);
+  }, [createAvailability, currentRole]);
 
   const selectedHeadOffice = useMemo(
     () => headOffices.find((item) => String(item.id) === String(form.headOfficeId)) || null,
@@ -890,13 +1083,49 @@ export default function User() {
     [teams, form.teamId],
   );
 
+  const availableTeamTrainers = useMemo(() => {
+    if (!form.teamId && !form.branchId) return [];
+
+    const inTeam = rows.filter((row) => {
+      if (normalizeRole(row?.role) !== "TRAINER") return false;
+      const rowTeamId = row?.teamId ?? row?.raw?.teamId ?? row?.raw?.team?.id;
+      return form.teamId && String(rowTeamId ?? "").trim() === String(form.teamId).trim();
+    });
+
+    if (inTeam.length > 0) return inTeam;
+
+    if (form.branchId) {
+      return rows.filter((row) => {
+        if (normalizeRole(row?.role) !== "TRAINER") return false;
+        const rowBranchId = row?.branchId ?? row?.raw?.branchId ?? row?.raw?.branch?.id;
+        return String(rowBranchId ?? "").trim() === String(form.branchId).trim();
+      });
+    }
+
+    return [];
+  }, [rows, form.teamId, form.branchId]);
+
   const selectedTeamTrainer = useMemo(
     () => {
+      if (form.assignedTrainerId) {
+        const found = rows.find(
+          (r) => normalizeRole(r?.role) === "TRAINER" && String(r.id) === String(form.assignedTrainerId)
+        );
+        if (found) {
+          return {
+            identity: {
+              id: String(found.id),
+              name: found.name || [found.firstName, found.lastName].filter(Boolean).join(" "),
+            },
+            option: found,
+          };
+        }
+      }
       const matched = getTrainerForTeam(selectedTeam, rows);
       if (matched) return { identity: matched, option: matched };
       return resolveTeamTrainerOption(selectedTeam, reportingOptions);
     },
-    [selectedTeam, reportingOptions, rows],
+    [form.assignedTrainerId, selectedTeam, reportingOptions, rows],
   );
 
   const selectedTeamTrainerName = selectedTeamTrainer.identity.name || getTeamTrainerLabel(selectedTeam);
@@ -992,7 +1221,31 @@ export default function User() {
     });
   }, [userRows, memberFilterTab, viewMode]);
 
-  const displayedRows = useMemo(() => (viewMode === "users" ? filteredUserRows : employeeRows), [employeeRows, filteredUserRows, viewMode]);
+  const searchParam = (searchParams.get("search") || "").toLowerCase().trim();
+
+  const displayedRows = useMemo(() => {
+    let raw = viewMode === "users" ? filteredUserRows : employeeRows;
+    if (searchParam) {
+      raw = raw.filter((r) => {
+        const name = String(r.name || "").toLowerCase();
+        const email = String(r.email || "").toLowerCase();
+        const phone = String(r.phone || "").toLowerCase();
+        const code = String(r.employeeCode || r.userCode || "").toLowerCase();
+        const dept = String(r.department || "").toLowerCase();
+        return (
+          name.includes(searchParam) ||
+          email.includes(searchParam) ||
+          phone.includes(searchParam) ||
+          code.includes(searchParam) ||
+          dept.includes(searchParam)
+        );
+      });
+    }
+    return raw.map((r) => ({
+      ...r,
+      compositeId: `${r.role}-${r.id}`,
+    }));
+  }, [employeeRows, filteredUserRows, viewMode, searchParam]);
 
   const activeRows = useMemo(
     () => displayedRows.filter((item) => String(item.status).toUpperCase() === "ACTIVE"),
@@ -1052,33 +1305,39 @@ export default function User() {
       const nextRows = [];
 
       if (currentRole === "SUPER_ADMIN") {
-        const [adminsResponse, managersResponse, trainersResponse, customersResponse] = await Promise.all([
+        const [adminsResponse, managersResponse, trainersResponse, counselorsResponse, customersResponse] = await Promise.all([
           api.get("/users/admins", { params: { requesterId: currentUserId } }),
           api.get("/users/managers", { params: { requesterId: currentUserId } }),
           api.get("/users/trainers", { params: { requesterId: currentUserId } }),
+          api.get("/users/counselors", { params: { requesterId: currentUserId } }).catch(() => ({ data: [] })),
           api.get("/users/customers", { params: { requesterId: currentUserId } }),
         ]);
 
         const admins = unwrapData(adminsResponse);
         const managers = unwrapData(managersResponse);
         const trainers = unwrapData(trainersResponse);
+        const counselors = unwrapData(counselorsResponse);
         const customers = unwrapData(customersResponse);
 
         if (Array.isArray(admins)) nextRows.push(...admins.map(mapAdminRow));
         if (Array.isArray(managers)) nextRows.push(...managers.map(mapManagerRow));
         if (Array.isArray(trainers)) nextRows.push(...trainers.map(mapTrainerRow));
+        if (Array.isArray(counselors)) nextRows.push(...counselors.map(mapCounselorRow));
         if (Array.isArray(customers)) nextRows.push(...customers.map(mapCustomerRow));
       } else if (currentRole === "ADMIN") {
-        const [managersResponse, trainersResponse, customersResponse] = await Promise.all([
+        const [managersResponse, trainersResponse, counselorsResponse, customersResponse] = await Promise.all([
           api.get("/users/managers", { params: { requesterId: currentUserId } }),
           api.get("/users/trainers", { params: { requesterId: currentUserId } }),
+          api.get("/users/counselors", { params: { requesterId: currentUserId } }).catch(() => ({ data: [] })),
           api.get("/users/customers", { params: { requesterId: currentUserId } }),
         ]);
         const managers = unwrapData(managersResponse);
         const trainers = unwrapData(trainersResponse);
+        const counselors = unwrapData(counselorsResponse);
         const customers = unwrapData(customersResponse);
         if (Array.isArray(managers)) nextRows.push(...managers.map(mapManagerRow));
         if (Array.isArray(trainers)) nextRows.push(...trainers.map(mapTrainerRow));
+        if (Array.isArray(counselors)) nextRows.push(...counselors.map(mapCounselorRow));
         if (Array.isArray(customers)) nextRows.push(...customers.map(mapCustomerRow));
       } else if (currentRole === "MANAGER") {
         const [trainersResponse, customersResponse] = await Promise.all([
@@ -1126,6 +1385,18 @@ export default function User() {
       }
     };
     fetchPlans();
+
+    const fetchCorporate = async () => {
+      try {
+        const reqId = currentUserId || user?.userId || user?.id;
+        if (!reqId) return;
+        const res = await api.get(`/users/corporate-hr?requesterId=${reqId}`);
+        setCorporatePartners(res.data?.data || []);
+      } catch (e) {
+        // silent
+      }
+    };
+    fetchCorporate();
   }, []);
 
   useEffect(() => {
@@ -1255,10 +1526,13 @@ export default function User() {
   useEffect(() => {
     if (!showModal || !isCustomerForm || !form.teamId) return;
 
+    if (form.assignedTrainerId) return;
+
     const resolved = getTrainerForTeam(selectedTeam, rows) || resolveTeamTrainerOption(selectedTeam, reportingOptions);
-    if (!resolved.identity?.id && !resolved.identity?.name && !resolved.option?.id && !resolved.option?.name) return;
+    if (!resolved?.identity?.id && !resolved?.identity?.name && !resolved?.option?.id && !resolved?.option?.name) return;
 
     setForm((prev) => {
+      if (prev.assignedTrainerId) return prev;
       const nextReportsToId = resolved.option ? String(resolved.option.id) : String(resolved.identity?.id || "");
       const nextReportingManagerName = resolved.option?.name || resolved.identity?.name || "";
 
@@ -1276,7 +1550,7 @@ export default function User() {
         reportingManagerName: nextReportingManagerName,
       };
     });
-  }, [showModal, isCustomerForm, form.teamId, selectedTeam, reportingOptions, rows]);
+  }, [showModal, isCustomerForm, form.teamId, form.assignedTrainerId, selectedTeam, reportingOptions, rows]);
 
   useEffect(() => {
     if (!notice) return;
@@ -1306,6 +1580,7 @@ export default function User() {
     setSelectedRow(null);
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("identity");
     setCountrySearch("");
     setCountryDropdownOpen(false);
@@ -1351,6 +1626,8 @@ export default function User() {
       bodyFat: org?.bodyFat ?? "",
       isFrozen: org?.isFrozen ?? false,
       referredBy: org?.referredBy || "",
+      assignedCorporateHrId: org?.assignedCorporateHrId ? String(org.assignedCorporateHrId) : "",
+      corporateDepartment: org?.corporateDepartment || "",
       membershipPlanId: org?.membershipPlanId ? String(org.membershipPlanId) : "",
       membershipAccessStartTime: org?.accessStartTime || "06:00",
       membershipAccessEndTime: org?.accessEndTime || "22:00",
@@ -1432,6 +1709,7 @@ export default function User() {
     setSelectedRow(row);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("identity");
     setCountrySearch("");
     setCountryDropdownOpen(false);
@@ -1442,6 +1720,7 @@ export default function User() {
     setShowModal(false);
     setShowPassword(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("identity");
   };
 
@@ -1536,15 +1815,21 @@ export default function User() {
 
   const goToNextModalStep = () => {
     setModalError("");
+    const currentStepKey = modalSteps[modalStepIndex]?.key || modalTab;
+    const stepErrors = validateStep(currentStepKey);
+    if (Object.keys(stepErrors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...stepErrors }));
+      return;
+    }
     if (modalStepIndex < modalStepCount - 1) {
-      setModalTab(USER_MODAL_STEPS[modalStepIndex + 1].key);
+      setModalTab(modalSteps[modalStepIndex + 1].key);
     }
   };
 
   const goToPreviousModalStep = () => {
     setModalError("");
     if (modalStepIndex > 0) {
-      setModalTab(USER_MODAL_STEPS[modalStepIndex - 1].key);
+      setModalTab(modalSteps[modalStepIndex - 1].key);
     }
   };
 
@@ -1733,6 +2018,23 @@ export default function User() {
       };
     }
 
+    if (role === "COUNSELOR") {
+      return {
+        endpoint: "/users/counselor",
+        params: { creatorId: currentUserId },
+        payload: {
+          email: shared.email,
+          password: shared.password,
+          firstName: shared.firstName,
+          lastName: shared.lastName,
+          phone: shared.phone,
+          headOfficeId: shared.headOfficeId,
+          branchId: shared.branchId,
+          departmentId: shared.departmentId,
+        },
+      };
+    }
+
     if (role === "USER") {
       return {
         endpoint: "/users/customer/by-trainer",
@@ -1758,12 +2060,14 @@ export default function User() {
           departmentId: shared.departmentId,
           teamId: shared.teamId,
           designationId: shared.designationId,
-          assignedTrainerId: toSafeId(selectedTeamTrainer?.option?.id || selectedTeamTrainer?.identity?.id || form.assignedTrainerId),
+          assignedTrainerId: toSafeId(form.assignedTrainerId || selectedTeamTrainer?.option?.id || selectedTeamTrainer?.identity?.id),
           photoPath: (form.candidatePhotoPath || "").trim() || null,
           idProofPath: (form.idProofDocumentPath || "").trim() || null,
           bodyFat: form.bodyFat === "" || form.bodyFat === null ? null : Number(form.bodyFat),
           isFrozen: Boolean(form.isFrozen),
           referredBy: (form.referredBy || "").trim() || null,
+          assignedCorporateHrId: form.assignedCorporateHrId ? Number(form.assignedCorporateHrId) : null,
+          corporateDepartment: (form.corporateDepartment || "").trim() || null,
         },
       };
     }
@@ -1871,6 +2175,21 @@ export default function User() {
       };
     }
 
+    if (role === "COUNSELOR") {
+      return {
+        endpoint: `/users/counselor/${selectedRow.id}`,
+        params: { updaterId: currentUserId },
+        payload: {
+          email: shared.email,
+          password: form.password.trim() || "Temp@123",
+          keepPassword: !form.password.trim(),
+          firstName: shared.firstName,
+          lastName: shared.lastName,
+          phone: shared.phone,
+        },
+      };
+    }
+
     if (role === "USER") {
       return {
         endpoint: `/users/customer/${selectedRow.id}`,
@@ -1896,12 +2215,14 @@ export default function User() {
           departmentId: shared.departmentId,
           teamId: shared.teamId,
           designationId: shared.designationId,
-          assignedTrainerId: toSafeId(selectedTeamTrainer?.option?.id || selectedTeamTrainer?.identity?.id || form.assignedTrainerId),
+          assignedTrainerId: toSafeId(form.assignedTrainerId || selectedTeamTrainer?.option?.id || selectedTeamTrainer?.identity?.id),
           photoPath: (form.candidatePhotoPath || "").trim() || null,
           idProofPath: (form.idProofDocumentPath || "").trim() || null,
           bodyFat: form.bodyFat === "" || form.bodyFat === null ? null : Number(form.bodyFat),
           isFrozen: Boolean(form.isFrozen),
           referredBy: (form.referredBy || "").trim() || null,
+          assignedCorporateHrId: form.assignedCorporateHrId ? Number(form.assignedCorporateHrId) : null,
+          corporateDepartment: (form.corporateDepartment || "").trim() || null,
         },
       };
     }
@@ -1909,137 +2230,206 @@ export default function User() {
     throw new Error(`${role} records are not editable from this page until the backend exposes that route.`);
   };
 
-  const validateForm = () => {
+  const validateStep = (stepKey) => {
     const role = normalizeRole(isEdit ? selectedRow?.role : form.role);
+    const errors = {};
 
-    if (!role) return "Please select a role";
-    if (!form.email.trim()) return "Email is required";
-    if (!isEdit && !form.password.trim()) return "Password is required";
-    if (!isEdit && role === "SUPER_ADMIN" && form.password.trim().length < 8) {
-      return "Super Admin password must be at least 8 characters";
-    }
-    if (
-      !isEdit &&
-      ["ADMIN", "MANAGER", "TRAINER"].includes(role) &&
-      !STAFF_PASSWORD_PATTERN.test(form.password.trim())
-    ) {
-      return "Password must contain uppercase, lowercase, digit, and special character";
-    }
-    if (isEdit && role === "SUPER_ADMIN" && !form.password.trim()) {
-      return "Password is required when updating a Super Admin";
-    }
-    if (isEdit && role === "SUPER_ADMIN" && form.password.trim().length < 8) {
-      return "Super Admin password must be at least 8 characters";
-    }
-    if (
-      isEdit &&
-      ["ADMIN", "MANAGER", "TRAINER"].includes(role) &&
-      form.password.trim() &&
-      !STAFF_PASSWORD_PATTERN.test(form.password.trim())
-    ) {
-      return "Password must contain uppercase, lowercase, digit, and special character";
-    }
-    if (!form.name.trim()) return "Name is required";
-    if (form.name.trim().length < 2) return "Name must be at least 2 characters";
-
-    if (form.phone) {
-      const phoneValidation = validatePhoneNumber(form.phone, form.countryCode);
-      if (phoneValidation) return phoneValidation;
-    }
-
-    if (!isEdit && !currentUserId) return "Current user is not available for this action";
-
-    if (role === "ADMIN" || role === "MANAGER") {
-      const label = role === "ADMIN" ? "Admin" : "Manager";
-      if (!form.qualification.trim()) return `Qualification is required for ${label}`;
-      if (!form.departmentId && !form.departmentText.trim()) return `Department is required for ${label}`;
-    }
-
-    if (role === "TRAINER") {
-      if (!form.specialization.trim()) return "Specialization is required for Trainer";
-      if (!String(form.experienceYears).trim()) return "Experience years is required for Trainer";
-      if (!form.certification.trim()) return "Certification is required for Trainer";
-      if (!form.qualification.trim()) return "Qualification is required for Trainer";
-      if (!String(form.ratePerHour).trim()) return "Rate per hour is required for Trainer";
-    }
-
-    if (role === "USER") {
-      if (!selectedTeamTrainer?.identity?.id && !selectedTeamTrainer?.option?.id && !form.assignedTrainerId) {
-        return "Team trainer is required for Member";
+    if (stepKey === "identity") {
+      if (!role) errors.role = "Please select a role";
+      if (!form.name || !form.name.trim()) {
+        errors.name = "Name is required";
+      } else if (form.name.trim().length < 2) {
+        errors.name = "Name must be at least 2 characters";
       }
-      if (!String(form.weight).trim()) return "Weight is required for Member";
-      if (!String(form.height).trim()) return "Height is required for Member";
-      if (!form.bloodGroup.trim()) return "Blood group is required for Member";
-      if (!String(form.age).trim()) return "Age is required for Member";
-      if (!form.gender.trim()) return "Gender is required for Member";
-      if (!form.address.trim()) return "Address is required for Member";
-      if (!form.city.trim()) return "City is required for Member";
-      if (!form.emergencyContact.trim()) return "Emergency contact is required for Member";
-      if (!form.emergencyPhone.trim()) return "Emergency phone is required for Member";
-      if (!form.candidatePhotoPath) return "Member photo is required (upload or take a photo)";
-      if (!form.idProofDocumentPath) return "ID proof is required for Member";
+
+      if (!form.email || !form.email.trim()) {
+        errors.email = "Email is required";
+      } else if (!/\S+@\S+\.\S+/.test(form.email.trim())) {
+        errors.email = "Please enter a valid email address";
+      }
+
+      if (!isEdit && !form.password.trim()) {
+        errors.password = "Password is required";
+      } else if (!isEdit && role === "SUPER_ADMIN" && form.password.trim().length < 8) {
+        errors.password = "Super Admin password must be at least 8 characters";
+      } else if (
+        !isEdit &&
+        ["ADMIN", "MANAGER", "TRAINER", "COUNSELOR"].includes(role) &&
+        !STAFF_PASSWORD_PATTERN.test(form.password.trim())
+      ) {
+        errors.password = "Password must contain uppercase, lowercase, digit, and special character";
+      } else if (isEdit && role === "SUPER_ADMIN" && !form.password.trim()) {
+        errors.password = "Password is required when updating a Super Admin";
+      } else if (isEdit && role === "SUPER_ADMIN" && form.password.trim().length < 8) {
+        errors.password = "Super Admin password must be at least 8 characters";
+      } else if (
+        isEdit &&
+        ["ADMIN", "MANAGER", "TRAINER", "COUNSELOR"].includes(role) &&
+        form.password.trim() &&
+        !STAFF_PASSWORD_PATTERN.test(form.password.trim())
+      ) {
+        errors.password = "Password must contain uppercase, lowercase, digit, and special character";
+      }
+
+      if (!form.phone || !form.phone.trim()) {
+        errors.phone = "Phone number is required";
+      } else {
+        const phoneValidation = validatePhoneNumber(form.phone, form.countryCode);
+        if (phoneValidation) errors.phone = phoneValidation;
+      }
+    } else if (stepKey === "organization") {
+      const orgVisibility = getOrganizationVisibility(role);
+
+      if (role === "ADMIN") {
+        if (!form.headOfficeId) errors.headOfficeId = "Head office is required for Admin";
+        if (!form.branchId) errors.branchId = "Branch is required for Admin";
+      } else if (role === "MANAGER") {
+        if (!form.headOfficeId) errors.headOfficeId = "Head office is required for Manager";
+        if (!form.branchId) errors.branchId = "Branch is required for Manager";
+        if (!form.departmentId) errors.departmentId = "Department is required for Manager";
+      } else if (role === "TRAINER") {
+        if (!form.headOfficeId) errors.headOfficeId = "Head office is required for Trainer";
+        if (!form.branchId) errors.branchId = "Branch is required for Trainer";
+        if (!form.departmentId) errors.departmentId = "Department is required for Trainer";
+        if (!form.teamId) errors.teamId = "Team is required for Trainer";
+      } else if (role === "COUNSELOR") {
+        if (!form.headOfficeId) errors.headOfficeId = "Head office is required for Counselor";
+        if (!form.branchId) errors.branchId = "Branch is required for Counselor";
+      } else {
+        if (orgVisibility.branch && form.branchId && !form.headOfficeId) {
+          errors.headOfficeId = "Select a head office before choosing a branch";
+        }
+        if (orgVisibility.department && form.departmentId && !form.branchId) {
+          errors.branchId = "Select a branch before choosing a department";
+        }
+        if (orgVisibility.designation && form.designationId && !form.departmentId) {
+          errors.departmentId = "Select a department before choosing a designation";
+        }
+      }
+    } else if (stepKey === "details") {
+      if (role === "ADMIN" || role === "MANAGER") {
+        const label = role === "ADMIN" ? "Admin" : "Manager";
+        if (!form.qualification.trim()) errors.qualification = `Qualification is required for ${label}`;
+        if (!form.departmentId && !form.departmentText.trim()) errors.departmentText = `Department is required for ${label}`;
+      } else if (role === "TRAINER") {
+        if (!form.specialization.trim()) errors.specialization = "Specialization is required for Trainer";
+        if (!String(form.experienceYears).trim()) errors.experienceYears = "Experience years is required for Trainer";
+        if (!form.certification.trim()) errors.certification = "Certification is required for Trainer";
+        if (!form.qualification.trim()) errors.qualification = "Qualification is required for Trainer";
+        if (!String(form.ratePerHour).trim()) errors.ratePerHour = "Rate per hour is required for Trainer";
+      } else if (role === "USER") {
+        if (!selectedTeamTrainer?.identity?.id && !selectedTeamTrainer?.option?.id && !form.assignedTrainerId) {
+          errors.assignedTrainerId = "Team trainer is required for Member";
+        }
+        if (!String(form.weight).trim()) errors.weight = "Weight is required for Member";
+        if (!String(form.height).trim()) errors.height = "Height is required for Member";
+        if (!form.bloodGroup.trim()) errors.bloodGroup = "Blood group is required for Member";
+        if (!String(form.age).trim()) errors.age = "Age is required for Member";
+        if (!form.gender.trim()) errors.gender = "Gender is required for Member";
+      }
+    } else if (stepKey === "personal") {
+      if (role === "USER") {
+        if (!form.address.trim()) errors.address = "Address is required for Member";
+        if (!form.city.trim()) errors.city = "City is required for Member";
+
+        const ec = (form.emergencyContact || "").trim();
+        if (!ec) {
+          errors.emergencyContact = "Emergency contact is required for Member";
+        } else if (/^\d+$/.test(ec)) {
+          if (ec.length !== 10) {
+            errors.emergencyContact = "Emergency contact number must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(ec)) {
+            errors.emergencyContact = "Emergency contact number must start with 6, 7, 8, or 9";
+          }
+        } else if (ec.length < 2) {
+          errors.emergencyContact = "Emergency contact name must be at least 2 characters";
+        }
+
+        const ep = (form.emergencyPhone || "").trim().replace(/\D/g, "");
+        if (!ep) {
+          errors.emergencyPhone = "Emergency phone is required for Member";
+        } else if (ep.length !== 10) {
+          errors.emergencyPhone = "Emergency phone must be exactly 10 digits";
+        } else if (!/^[6-9]\d{9}$/.test(ep)) {
+          errors.emergencyPhone = "Emergency phone must start with 6, 7, 8, or 9";
+        }
+
+        if (!form.candidatePhotoPath) errors.candidatePhotoPath = "Member photo is required (upload or take a photo)";
+        if (!form.idProofDocumentPath) errors.idProofDocumentPath = "ID proof is required for Member";
+      } else if (["ADMIN", "MANAGER", "TRAINER"].includes(role)) {
+        if (form.alternatePhone?.trim()) {
+          const digits = form.alternatePhone.trim().replace(/\D/g, "");
+          if (digits.length !== 10) {
+            errors.alternatePhone = "Alternate phone must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(digits)) {
+            errors.alternatePhone = "Alternate phone must start with 6, 7, 8, or 9";
+          }
+        }
+        if (form.emergencyPhone?.trim()) {
+          const digits = form.emergencyPhone.trim().replace(/\D/g, "");
+          if (digits.length !== 10) {
+            errors.emergencyPhone = "Emergency phone 1 must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(digits)) {
+            errors.emergencyPhone = "Emergency phone 1 must start with 6, 7, 8, or 9";
+          }
+        }
+        if (form.emergencyPhone2?.trim()) {
+          const digits = form.emergencyPhone2.trim().replace(/\D/g, "");
+          if (digits.length !== 10) {
+            errors.emergencyPhone2 = "Emergency phone 2 must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(digits)) {
+            errors.emergencyPhone2 = "Emergency phone 2 must start with 6, 7, 8, or 9";
+          }
+        }
+        if (form.referencePhone1?.trim()) {
+          const digits = form.referencePhone1.trim().replace(/\D/g, "");
+          if (digits.length !== 10) {
+            errors.referencePhone1 = "Reference phone 1 must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(digits)) {
+            errors.referencePhone1 = "Reference phone 1 must start with 6, 7, 8, or 9";
+          }
+        }
+        if (form.referencePhone2?.trim()) {
+          const digits = form.referencePhone2.trim().replace(/\D/g, "");
+          if (digits.length !== 10) {
+            errors.referencePhone2 = "Reference phone 2 must be exactly 10 digits";
+          } else if (!/^[6-9]\d{9}$/.test(digits)) {
+            errors.referencePhone2 = "Reference phone 2 must start with 6, 7, 8, or 9";
+          }
+        }
+      }
     }
 
-    const orgVisibility = getOrganizationVisibility(role);
+    return errors;
+  };
 
-    if (role === "ADMIN") {
-      if (!form.headOfficeId) return "Head office is required for Admin";
-      if (!form.branchId) return "Branch is required for Admin";
-      return null;
+  const validateAllSteps = () => {
+    let allErrors = {};
+    for (const step of modalSteps) {
+      const stepErrors = validateStep(step.key);
+      allErrors = { ...allErrors, ...stepErrors };
     }
-
-    if (role === "MANAGER") {
-      if (!form.headOfficeId) return "Head office is required for Manager";
-      if (!form.branchId) return "Branch is required for Manager";
-      if (!form.departmentId) return "Department is required for Manager";
-      return null;
-    }
-
-    if (role === "TRAINER") {
-      if (!form.headOfficeId) return "Head office is required for Trainer";
-      if (!form.branchId) return "Branch is required for Trainer";
-      if (!form.departmentId) return "Department is required for Trainer";
-      if (!form.teamId) return "Team is required for Trainer";
-      return null;
-    }
-
-    if (!form.headOfficeId && !form.branchId && !form.departmentId && !form.teamId && !form.designationId) {
-      return null;
-    }
-
-    if (orgVisibility.branch && form.branchId && !form.headOfficeId) return "Select a head office before choosing a branch";
-    if (orgVisibility.department && form.departmentId && !form.branchId) return "Select a branch before choosing a department";
-    if (orgVisibility.designation && form.designationId && !form.departmentId) return "Select a department before choosing a designation";
-
-    return null;
+    return allErrors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
-      const lowerMessage = validationMessage.toLowerCase();
-      setModalTab(
-        lowerMessage.includes("office") ||
-        lowerMessage.includes("branch") ||
-        lowerMessage.includes("department") ||
-        lowerMessage.includes("team") ||
-        lowerMessage.includes("designation")
-          ? "organization"
-          : lowerMessage.includes("address") ||
-              lowerMessage.includes("city") ||
-              lowerMessage.includes("emergency")
-            ? "personal"
-            : lowerMessage.includes("weight") ||
-                lowerMessage.includes("height") ||
-                lowerMessage.includes("blood") ||
-                lowerMessage.includes("age") ||
-                lowerMessage.includes("gender")
-              ? "details"
-              : "identity",
-      );
+    const allErrors = validateAllSteps();
+    if (Object.keys(allErrors).length > 0) {
+      setFieldErrors(allErrors);
+      for (const step of modalSteps) {
+        const stepErrors = validateStep(step.key);
+        if (Object.keys(stepErrors).length > 0) {
+          setModalTab(step.key);
+          break;
+        }
+      }
+      return;
+    }
+
+    if (!isEdit && !currentUserId) {
+      setModalError("Current user session is not available. Please log out and log in again.");
       return;
     }
 
@@ -2091,7 +2481,8 @@ export default function User() {
       setForm(createEmptyForm(getDefaultCreateRole(currentRole)));
       await loadRows();
     } catch (e) {
-      setModalError(extractApiErrorMessage(e, "Operation failed"));
+      console.error("Save failed:", e);
+      setModalError(extractApiErrorMessage(e, "Operation failed. Please check the form and try again."));
     } finally {
       setSaving(false);
     }
@@ -2213,21 +2604,46 @@ export default function User() {
 
   const roleSelectOptions = useMemo(() => {
     const availability = createAvailability;
-    return ROLE_OPTIONS.filter((item) => {
-      if (item.value === "SUPER_ADMIN") return false;
-      return viewMode === "users" ? item.value === "USER" : item.value !== "USER";
+    const allowed = ROLE_OPTIONS.filter((item) => {
+      if (item.value === "SUPER_ADMIN" && currentRole !== "SUPER_ADMIN") return false;
+      return Boolean(availability[item.value]);
     }).map((item) => ({
       ...item,
       disabled: !availability[item.value],
     }));
-  }, [createAvailability, viewMode]);
+
+    if (viewMode === "users") {
+      return [...allowed].sort((a, b) => (a.value === "USER" ? -1 : b.value === "USER" ? 1 : 0));
+    }
+    return allowed;
+  }, [createAvailability, currentRole, viewMode]);
 
   const renderStats = () => (
-    <div className="row mb-4">
-      <StatCard value={displayedRows.length} label={viewMode === "users" ? "Total Members" : "Total Employees"} />
-      <StatCard value={activeRows.length} label="Active Records" />
-      <StatCard value={inactiveRows.length} label="Inactive Records" />
-      <StatCard value={totalRoles} label="Role Types" />
+    <div className="um-stats-grid">
+      <StatCard
+        value={displayedRows.length}
+        label={viewMode === "users" ? "Total Members" : "Total Employees"}
+        icon={IconUsers}
+        variant="stat-total"
+      />
+      <StatCard
+        value={activeRows.length}
+        label="Active Records"
+        icon={IconUserCheck}
+        variant="stat-active"
+      />
+      <StatCard
+        value={inactiveRows.length}
+        label="Inactive Records"
+        icon={IconUserOff}
+        variant="stat-inactive"
+      />
+      <StatCard
+        value={totalRoles}
+        label="Role Types"
+        icon={IconShieldCheck}
+        variant="stat-roles"
+      />
     </div>
   );
 
@@ -2297,13 +2713,16 @@ export default function User() {
     );
   };
 
-  const openProfileModal = async (row) => {
+  const openProfileModal = async (row, initialTab = "personal") => {
     setProfileMember(row);
     setShowProfileModal(true);
-    setProfileTab("personal");
+    setProfileTab(initialTab);
+    setShowPresetMenu(false);
     setMemberProgress([]);
+    setMemberGoals([]);
     if (row.id) {
       setMemberProgressLoading(true);
+      setMemberGoalsLoading(true);
       try {
         const progressData = await getMemberProgressEntries(row.id);
         setMemberProgress(progressData);
@@ -2312,6 +2731,76 @@ export default function User() {
       } finally {
         setMemberProgressLoading(false);
       }
+      try {
+        const targetMemberId = row.userId || row.id || row.raw?.user_id;
+        const goalsData = await getMemberGoals(targetMemberId);
+        setMemberGoals(goalsData || []);
+      } catch (err) {
+        console.error("Failed to load goals for member", err);
+      } finally {
+        setMemberGoalsLoading(false);
+      }
+    }
+  };
+
+  const handleOpenAssignGoal = () => {
+    setMemberGoalForm({
+      title: "",
+      category: "General Fitness",
+      currentValue: "0",
+      targetValue: "",
+      targetUnit: "kg",
+      targetDate: new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0],
+      notes: "",
+    });
+    setShowMemberGoalModal(true);
+  };
+
+  const handleSaveMemberGoal = async (e) => {
+    e.preventDefault();
+    if (!profileMember) return;
+    if (!memberGoalForm.title.trim()) {
+      alert("Please enter a goal title");
+      return;
+    }
+    const targetMemberId = profileMember.userId || profileMember.id || profileMember.raw?.user_id;
+    setMemberGoalSaving(true);
+    try {
+      await createGoalForMember(targetMemberId, {
+        title: memberGoalForm.title.trim(),
+        category: memberGoalForm.category,
+        currentValue: Number(memberGoalForm.currentValue) || 0,
+        targetValue: Number(memberGoalForm.targetValue) || 0,
+        targetUnit: memberGoalForm.targetUnit || "units",
+        targetDate: memberGoalForm.targetDate ? new Date(memberGoalForm.targetDate).toISOString() : undefined,
+        notes: memberGoalForm.notes || undefined,
+      });
+      setShowMemberGoalModal(false);
+      setNotice(`Goal "${memberGoalForm.title}" assigned successfully!`);
+      const updated = await getMemberGoals(targetMemberId);
+      setMemberGoals(updated || []);
+    } catch (err) {
+      console.error("Failed to assign goal to member", err);
+      setNotice(extractApiErrorMessage(err, "Failed to assign goal to member"));
+    } finally {
+      setMemberGoalSaving(false);
+    }
+  };
+
+  const handleApplyGoalPreset = async (packType) => {
+    if (!profileMember) return;
+    const targetMemberId = profileMember.userId || profileMember.id || profileMember.raw?.user_id;
+    setMemberGoalPresetSaving(true);
+    try {
+      const res = await loadGoalPresets(packType, targetMemberId);
+      setNotice(`Loaded ${res?.count || 3} preset goals for ${profileMember.name || "member"}!`);
+      const updated = await getMemberGoals(targetMemberId);
+      setMemberGoals(updated || []);
+    } catch (err) {
+      console.error("Failed to apply preset goals", err);
+      setNotice(extractApiErrorMessage(err, "Failed to apply preset goals"));
+    } finally {
+      setMemberGoalPresetSaving(false);
     }
   };
 
@@ -2408,24 +2897,34 @@ export default function User() {
           <div className="col-md-6">
             <label className="form-label">Qualification *</label>
             <select
-              className="form-select"
+              className={`form-select ${fieldErrors.qualification ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.qualification ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.qualification}
-              onChange={(e) => setForm({ ...form, qualification: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("qualification");
+                setForm({ ...form, qualification: e.target.value });
+              }}
             >
               <option value="">Select qualification</option>
               {QUALIFICATION_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
+            {fieldErrors.qualification && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.qualification}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Department Label</label>
             <input
-              className="form-control"
+              className={`form-control ${fieldErrors.departmentText ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.departmentText ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.departmentText}
-              onChange={(e) => setForm({ ...form, departmentText: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("departmentText");
+                setForm({ ...form, departmentText: e.target.value });
+              }}
               placeholder="Usually derived from the selected department master"
             />
+            {fieldErrors.departmentText && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.departmentText}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Join Date</label>
@@ -2447,41 +2946,61 @@ export default function User() {
           <div className="col-md-6">
             <label className="form-label">Specialization *</label>
             <input
-              className="form-control"
+              className={`form-control ${fieldErrors.specialization ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.specialization ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.specialization}
-              onChange={(e) => setForm({ ...form, specialization: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("specialization");
+                setForm({ ...form, specialization: e.target.value });
+              }}
             />
+            {fieldErrors.specialization && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.specialization}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Experience Years *</label>
             <input
               type="number"
               min="0"
-              className="form-control"
+              className={`form-control ${fieldErrors.experienceYears ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.experienceYears ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.experienceYears}
-              onChange={(e) => setForm({ ...form, experienceYears: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("experienceYears");
+                setForm({ ...form, experienceYears: e.target.value });
+              }}
             />
+            {fieldErrors.experienceYears && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.experienceYears}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Certification *</label>
             <input
-              className="form-control"
+              className={`form-control ${fieldErrors.certification ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.certification ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.certification}
-              onChange={(e) => setForm({ ...form, certification: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("certification");
+                setForm({ ...form, certification: e.target.value });
+              }}
             />
+            {fieldErrors.certification && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.certification}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Qualification *</label>
             <select
-              className="form-select"
+              className={`form-select ${fieldErrors.qualification ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.qualification ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.qualification}
-              onChange={(e) => setForm({ ...form, qualification: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("qualification");
+                setForm({ ...form, qualification: e.target.value });
+              }}
             >
               <option value="">Select qualification</option>
               {QUALIFICATION_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
+            {fieldErrors.qualification && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.qualification}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Rate Per Hour *</label>
@@ -2489,10 +3008,15 @@ export default function User() {
               type="number"
               min="0"
               step="0.01"
-              className="form-control"
+              className={`form-control ${fieldErrors.ratePerHour ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.ratePerHour ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.ratePerHour}
-              onChange={(e) => setForm({ ...form, ratePerHour: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("ratePerHour");
+                setForm({ ...form, ratePerHour: e.target.value });
+              }}
             />
+            {fieldErrors.ratePerHour && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.ratePerHour}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Join Date</label>
@@ -2538,6 +3062,23 @@ export default function User() {
       );
     }
 
+    if (role === "COUNSELOR") {
+      return (
+        <div className="row g-3">
+          <SectionHeader label="Counselor Details" />
+          <div className="col-md-6">
+            <label className="form-label">Join Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={form.joinDate}
+              onChange={(e) => setForm({ ...form, joinDate: e.target.value })}
+            />
+          </div>
+        </div>
+      );
+    }
+
     if (role === "USER") {
       return (
         <div className="row g-3">
@@ -2548,10 +3089,15 @@ export default function User() {
               type="number"
               min="0"
               step="0.1"
-              className="form-control"
+              className={`form-control ${fieldErrors.weight ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.weight ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.weight}
-              onChange={(e) => setForm({ ...form, weight: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("weight");
+                setForm({ ...form, weight: e.target.value });
+              }}
             />
+            {fieldErrors.weight && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.weight}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Height (cm) *</label>
@@ -2559,17 +3105,26 @@ export default function User() {
               type="number"
               min="0"
               step="0.1"
-              className="form-control"
+              className={`form-control ${fieldErrors.height ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.height ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.height}
-              onChange={(e) => setForm({ ...form, height: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("height");
+                setForm({ ...form, height: e.target.value });
+              }}
             />
+            {fieldErrors.height && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.height}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Blood Group *</label>
             <select
-              className="form-select"
+              className={`form-select ${fieldErrors.bloodGroup ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.bloodGroup ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.bloodGroup}
-              onChange={(e) => setForm({ ...form, bloodGroup: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("bloodGroup");
+                setForm({ ...form, bloodGroup: e.target.value });
+              }}
             >
               <option value="">Select</option>
               {BLOOD_GROUP_OPTIONS.map((item) => (
@@ -2578,23 +3133,33 @@ export default function User() {
                 </option>
               ))}
             </select>
+            {fieldErrors.bloodGroup && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.bloodGroup}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Age *</label>
             <input
               type="number"
               min="0"
-              className="form-control"
+              className={`form-control ${fieldErrors.age ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.age ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.age}
-              onChange={(e) => setForm({ ...form, age: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("age");
+                setForm({ ...form, age: e.target.value });
+              }}
             />
+            {fieldErrors.age && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.age}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Gender *</label>
             <select
-              className="form-select"
+              className={`form-select ${fieldErrors.gender ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.gender ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.gender}
-              onChange={(e) => setForm({ ...form, gender: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("gender");
+                setForm({ ...form, gender: e.target.value });
+              }}
             >
               <option value="">Select</option>
               {GENDER_OPTIONS.map((item) => (
@@ -2603,6 +3168,7 @@ export default function User() {
                 </option>
               ))}
             </select>
+            {fieldErrors.gender && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.gender}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">Medical Conditions</label>
@@ -2633,6 +3199,32 @@ export default function User() {
               value={form.referredBy || ""}
               onChange={(e) => setForm({ ...form, referredBy: e.target.value })}
               placeholder="Referrer name (if any)"
+            />
+          </div>
+          <SectionHeader label="Corporate Sponsorship (Optional)" />
+          <div className="col-md-6">
+            <label className="form-label">Corporate Sponsor / Partner</label>
+            <select
+              className="form-select"
+              value={form.assignedCorporateHrId || ""}
+              onChange={(e) => setForm({ ...form, assignedCorporateHrId: e.target.value })}
+            >
+              <option value="">None (Individual Member)</option>
+              {corporatePartners.map((cp) => (
+                <option key={cp.id} value={cp.id}>
+                  {cp.companyName} ({cp.email})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-md-6">
+            <label className="form-label">Corporate Department</label>
+            <input
+              type="text"
+              className="form-control"
+              value={form.corporateDepartment || ""}
+              onChange={(e) => setForm({ ...form, corporateDepartment: e.target.value })}
+              placeholder="e.g. Engineering, Sales, HR"
             />
           </div>
           <SectionHeader label="Membership & Workout Plan" />
@@ -2767,36 +3359,94 @@ export default function User() {
           <div className="col-md-12">
             <label className="form-label">Address *</label>
             <textarea
-              className="form-control"
+              className={`form-control ${fieldErrors.address ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.address ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               rows={3}
               value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("address");
+                setForm({ ...form, address: e.target.value });
+              }}
               placeholder="House number, street, landmark, area"
             />
+            {fieldErrors.address && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.address}</div>}
           </div>
           <div className="col-md-6">
             <label className="form-label">City *</label>
             <input
-              className="form-control"
+              className={`form-control ${fieldErrors.city ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.city ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("city");
+                setForm({ ...form, city: e.target.value });
+              }}
             />
+            {fieldErrors.city && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.city}</div>}
           </div>
           <div className="col-md-6">
-            <label className="form-label">Emergency Contact *</label>
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <label className="form-label mb-0">Emergency Contact Person / Name *</label>
+              {form.emergencyContact && (
+                <span className="small text-muted" style={{ fontSize: "0.75rem" }}>
+                  {form.emergencyContact.length}/50
+                </span>
+              )}
+            </div>
             <input
-              className="form-control"
+              className={`form-control ${fieldErrors.emergencyContact ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.emergencyContact ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               value={form.emergencyContact}
-              onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })}
+              maxLength={50}
+              placeholder="e.g. Ramesh Kumar (Father)"
+              onChange={(e) => {
+                clearFieldError("emergencyContact");
+                const raw = e.target.value;
+                // If user starts typing numeric digits, cap strictly at 10 digits!
+                // If user types text/names, restrict to valid letters, spaces, dots, hyphens, and relationship parentheses ()
+                let sanitized = raw;
+                if (/^\d+$/.test(raw)) {
+                  sanitized = raw.replace(/\D/g, "").slice(0, 10);
+                } else {
+                  sanitized = raw.replace(/[^a-zA-Z0-9\s.'\-()]/g, "").slice(0, 50);
+                }
+                setForm({ ...form, emergencyContact: sanitized });
+              }}
             />
+            {fieldErrors.emergencyContact ? (
+              <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.emergencyContact}</div>
+            ) : (
+              <small className="text-muted d-block mt-1" style={{ fontSize: "0.74rem" }}>
+                Contact person name & relation (or 10-digit mobile)
+              </small>
+            )}
           </div>
           <div className="col-md-6">
-            <label className="form-label">Emergency Phone *</label>
-            <input
-              className="form-control"
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <label className="form-label mb-0">Emergency Phone *</label>
+              {form.emergencyPhone && (
+                <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.emergencyPhone.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                  {form.emergencyPhone.length}/10 digits
+                </span>
+              )}
+            </div>
+            <PhoneInputWithFlag
               value={form.emergencyPhone}
-              onChange={(e) => setForm({ ...form, emergencyPhone: e.target.value.replace(/\D/g, "") })}
+              isInvalid={Boolean(fieldErrors.emergencyPhone)}
+              onChange={(e) => {
+                clearFieldError("emergencyPhone");
+                setForm({ ...form, emergencyPhone: e.target.value });
+              }}
+              placeholder="9876543210"
+              size="sm"
             />
+            {fieldErrors.emergencyPhone ? (
+              <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.emergencyPhone}</div>
+            ) : (
+              <small className="text-muted d-block mt-1" style={{ fontSize: "0.74rem" }}>
+                10-digit emergency contact phone number
+              </small>
+            )}
           </div>
           <div className="col-md-6">
             <label className="form-label">Medical Conditions</label>
@@ -2814,21 +3464,28 @@ export default function User() {
             value={form.candidatePhotoPath}
             href={resolveDocHref(form.candidatePhotoPath)}
             uploading={uploadingField === "candidatePhotoPath"}
-            onFile={(file) => uploadMemberFile(file, "candidatePhotoPath")}
+            error={fieldErrors.candidatePhotoPath}
+            onFile={(file) => {
+              clearFieldError("candidatePhotoPath");
+              uploadMemberFile(file, "candidatePhotoPath");
+            }}
           />
           <div className="col-md-6">
             <label className="form-label">ID Proof *</label>
             <input
               type="file"
-              className="form-control"
+              className={`form-control ${fieldErrors.idProofDocumentPath ? "is-invalid border-danger" : ""}`}
+              style={fieldErrors.idProofDocumentPath ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
               accept=".pdf,.jpg,.jpeg,.png,.webp"
               disabled={uploadingField === "idProofDocumentPath"}
               onChange={(e) => {
+                clearFieldError("idProofDocumentPath");
                 const file = e.target.files?.[0];
                 if (file) uploadMemberFile(file, "idProofDocumentPath");
                 e.target.value = "";
               }}
             />
+            {fieldErrors.idProofDocumentPath && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.idProofDocumentPath}</div>}
             <small className="text-muted d-block mt-1">
               {uploadingField === "idProofDocumentPath"
                 ? "Uploading…"
@@ -2874,16 +3531,117 @@ export default function User() {
           <input type="email" className="form-control" value={form.personalEmail} onChange={(e) => setForm({ ...form, personalEmail: e.target.value })} />
         </div>
         <div className="col-md-6">
-          <label className="form-label">Alternate Phone</label>
-          <input className="form-control" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value.replace(/[^+\d]/g, "") })} />
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <label className="form-label mb-0">Alternate Phone</label>
+            {form.alternatePhone && (
+              <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.alternatePhone.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                {form.alternatePhone.length}/10
+              </span>
+            )}
+          </div>
+          <PhoneInputWithFlag
+            value={form.alternatePhone}
+            isInvalid={Boolean(fieldErrors.alternatePhone)}
+            onChange={(e) => {
+              clearFieldError("alternatePhone");
+              setForm({ ...form, alternatePhone: e.target.value });
+            }}
+            placeholder="9876543210"
+            size="sm"
+          />
+          {fieldErrors.alternatePhone && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.alternatePhone}</div>}
         </div>
         <SectionHeader label="Emergency" />
-        <div className="col-md-6"><label className="form-label">Emergency Name 1</label><input className="form-control" value={form.emergencyContact} onChange={(e) => setForm({ ...form, emergencyContact: e.target.value })} /></div>
-        <div className="col-md-6"><label className="form-label">Emergency Contact 1</label><input className="form-control" value={form.emergencyPhone} onChange={(e) => setForm({ ...form, emergencyPhone: e.target.value.replace(/[^+\d]/g, "") })} /></div>
-        <div className="col-md-6"><label className="form-label">Emergency Relationship 1</label><input className="form-control" value={form.emergencyContactRelationship} onChange={(e) => setForm({ ...form, emergencyContactRelationship: e.target.value })} /></div>
-        <div className="col-md-6"><label className="form-label">Emergency Name 2</label><input className="form-control" value={form.emergencyContactName2} onChange={(e) => setForm({ ...form, emergencyContactName2: e.target.value })} /></div>
-        <div className="col-md-6"><label className="form-label">Emergency Contact 2</label><input className="form-control" value={form.emergencyPhone2} onChange={(e) => setForm({ ...form, emergencyPhone2: e.target.value.replace(/[^+\d]/g, "") })} /></div>
-        <div className="col-md-6"><label className="form-label">Emergency Relationship 2</label><input className="form-control" value={form.emergencyContactRelationship2} onChange={(e) => setForm({ ...form, emergencyContactRelationship2: e.target.value })} /></div>
+        <div className="col-md-6">
+          <label className="form-label">Emergency Name 1</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Ramesh Kumar"
+            value={form.emergencyContact}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const sanitized = /^\d+$/.test(raw) ? raw.replace(/\D/g, "").slice(0, 10) : raw.replace(/[^a-zA-Z0-9\s.'\-()]/g, "").slice(0, 50);
+              setForm({ ...form, emergencyContact: sanitized });
+            }}
+          />
+        </div>
+        <div className="col-md-6">
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <label className="form-label mb-0">Emergency Contact 1 Phone</label>
+            {form.emergencyPhone && (
+              <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.emergencyPhone.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                {form.emergencyPhone.length}/10
+              </span>
+            )}
+          </div>
+          <PhoneInputWithFlag
+            value={form.emergencyPhone}
+            isInvalid={Boolean(fieldErrors.emergencyPhone)}
+            onChange={(e) => {
+              clearFieldError("emergencyPhone");
+              setForm({ ...form, emergencyPhone: e.target.value });
+            }}
+            placeholder="9876543210"
+            size="sm"
+          />
+          {fieldErrors.emergencyPhone && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.emergencyPhone}</div>}
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Emergency Relationship 1</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Father, Spouse"
+            value={form.emergencyContactRelationship}
+            onChange={(e) => setForm({ ...form, emergencyContactRelationship: e.target.value.slice(0, 50) })}
+          />
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Emergency Name 2</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Sunita Devi"
+            value={form.emergencyContactName2}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const sanitized = /^\d+$/.test(raw) ? raw.replace(/\D/g, "").slice(0, 10) : raw.replace(/[^a-zA-Z0-9\s.'\-()]/g, "").slice(0, 50);
+              setForm({ ...form, emergencyContactName2: sanitized });
+            }}
+          />
+        </div>
+        <div className="col-md-6">
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <label className="form-label mb-0">Emergency Contact 2 Phone</label>
+            {form.emergencyPhone2 && (
+              <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.emergencyPhone2.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                {form.emergencyPhone2.length}/10
+              </span>
+            )}
+          </div>
+          <PhoneInputWithFlag
+            value={form.emergencyPhone2}
+            isInvalid={Boolean(fieldErrors.emergencyPhone2)}
+            onChange={(e) => {
+              clearFieldError("emergencyPhone2");
+              setForm({ ...form, emergencyPhone2: e.target.value });
+            }}
+            placeholder="9876543210"
+            size="sm"
+          />
+          {fieldErrors.emergencyPhone2 && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.emergencyPhone2}</div>}
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Emergency Relationship 2</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Mother, Sibling"
+            value={form.emergencyContactRelationship2}
+            onChange={(e) => setForm({ ...form, emergencyContactRelationship2: e.target.value.slice(0, 50) })}
+          />
+        </div>
         <div className="col-md-6"><label className="form-label">Location</label><input className="form-control" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
         <div className="col-md-6">
           <label className="form-label">City</label>
@@ -3056,10 +3814,68 @@ export default function User() {
 
 
         <SectionHeader label="References" />
-        <div className="col-md-6"><label className="form-label">Reference Name 1</label><input className="form-control" value={form.referenceName1} onChange={(e) => setForm({ ...form, referenceName1: e.target.value })} /></div>
-        <div className="col-md-6"><label className="form-label">Reference Phone 1</label><input className="form-control" value={form.referencePhone1} onChange={(e) => setForm({ ...form, referencePhone1: e.target.value.replace(/[^+\d]/g, "") })} /></div>
-        <div className="col-md-6"><label className="form-label">Reference Name 2</label><input className="form-control" value={form.referenceName2} onChange={(e) => setForm({ ...form, referenceName2: e.target.value })} /></div>
-        <div className="col-md-6"><label className="form-label">Reference Phone 2</label><input className="form-control" value={form.referencePhone2} onChange={(e) => setForm({ ...form, referencePhone2: e.target.value.replace(/[^+\d]/g, "") })} /></div>
+        <div className="col-md-6">
+          <label className="form-label">Reference Name 1</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Anand Roy"
+            value={form.referenceName1}
+            onChange={(e) => setForm({ ...form, referenceName1: e.target.value.slice(0, 50) })}
+          />
+        </div>
+        <div className="col-md-6">
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <label className="form-label mb-0">Reference Phone 1</label>
+            {form.referencePhone1 && (
+              <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.referencePhone1.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                {form.referencePhone1.length}/10
+              </span>
+            )}
+          </div>
+          <PhoneInputWithFlag
+            value={form.referencePhone1}
+            isInvalid={Boolean(fieldErrors.referencePhone1)}
+            onChange={(e) => {
+              clearFieldError("referencePhone1");
+              setForm({ ...form, referencePhone1: e.target.value });
+            }}
+            placeholder="9876543210"
+            size="sm"
+          />
+          {fieldErrors.referencePhone1 && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.referencePhone1}</div>}
+        </div>
+        <div className="col-md-6">
+          <label className="form-label">Reference Name 2</label>
+          <input
+            className="form-control"
+            maxLength={50}
+            placeholder="e.g. Sneha Patel"
+            value={form.referenceName2}
+            onChange={(e) => setForm({ ...form, referenceName2: e.target.value.slice(0, 50) })}
+          />
+        </div>
+        <div className="col-md-6">
+          <div className="d-flex justify-content-between align-items-center mb-1">
+            <label className="form-label mb-0">Reference Phone 2</label>
+            {form.referencePhone2 && (
+              <span className="small fw-semibold" style={{ fontSize: "0.75rem", color: form.referencePhone2.length === 10 ? "#16a34a" : "#94a3b8" }}>
+                {form.referencePhone2.length}/10
+              </span>
+            )}
+          </div>
+          <PhoneInputWithFlag
+            value={form.referencePhone2}
+            isInvalid={Boolean(fieldErrors.referencePhone2)}
+            onChange={(e) => {
+              clearFieldError("referencePhone2");
+              setForm({ ...form, referencePhone2: e.target.value });
+            }}
+            placeholder="9876543210"
+            size="sm"
+          />
+          {fieldErrors.referencePhone2 && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.referencePhone2}</div>}
+        </div>
         <SectionHeader label="Declaration" />
         <div className="col-md-6"><label className="form-label">Declaration Date</label><input type="date" className="form-control" value={form.declarationDate} onChange={(e) => setForm({ ...form, declarationDate: e.target.value })} /></div>
         <div className="col-md-6"><label className="form-label">Declaration Place</label><input className="form-control" value={form.declarationPlace} onChange={(e) => setForm({ ...form, declarationPlace: e.target.value })} /></div>
@@ -3074,10 +3890,12 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Head Office</label>
           <select
-            className="form-select"
+            className={`form-select ${fieldErrors.headOfficeId ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.headOfficeId ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.headOfficeId}
             disabled={orgLoading}
-            onChange={(e) =>
+            onChange={(e) => {
+              clearFieldError("headOfficeId");
               setForm({
                 ...form,
                 headOfficeId: e.target.value,
@@ -3085,8 +3903,8 @@ export default function User() {
                 departmentId: "",
                 teamId: "",
                 designationId: "",
-              })
-            }
+              });
+            }}
           >
             <option value="">Select Head Office</option>
             {headOffices.map((item) => (
@@ -3095,6 +3913,7 @@ export default function User() {
               </option>
             ))}
           </select>
+          {fieldErrors.headOfficeId && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.headOfficeId}</div>}
         </div>
       )}
 
@@ -3102,18 +3921,20 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Branch</label>
           <select
-            className="form-select"
+            className={`form-select ${fieldErrors.branchId ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.branchId ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.branchId}
             disabled={orgLoading || !form.headOfficeId}
-            onChange={(e) =>
+            onChange={(e) => {
+              clearFieldError("branchId");
               setForm({
                 ...form,
                 branchId: e.target.value,
                 departmentId: "",
                 teamId: "",
                 designationId: "",
-              })
-            }
+              });
+            }}
           >
             <option value="">Select Branch</option>
             {filteredBranches.map((item) => (
@@ -3122,6 +3943,7 @@ export default function User() {
               </option>
             ))}
           </select>
+          {fieldErrors.branchId && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.branchId}</div>}
         </div>
       )}
 
@@ -3129,17 +3951,19 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Department</label>
           <select
-            className="form-select"
+            className={`form-select ${fieldErrors.departmentId ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.departmentId ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.departmentId}
             disabled={orgLoading || !form.branchId}
-            onChange={(e) =>
+            onChange={(e) => {
+              clearFieldError("departmentId");
               setForm({
                 ...form,
                 departmentId: e.target.value,
                 teamId: "",
                 designationId: "",
-              })
-            }
+              });
+            }}
           >
             <option value="">Select Department</option>
             {filteredDepartments.map((item) => (
@@ -3148,6 +3972,7 @@ export default function User() {
               </option>
             ))}
           </select>
+          {fieldErrors.departmentId && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.departmentId}</div>}
         </div>
       )}
 
@@ -3180,10 +4005,13 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Team</label>
           <select
-            className="form-select"
+            className={`form-select ${fieldErrors.teamId ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.teamId ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.teamId}
             disabled={orgLoading || (isCustomerForm ? !form.branchId : !form.departmentId)}
             onChange={(e) => {
+              clearFieldError("teamId");
+              clearFieldError("assignedTrainerId");
               const nextTeamId = e.target.value;
               const nextTeam = teams.find((item) => String(item.id) === String(nextTeamId)) || null;
               if (!isCustomerForm) {
@@ -3217,20 +4045,42 @@ export default function User() {
               </option>
             ))}
           </select>
+          {fieldErrors.teamId && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.teamId}</div>}
         </div>
       )}
 
       {isCustomerForm && getOrganizationVisibility(form.role).team && (
         <div className="col-md-6">
           <label className="form-label">Team Trainer</label>
-          <select className="form-select bg-light" value={form.assignedTrainerId || selectedTeamTrainer?.identity?.id || ""} disabled>
+          <select
+            className={`form-select ${fieldErrors.assignedTrainerId ? "is-invalid border-danger" : ""}`}
+            value={form.assignedTrainerId || selectedTeamTrainer?.identity?.id || ""}
+            onChange={(e) => {
+              clearFieldError("assignedTrainerId");
+              const nextId = e.target.value;
+              const chosen = rows.find((r) => String(r.id) === String(nextId));
+              const chosenName = chosen?.name || [chosen?.firstName, chosen?.lastName].filter(Boolean).join(" ") || "";
+              setForm((prev) => ({
+                ...prev,
+                assignedTrainerId: nextId,
+                reportsToId: nextId,
+                reportingManagerName: chosenName,
+              }));
+            }}
+          >
             <option value="">
-              {selectedTeamTrainerName || "No trainer assigned to this team"}
+              {availableTeamTrainers.length ? "Select Trainer" : "No trainer assigned to this team"}
             </option>
-            {selectedTeamTrainer?.identity?.id ? (
-              <option value={selectedTeamTrainer.identity.id}>{selectedTeamTrainerName}</option>
-            ) : null}
+            {availableTeamTrainers.map((trainer) => {
+              const tName = trainer.name || [trainer.firstName, trainer.lastName].filter(Boolean).join(" ") || `Trainer #${trainer.id}`;
+              return (
+                <option key={trainer.id} value={trainer.id}>
+                  {tName}
+                </option>
+              );
+            })}
           </select>
+          {fieldErrors.assignedTrainerId && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.assignedTrainerId}</div>}
         </div>
       )}
 
@@ -3252,10 +4102,12 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Role *</label>
           <select
-            className="form-select"
+            className={`form-select ${fieldErrors.role ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.role ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={effectiveRole}
             disabled={isEdit}
             onChange={(e) => {
+              clearFieldError("role");
               const nextRole = e.target.value;
               const orgVisibility = getOrganizationVisibility(nextRole);
               setForm((prev) => ({
@@ -3283,7 +4135,8 @@ export default function User() {
               </option>
             ))}
           </select>
-          <small className="text-muted">
+          {fieldErrors.role && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.role}</div>}
+          <small className="text-muted d-block mt-1">
             {isEdit
               ? "Role changes are locked during edit because each role uses a different backend route."
               : "Only the roles supported by the backend are enabled for your current login."}
@@ -3305,24 +4158,34 @@ export default function User() {
         <div className="col-md-6">
           <label className="form-label">Name *</label>
           <input
-            className="form-control"
+            className={`form-control ${fieldErrors.name ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.name ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.name}
             onChange={(e) => {
+              clearFieldError("name");
               const nextName = e.target.value;
               const split = splitName(nextName);
               setForm({ ...form, name: nextName, firstName: split.firstName, lastName: split.lastName });
             }}
+            placeholder="Enter full name"
           />
+          {fieldErrors.name && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.name}</div>}
         </div>
 
         <div className="col-md-6">
           <label className="form-label">Email *</label>
           <input
             type="email"
-            className="form-control"
+            className={`form-control ${fieldErrors.email ? "is-invalid border-danger" : ""}`}
+            style={fieldErrors.email ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}}
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={(e) => {
+              clearFieldError("email");
+              setForm({ ...form, email: e.target.value });
+            }}
+            placeholder="user@example.com"
           />
+          {fieldErrors.email && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.email}</div>}
         </div>
 
         <div className="col-md-6">
@@ -3330,10 +4193,13 @@ export default function User() {
           <div className="position-relative">
             <input
               type={showPassword ? "text" : "password"}
-              className="form-control"
-              style={{ paddingRight: "2.5rem" }}
+              className={`form-control ${fieldErrors.password ? "is-invalid border-danger" : ""}`}
+              style={{ paddingRight: "2.5rem", ...(fieldErrors.password ? { borderColor: "#ef4444", boxShadow: "0 0 0 2px rgba(239, 68, 68, 0.2)" } : {}) }}
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => {
+                clearFieldError("password");
+                setForm({ ...form, password: e.target.value });
+              }}
               placeholder={isEdit ? "Leave blank to keep current password" : "Set an initial password"}
             />
             <button
@@ -3347,6 +4213,7 @@ export default function User() {
               {showPassword ? <IconEyeOff size={18} /> : <IconEye size={18} />}
             </button>
           </div>
+          {fieldErrors.password && <div className="text-danger small mt-1" style={{ fontSize: "0.82rem", fontWeight: 500 }}>● {fieldErrors.password}</div>}
         </div>
 
         <div className="col-md-6">
@@ -3355,7 +4222,11 @@ export default function User() {
             label="Phone"
             countryCode={form.countryCode}
             value={form.phone}
-            onChange={({ countryCode, phone }) => setForm({ ...form, countryCode, phone })}
+            error={fieldErrors.phone}
+            onChange={({ countryCode, phone }) => {
+              clearFieldError("phone");
+              setForm({ ...form, countryCode, phone });
+            }}
           />
         </div>
 
@@ -3375,10 +4246,15 @@ export default function User() {
           onNext={goToNextModalStep}
         onSubmit={handleSubmit}
         submitLabel={saving ? "Saving..." : "Save Changes"}
-        modalWidth="680px"
+        modalWidth="720px"
         disabled={saving}
       >
-        {modalError && <div className="alert alert-danger">{modalError}</div>}
+        {modalError && (
+          <div className="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center gap-2" role="alert" style={{ borderRadius: 8, fontSize: "0.875rem" }}>
+            <IconAlertCircle size={18} className="flex-shrink-0" />
+            <div>{modalError}</div>
+          </div>
+        )}
 
         {modalTab === "identity" && renderIdentityFields()}
         {modalTab === "organization" && renderOrgFields()}
@@ -3443,6 +4319,7 @@ export default function User() {
       { key: "fitness", label: "Fitness" },
       { key: "membership", label: "Membership" },
       { key: "workout", label: "Workout" },
+      { key: "goals", label: "Goals" },
       { key: "attendance", label: "Attendance" },
     ];
 
@@ -3450,13 +4327,12 @@ export default function User() {
       <Modal show={showProfileModal} onHide={() => setShowProfileModal(false)} size="lg" centered>
         <Modal.Header closeButton className="bg-primary text-white">
           <Modal.Title className="d-flex align-items-center gap-3">
-            <img
-              src={m.img || resolveDocHref(raw.photoPath) || ROLE_AVATARS.USER}
-              alt={m.name}
-              className="rounded-circle border border-white border-2"
-              width="50"
-              height="50"
-              style={{ objectFit: "cover" }}
+            <UserAvatar
+              src={m.img || (raw.photoPath ? resolveUploadUrl(raw.photoPath) : "")}
+              name={m.name}
+              role={m.role}
+              size={50}
+              className="border border-white border-2"
             />
             <div>
               <h5 className="mb-0 text-white">{m.name || "Member Profile"}</h5>
@@ -3671,6 +4547,211 @@ export default function User() {
               </div>
             )}
 
+            {profileTab === "goals" && (
+              <div>
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 p-3 bg-light rounded-3 border">
+                  <div>
+                    <h6 className="mb-0 fw-bold d-flex align-items-center gap-2">
+                      <IconTarget size={18} className="text-primary" />
+                      Active Milestones & Goals
+                      <span className="badge bg-primary rounded-pill ms-1">{memberGoals.length}</span>
+                    </h6>
+                    <small className="text-muted">Coach-assigned targets and member fitness progress</small>
+                  </div>
+                  {canAssignGoal && (
+                    <div className="d-flex align-items-center gap-2 position-relative">
+                      <div className="position-relative">
+                        <button
+                          className="btn btn-sm btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1"
+                          type="button"
+                          onClick={() => setShowPresetMenu((prev) => !prev)}
+                          disabled={memberGoalPresetSaving}
+                        >
+                          <IconBolt size={14} className="text-warning" />
+                          {memberGoalPresetSaving ? "Applying..." : "Preset Packs"}
+                        </button>
+                        {showPresetMenu && (
+                          <div
+                            className="dropdown-menu dropdown-menu-end shadow show p-1"
+                            style={{ position: "absolute", right: 0, top: "100%", zIndex: 1055, minWidth: "240px" }}
+                          >
+                            <button
+                              className="dropdown-item py-2 rounded text-start"
+                              type="button"
+                              onClick={() => {
+                                setShowPresetMenu(false);
+                                handleApplyGoalPreset("strength");
+                              }}
+                            >
+                              <div className="fw-semibold">💪 Strength Starter</div>
+                              <small className="text-muted d-block">Squat (100kg), Bench (80kg), Deadlift (120kg)</small>
+                            </button>
+                            <button
+                              className="dropdown-item py-2 rounded text-start"
+                              type="button"
+                              onClick={() => {
+                                setShowPresetMenu(false);
+                                handleApplyGoalPreset("weight_loss");
+                              }}
+                            >
+                              <div className="fw-semibold">🔥 Fat Loss Starter</div>
+                              <small className="text-muted d-block">Lose 5kg, 10k Steps, 45m Cardio</small>
+                            </button>
+                            <button
+                              className="dropdown-item py-2 rounded text-start"
+                              type="button"
+                              onClick={() => {
+                                setShowPresetMenu(false);
+                                handleApplyGoalPreset("general");
+                              }}
+                            >
+                              <div className="fw-semibold">⚡ General Fitness</div>
+                              <small className="text-muted d-block">4x Workouts/wk, Water Target, 30m Run</small>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                        type="button"
+                        onClick={handleOpenAssignGoal}
+                      >
+                        <IconPlus size={14} />
+                        Assign Goal
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {memberGoalsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border spinner-border-sm text-primary me-2" role="status" />
+                    Loading member goals...
+                  </div>
+                ) : memberGoals.length === 0 ? (
+                  <div className="card border-dashed p-4 text-center bg-light">
+                    <div className="mb-2">
+                      <IconTarget size={36} className="text-muted" />
+                    </div>
+                    <h6 className="fw-bold mb-1">No Goals Set For This Member Yet</h6>
+                    <p className="text-muted small mb-3">
+                      Kickstart their fitness motivation with coach-assigned milestones or a starter preset pack.
+                    </p>
+                    {canAssignGoal && (
+                      <div className="d-flex flex-wrap justify-content-center gap-2">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => handleApplyGoalPreset("strength")}
+                          disabled={memberGoalPresetSaving}
+                        >
+                          💪 Load Strength Pack
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-success"
+                          onClick={() => handleApplyGoalPreset("weight_loss")}
+                          disabled={memberGoalPresetSaving}
+                        >
+                          🔥 Load Fat Loss Pack
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-info"
+                          onClick={() => handleApplyGoalPreset("general")}
+                          disabled={memberGoalPresetSaving}
+                        >
+                          ⚡ Load General Pack
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          onClick={handleOpenAssignGoal}
+                        >
+                          + Custom Goal
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="table-responsive border rounded">
+                    <table className="table table-sm table-hover align-middle mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Goal</th>
+                          <th>Category</th>
+                          <th>Progress</th>
+                          <th>Target Date</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {memberGoals.map((g) => {
+                          const curr = Number(g.currentValue) || 0;
+                          const targ = Number(g.targetValue) || 1;
+                          const pct = Math.min(100, Math.max(0, Math.round((curr / targ) * 100)));
+                          const isAssigned = (g.notes || "").includes("[Assigned by");
+
+                          return (
+                            <tr key={g.id}>
+                              <td>
+                                <div className="fw-semibold text-dark">{g.title}</div>
+                                {isAssigned && (
+                                  <span className="badge bg-info-subtle text-info border border-info-subtle small py-0 px-1" style={{ fontSize: "10px" }}>
+                                    Coach Assigned
+                                  </span>
+                                )}
+                                {g.notes && !isAssigned && (
+                                  <small className="text-muted d-block text-truncate" style={{ maxWidth: "180px" }}>
+                                    {g.notes}
+                                  </small>
+                                )}
+                              </td>
+                              <td>
+                                <span className="badge bg-secondary-subtle text-secondary border">
+                                  {g.category || "General"}
+                                </span>
+                              </td>
+                              <td style={{ minWidth: "120px" }}>
+                                <div className="d-flex justify-content-between small text-muted mb-1">
+                                  <span>{curr} / {g.targetValue} {g.targetUnit}</span>
+                                  <span>{pct}%</span>
+                                </div>
+                                <div className="progress" style={{ height: "5px" }}>
+                                  <div
+                                    className={`progress-bar ${pct >= 100 ? "bg-success" : "bg-primary"}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </td>
+                              <td>
+                                <small className="text-muted">
+                                  {g.targetDate ? new Date(g.targetDate).toLocaleDateString() : "No deadline"}
+                                </small>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    g.status === "ACHIEVED"
+                                      ? "bg-success"
+                                      : g.status === "ABANDONED"
+                                      ? "bg-secondary"
+                                      : "bg-warning text-dark"
+                                  }`}
+                                >
+                                  {g.status === "ACHIEVED" ? "Achieved" : g.status === "ABANDONED" ? "Abandoned" : "In Progress"}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
             {profileTab === "attendance" && (
               <div>
                 <div className="row g-3 mb-4">
@@ -3735,6 +4816,111 @@ export default function User() {
       </Modal>
     );
   };
+
+  const renderMemberGoalModal = () => (
+    <Modal show={showMemberGoalModal} onHide={() => setShowMemberGoalModal(false)} centered>
+      <form onSubmit={handleSaveMemberGoal}>
+        <Modal.Header closeButton>
+          <Modal.Title className="h5 d-flex align-items-center gap-2">
+            <IconTarget size={20} className="text-primary" />
+            Assign Goal to {profileMember?.name || "Member"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="mb-3">
+            <label className="form-label small fw-semibold">Goal Title *</label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g. Bench Press 100kg, Lose 5kg, 10k Steps"
+              value={memberGoalForm.title}
+              onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, title: e.target.value }))}
+              required
+            />
+          </div>
+          <div className="row g-2 mb-3">
+            <div className="col-6">
+              <label className="form-label small fw-semibold">Category</label>
+              <select
+                className="form-select"
+                value={memberGoalForm.category}
+                onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                <option value="General Fitness">General Fitness</option>
+                <option value="Strength">Strength</option>
+                <option value="Weight Loss">Weight Loss</option>
+                <option value="Cardio">Cardio</option>
+                <option value="Endurance">Endurance</option>
+                <option value="Flexibility">Flexibility</option>
+              </select>
+            </div>
+            <div className="col-6">
+              <label className="form-label small fw-semibold">Target Unit</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="e.g. kg, reps, min, km, days"
+                value={memberGoalForm.targetUnit}
+                onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, targetUnit: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="row g-2 mb-3">
+            <div className="col-6">
+              <label className="form-label small fw-semibold">Current Value</label>
+              <input
+                type="number"
+                step="any"
+                className="form-control"
+                placeholder="0"
+                value={memberGoalForm.currentValue}
+                onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, currentValue: e.target.value }))}
+              />
+            </div>
+            <div className="col-6">
+              <label className="form-label small fw-semibold">Target Value *</label>
+              <input
+                type="number"
+                step="any"
+                className="form-control"
+                placeholder="e.g. 100"
+                value={memberGoalForm.targetValue}
+                onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, targetValue: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="form-label small fw-semibold">Target Date</label>
+            <input
+              type="date"
+              className="form-control"
+              value={memberGoalForm.targetDate}
+              onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, targetDate: e.target.value }))}
+            />
+          </div>
+          <div className="mb-2">
+            <label className="form-label small fw-semibold">Coach Notes / Instructions</label>
+            <textarea
+              className="form-control"
+              rows={2}
+              placeholder="e.g. Focus on progressive overload, maintain proper form..."
+              value={memberGoalForm.notes}
+              onChange={(e) => setMemberGoalForm((prev) => ({ ...prev, notes: e.target.value }))}
+            />
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMemberGoalModal(false)} type="button">
+            Cancel
+          </Button>
+          <Button variant="primary" type="submit" disabled={memberGoalSaving}>
+            {memberGoalSaving ? "Assigning..." : "Assign Goal"}
+          </Button>
+        </Modal.Footer>
+      </form>
+    </Modal>
+  );
 
   const renderDietAssignModal = () => (
     <Modal show={showDietAssignModal} onHide={closeDietAssignModal} centered>
@@ -3852,6 +5038,126 @@ export default function User() {
     designations,
   };
 
+  const tableColumns = useMemo(() => {
+    return [
+      {
+        key: "id",
+        label: "ID",
+        sortable: true,
+        render: (val, row) => (
+          <span className="fw-semibold text-muted text-nowrap">{formatMemberCode(row.id)}</span>
+        ),
+      },
+      {
+        key: "role",
+        label: "ROLE",
+        sortable: true,
+        render: (val, row) => (
+          <span className={`badge ${getRoleBadgeClass(row.role)}`}>{roleDisplay(row.role)}</span>
+        ),
+      },
+      {
+        key: "name",
+        label: "NAME",
+        sortable: true,
+        render: (val, row) => (
+          <div className="d-flex align-items-center text-nowrap">
+            <UserAvatar
+              src={row.img}
+              name={row.name}
+              role={row.role}
+              size={34}
+              className="me-2"
+            />
+            {normalizeRole(row.role) === "USER" ? (
+              <button
+                type="button"
+                className="btn btn-link p-0 fw-semibold text-decoration-none text-start text-primary"
+                onClick={() => openProfileModal(row)}
+              >
+                {row.name || "-"}
+              </button>
+            ) : (
+              <span className="fw-semibold text-white">{row.name || "-"}</span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "email",
+        label: "EMAIL",
+        sortable: true,
+        render: (val, row) => <span className="text-secondary">{row.email || "-"}</span>,
+      },
+      {
+        key: "phone",
+        label: "PHONE",
+        sortable: true,
+        render: (val, row) => (
+          <span className="text-nowrap">{formatPhoneWithCode(row.phone, row.countryCode)}</span>
+        ),
+      },
+      {
+        key: "department",
+        label: isMembersPage || viewMode === "users" ? "TRAINER" : "DEPARTMENT / TITLE",
+        sortable: true,
+        render: (val, row) =>
+          normalizeRole(row.role) === "USER"
+            ? (row.assignedTrainerName || "-")
+            : (row.department || "-"),
+      },
+      {
+        key: "orgScope",
+        label: "ORG SCOPE",
+        sortable: false,
+        render: (val, row) => {
+          const label = buildOrgLabel(row.raw, scopeHelpers, row.role);
+          const tooltip = buildOrgHierarchyTooltip(row.raw, scopeHelpers);
+          return (
+            <span
+              className="badge bg-light text-dark border text-nowrap px-2 py-1 fw-medium"
+              title={tooltip || label}
+              style={{ fontSize: "12px", letterSpacing: "0.2px" }}
+            >
+              {label}
+            </span>
+          );
+        },
+      },
+      {
+        key: "status",
+        label: "STATUS",
+        sortable: true,
+        render: (val, row) => (
+          <div className="form-check form-switch d-inline-flex align-items-center gap-2 m-0 ps-0">
+            <input
+              className="form-check-input m-0"
+              style={{ cursor: togglingId === row.id ? "wait" : "pointer", marginLeft: 0 }}
+              type="checkbox"
+              role="switch"
+              title={row.status === "ACTIVE" ? "Click to deactivate" : "Click to activate"}
+              checked={row.status === "ACTIVE"}
+              disabled={togglingId === row.id}
+              onChange={() => handleToggleStatus(row)}
+            />
+            <span className={`badge ${row.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
+              {row.status === "ACTIVE" ? "Active" : "Inactive"}
+            </span>
+          </div>
+        ),
+      },
+    ];
+  }, [
+    isMembersPage,
+    viewMode,
+    togglingId,
+    headOffices,
+    branches,
+    departments,
+    teams,
+    designations,
+  ]);
+
   const renderGridCard = (row) => (
     <div className="col-xl-3 col-lg-4 col-md-6 d-flex" key={`${row.role}-${row.id}`}>
       <div className="card flex-fill">
@@ -3879,6 +5185,16 @@ export default function User() {
                   <IconChefHat size={14} />
                 </button>
               )}
+              {canAssignGoal && normalizeRole(row.role) === "USER" && (
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => openProfileModal(row, "goals")}
+                  type="button"
+                  title="Member Goals"
+                >
+                  <IconTarget size={14} />
+                </button>
+              )}
               {normalizeRole(row.role) === "USER" && (
                 <button
                   className="btn btn-sm btn-outline-info"
@@ -3899,12 +5215,12 @@ export default function User() {
           </div>
 
           <div className="d-flex align-items-center mb-3">
-            <img
-              src={row.img || ROLE_AVATARS[normalizeRole(row.role)] || userAvatar}
-              alt={row.name}
-              className="rounded-circle me-2"
-              width="42"
-              height="42"
+            <UserAvatar
+              src={row.img}
+              name={row.name}
+              role={row.role}
+              size={42}
+              className="me-2"
             />
             <div>
               <h6 className="mb-0">
@@ -3926,7 +5242,7 @@ export default function User() {
 
           <p className="mb-1">Email: {row.email || "-"}</p>
           <p className="mb-1">Phone: {formatPhoneWithCode(row.phone, row.countryCode)}</p>
-          <p className="mb-1">Org: {buildOrgLabel(row.raw, scopeHelpers, row.role)}</p>
+          <p className="mb-1 text-nowrap">Org: <span className="fw-semibold">{buildOrgLabel(row.raw, scopeHelpers, row.role)}</span></p>
           <div className="form-check form-switch d-inline-flex align-items-center gap-2 m-0 ps-0">
             <input
               className="form-check-input m-0"
@@ -3975,6 +5291,7 @@ export default function User() {
           {renderWorkoutAssignModal()}
           {renderDeleteModal()}
           {renderProfileModal()}
+          {renderMemberGoalModal()}
       </div>
     );
   }
@@ -3986,20 +5303,34 @@ export default function User() {
         {error && <div className="alert alert-danger">{error}</div>}
 
         {renderHeader(isMembersPage ? "Members Management" : "User Management", isMembersPage ? "Members" : "Users")}
-        {renderDisplaySwitch()}
-        {renderStats()}
-        {renderMemberFilterTabs()}
 
-        <div className="card mb-3">
-          <div className="card-body d-flex flex-wrap align-items-center gap-3 justify-content-between">
-            <div>
-              <h5 className="mb-1">Current Role</h5>
-              <p className="text-muted mb-0">
-                Logged in as <strong>{currentRole || "UNKNOWN"}</strong>
-                {currentUserId ? ` (User ID: ${currentUserId})` : ""}
-              </p>
+        <div className="um-toolbar-strip">
+          {!isMembersPage && (
+            <div className="um-switcher-group">
+              <button
+                type="button"
+                className={`um-tab-btn ${viewMode === "employees" ? "active" : ""}`}
+                onClick={() => setViewMode("employees")}
+              >
+                Employees
+                <span className="um-badge-count">{employeeRows.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`um-tab-btn ${viewMode === "users" ? "active" : ""}`}
+                onClick={() => setViewMode("users")}
+              >
+                Members
+                <span className="um-badge-count">{userRows.length}</span>
+              </button>
             </div>
-            <div className="d-flex flex-wrap gap-2">
+          )}
+          <div className="um-role-info ms-auto">
+            <span className="um-logged-as">
+              Logged in as <span className={`badge ${getRoleBadgeClass(currentRole)}`}>{currentRole || "UNKNOWN"}</span>
+              {currentUserId ? ` (ID: ${currentUserId})` : ""}
+            </span>
+            <div className="um-role-tags">
               {ROLE_OPTIONS.map((item) => (
                 <span key={item.value} className={`badge ${getRoleBadgeClass(item.value)}`}>
                   {item.label}
@@ -4009,157 +5340,82 @@ export default function User() {
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 className="mb-0">{viewMode === "users" ? "Members List" : "Employee List"}</h5>
-            <div className="d-flex flex-wrap gap-2 align-items-center">
-              <span className="badge bg-info">{currentRole || "UNKNOWN"}</span>
-              <span className="badge bg-light text-dark">
-                Create:{" "}
-                {creatableRolesForCurrentView.map((item) => item.label).join(", ") || "None"}
-              </span>
-            </div>
-          </div>
+        {renderStats()}
+        {renderMemberFilterTabs()}
 
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>ID</th>
-                    <th>Role</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>{isMembersPage ? "Trainer" : "Department / Title"}</th>
-                    <th>Org Scope</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={9} className="text-center py-4">
-                        Loading...
-                      </td>
-                    </tr>
-                  ) : displayedRows.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="text-center py-4">
-                        No {viewMode === "users" ? "members" : "employees"} found for your role.
-                      </td>
-                    </tr>
-                  ) : (
-                    displayedRows.map((row) => (
-                      <tr key={`${row.role}-${row.id}`}>
-                        <td className="fw-semibold text-muted text-nowrap">{formatMemberCode(row.id)}</td>
-                        <td>
-                          <span className={`badge ${getRoleBadgeClass(row.role)}`}>{roleDisplay(row.role)}</span>
-                        </td>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <img
-                              src={row.img || ROLE_AVATARS[normalizeRole(row.role)] || userAvatar}
-                              alt={row.name}
-                              className="rounded-circle me-2"
-                              width="34"
-                              height="34"
-                            />
-                            {normalizeRole(row.role) === "USER" ? (
-                              <button
-                                type="button"
-                                className="btn btn-link p-0 fw-semibold text-decoration-none text-start text-primary"
-                                onClick={() => openProfileModal(row)}
-                              >
-                                {row.name || "-"}
-                              </button>
-                            ) : (
-                              <span className="fw-semibold">{row.name || "-"}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>{row.email || "-"}</td>
-                        <td>{formatPhoneWithCode(row.phone, row.countryCode)}</td>
-                        <td>{normalizeRole(row.role) === "USER" ? (row.assignedTrainerName || "-") : (row.department || "-")}</td>
-                        <td>{buildOrgLabel(row.raw, scopeHelpers, row.role)}</td>
-                        <td>
-                          <div className="form-check form-switch d-inline-flex align-items-center gap-2 m-0 ps-0">
-                            <input
-                              className="form-check-input m-0"
-                              style={{ cursor: togglingId === row.id ? "wait" : "pointer", marginLeft: 0 }}
-                              type="checkbox"
-                              role="switch"
-                              title={row.status === "ACTIVE" ? "Click to deactivate" : "Click to activate"}
-                              checked={row.status === "ACTIVE"}
-                              disabled={togglingId === row.id}
-                              onChange={() => handleToggleStatus(row)}
-                            />
-                            <span className={`badge ${row.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                              {row.status === "ACTIVE" ? "Active" : "Inactive"}
-                            </span>
-                          </div>
-                        </td>
-                        <td>
-                            {canAssignWorkoutPlan && normalizeRole(row.role) === "USER" && (
-                              <button
-                                className="btn btn-sm btn-outline-success me-1"
-                                onClick={() => openWorkoutAssignModal(row)}
-                                type="button"
-                              >
-                                <IconBarbell size={14} className="me-1" />
-                                Assign Workout Plan
-                              </button>
-                            )}
-                            {canAssignDietPlan && normalizeRole(row.role) === "USER" && (
-                              <button
-                                className="btn btn-sm btn-outline-warning me-1"
-                                onClick={() => openDietAssignModal(row)}
-                                type="button"
-                              >
-                              <IconChefHat size={14} className="me-1" />
-                              Assign Diet Plan
-                            </button>
-                          )}
-                          {normalizeRole(row.role) === "USER" && (
-                            <button
-                              className="btn btn-sm btn-outline-info me-1"
-                              onClick={() => openProfileModal(row)}
-                              type="button"
-                              title="View Member Profile"
-                            >
-                              <IconEye size={14} />
-                            </button>
-                          )}
-                          <button
-                            className="btn btn-sm btn-outline-primary me-1"
-                            onClick={() => openEdit(row)}
-                            type="button"
-                          >
-                            <IconEdit size={14} />
-                          </button>
-                          <button
-                            className="btn btn-sm btn-outline-danger"
-                            onClick={() => confirmDelete(row)}
-                            type="button"
-                          >
-                            <IconTrash size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        <CommonTable
+          key={viewMode}
+          columns={tableColumns}
+          data={displayedRows}
+          entityName={viewMode === "users" ? "member" : "employee"}
+          searchPlaceholder={
+            viewMode === "users"
+              ? "Search members by name, email, phone, trainer..."
+              : "Search employees by name, email, phone, role, department..."
+          }
+          searchKeys={["name", "email", "phone", "role", "department", "assignedTrainerName"]}
+          idKey="compositeId"
+          onEdit={openEdit}
+          onDelete={(row) => confirmDelete(row)}
+          canEdit={true}
+          canDelete={true}
+          loading={loading}
+          customActions={(row) => (
+            <>
+              {canAssignWorkoutPlan && normalizeRole(row.role) === "USER" && (
+                <button
+                  className="ct-action-btn"
+                  style={{ color: "#10b981", borderColor: "rgba(16, 185, 129, 0.3)" }}
+                  onClick={() => openWorkoutAssignModal(row)}
+                  type="button"
+                  title="Assign Workout Plan"
+                >
+                  <IconBarbell size={14} />
+                </button>
+              )}
+              {canAssignDietPlan && normalizeRole(row.role) === "USER" && (
+                <button
+                  className="ct-action-btn"
+                  style={{ color: "#f59e0b", borderColor: "rgba(245, 158, 11, 0.3)" }}
+                  onClick={() => openDietAssignModal(row)}
+                  type="button"
+                  title="Assign Diet Plan"
+                >
+                  <IconChefHat size={14} />
+                </button>
+              )}
+              {canAssignGoal && normalizeRole(row.role) === "USER" && (
+                <button
+                  className="ct-action-btn"
+                  style={{ color: "#8b5cf6", borderColor: "rgba(139, 92, 246, 0.3)" }}
+                  onClick={() => openProfileModal(row, "goals")}
+                  type="button"
+                  title="Member Goals"
+                >
+                  <IconTarget size={14} />
+                </button>
+              )}
+              {normalizeRole(row.role) === "USER" && (
+                <button
+                  className="ct-action-btn"
+                  style={{ color: "#06b6d4", borderColor: "rgba(6, 182, 212, 0.3)" }}
+                  onClick={() => openProfileModal(row)}
+                  type="button"
+                  title="View Member Profile"
+                >
+                  <IconEye size={14} />
+                </button>
+              )}
+            </>
+          )}
+        />
 
         {renderUserModal()}
         {renderDietAssignModal()}
         {renderWorkoutAssignModal()}
         {renderDeleteModal()}
         {renderProfileModal()}
+        {renderMemberGoalModal()}
       </div>
     </div>
   );

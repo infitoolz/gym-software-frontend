@@ -51,6 +51,7 @@ const ROLE_LABELS = {
   TRAINER: "Trainer",
   COUNSELOR: "Counselor",
   USER: "User",
+  CORPORATE_HR: "Corporate HR",
 };
 
 const ROLE_DEFAULT_PAGES = {
@@ -58,11 +59,12 @@ const ROLE_DEFAULT_PAGES = {
     ...APP_PAGES.map((page) => page.key),
     "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports",
   ],
-  ADMIN: ["dashboard", "employees", "users", "headoffice", "branches", "departments", "designations", "teams", "workout-type", "body-part", "exercise-master", "workout-plan", "workout-detail", "trainer-duty-schedule", "user-workout-schedule", "schedule", "attendance", "membership-plans", "wellness-chat", "profile", "leads", "billing", "inventory", "reports", "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports"],
-  MANAGER: ["dashboard", "employees", "users", "branches", "departments", "designations", "teams", "workout-type", "body-part", "exercise-master", "workout-plan", "workout-detail", "trainer-duty-schedule", "user-workout-schedule", "schedule", "attendance", "membership-plans", "wellness-chat", "profile", "leads", "billing", "inventory", "reports", "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports"],
+  ADMIN: ["dashboard", "employees", "users", "headoffice", "branches", "departments", "designations", "teams", "workout-type", "body-part", "exercise-master", "workout-plan", "workout-detail", "trainer-duty-schedule", "user-workout-schedule", "dietplan", "diet-detail", "goals", "progress", "schedule", "attendance", "membership-plans", "wellness-chat", "profile", "leads", "billing", "inventory", "reports", "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports"],
+  MANAGER: ["dashboard", "employees", "users", "branches", "departments", "designations", "teams", "workout-type", "body-part", "exercise-master", "workout-plan", "workout-detail", "trainer-duty-schedule", "user-workout-schedule", "dietplan", "diet-detail", "goals", "progress", "schedule", "attendance", "membership-plans", "wellness-chat", "profile", "leads", "billing", "inventory", "reports", "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports"],
   TRAINER: ["dashboard", "users", "workout-filter", "workout-topfilter", "upperbody-workout", "create-workout", "workout-summary", "workout-type", "body-part", "exercise-master", "workout-plan", "workout-detail", "trainer-duty-schedule", "user-workout-schedule", "dietplan", "diet-detail", "goals", "schedule", "progress", "wellness-chat", "attendance", "profile", "leads", "reports"],
-  COUNSELOR: ["leads"],
+  COUNSELOR: ["leads", "profile"],
   USER: ["dashboard", "workout-detail", "dietplan", "diet-detail", "goals", "schedule", "my-schedule", "progress", "wellness-chat", "attendance", "profile", "onboding-step"],
+  CORPORATE_HR: ["profile", "corporate-dashboard", "corporate-bmi", "corporate-challenges", "corporate-reports"],
 };
 
 function normalizeRole(role) {

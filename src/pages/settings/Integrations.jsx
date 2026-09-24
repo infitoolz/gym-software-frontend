@@ -10,7 +10,7 @@ import {
   IconLink
 } from "@tabler/icons-react";
 import Swal from "sweetalert2";
-import { Card, Button, Form, Badge } from "react-bootstrap";
+import { Card, Button, Form, Badge, Container } from "react-bootstrap";
 
 export default function Integrations() {
   const [tokens, setTokens] = useState({
@@ -48,8 +48,10 @@ export default function Integrations() {
   };
 
   return (
-    <div className="container-fluid py-4">
-      <div className="mb-4 d-flex align-items-center gap-2">
+    <main className="themebody-wrap">
+      <div className="theme-body">
+        <Container fluid>
+          <div className="mb-4 d-flex align-items-center gap-2">
         <div className="p-2 rounded" style={{ background: "#f8fafc", border: "1px solid #e2e8f0" }}>
           <IconPlugConnected size={24} color="#3b82f6" />
         </div>
@@ -216,6 +218,8 @@ export default function Integrations() {
           </Card>
         </div>
       </div>
-    </div>
+    </Container>
+  </div>
+</main>
   );
 }

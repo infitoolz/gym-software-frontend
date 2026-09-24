@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { IconHome, IconEdit, IconTrash, IconPlus } from '@tabler/icons-react';
 import { 
@@ -13,6 +13,7 @@ import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
 import PhoneField from "../../components/PhoneField";
+import CommonTable from "../../components/CommonTable";
 import { ensureCountryCodeValue, sanitizePhoneDigits, splitPhoneWithCountryCode, validatePhoneNumber } from "../../utils/phoneUtils";
 
 const EMPTY_FORM = {
@@ -48,7 +49,17 @@ export default function BranchPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const modalStepIndex = useMemo(() => {
     const index = BRANCH_STEPS.findIndex((item) => item.key === modalTab);
@@ -131,6 +142,7 @@ export default function BranchPage() {
     });
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -151,6 +163,7 @@ export default function BranchPage() {
     setSelectedId(branch?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -158,6 +171,7 @@ export default function BranchPage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -166,26 +180,30 @@ export default function BranchPage() {
     
     // Validate current step before proceeding
     if (modalTab === "basic") {
+      const errs = {};
       if (!form.name?.trim()) {
-        setModalError("Branch name is required");
-        return;
+        errs.name = "Branch name is required";
       }
       if (!form.headOfficeId) {
-        setModalError("Head office is required");
+        errs.headOfficeId = "Head office is required";
+      }
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errs }));
         return;
       }
     }
     
     if (modalTab === "contact") {
+      const errs = {};
       if (form.phone) {
         const phoneValidation = validatePhoneNumber(form.phone, form.countryCode);
-        if (phoneValidation) {
-          setModalError(phoneValidation);
-          return;
-        }
+        if (phoneValidation) errs.phone = phoneValidation;
       }
       if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        setModalError("Please enter a valid email address");
+        errs.email = "Please enter a valid email address";
+      }
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errs }));
         return;
       }
     }
@@ -205,38 +223,37 @@ export default function BranchPage() {
   // ── Form submit ───────────────────────────────────────────────────────────────
 
   const validateForm = () => {
+    const errors = {};
     if (!form.name?.trim()) {
-      return "Branch name is required";
+      errors.name = "Branch name is required";
     }
 
     if (!form.headOfficeId) {
-      return "Head office is required";
+      errors.headOfficeId = "Head office is required";
     }
 
     if (form.phone) {
       const phoneValidation = validatePhoneNumber(form.phone, form.countryCode);
-      if (phoneValidation) return phoneValidation;
+      if (phoneValidation) errors.phone = phoneValidation;
     }
 
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      return "Please enter a valid email address";
+      errors.email = "Please enter a valid email address";
     }
 
-    return null;
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
-      if (validationMessage.includes("phone") || validationMessage.includes("email")) {
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name || errors.headOfficeId) {
+        setModalTab("basic");
+      } else if (errors.phone || errors.email) {
         setModalTab("contact");
-      } else if (validationMessage.includes("Head office")) {
-        setModalTab("basic");
-      } else {
-        setModalTab("basic");
       }
       return;
     }
@@ -317,19 +334,26 @@ export default function BranchPage() {
       <div className="col-md-12">
         <label className="form-label">Branch Name *</label>
         <input
-          className="form-control"
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, name: e.target.value });
+            clearFieldError("name");
+          }}
           placeholder="Enter branch name"
         />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
 
       <div className="col-md-12">
         <label className="form-label">Head Office *</label>
         <select
-          className="form-select"
+          className={`form-select ${fieldErrors.headOfficeId ? "is-invalid" : ""}`}
           value={form.headOfficeId}
-          onChange={(e) => setForm({ ...form, headOfficeId: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, headOfficeId: e.target.value });
+            clearFieldError("headOfficeId");
+          }}
           disabled={currentRole === "ADMIN" || heLoading}
         >
           <option value="">Select Head Office</option>
@@ -337,6 +361,7 @@ export default function BranchPage() {
             <option key={office.id} value={office.id}>{office.name}</option>
           ))}
         </select>
+        {fieldErrors.headOfficeId && <div className="avm-field-error">{fieldErrors.headOfficeId}</div>}
       </div>
 
       <div className="col-md-12">
@@ -386,19 +411,28 @@ export default function BranchPage() {
           label="Phone Number"
           countryCode={form.countryCode}
           value={form.phone}
-          onChange={({ countryCode, phone }) => setForm({ ...form, countryCode, phone })}
+          onChange={({ countryCode, phone }) => {
+            setForm({ ...form, countryCode, phone });
+            clearFieldError("phone");
+          }}
+          className={fieldErrors.phone ? "is-invalid" : ""}
         />
+        {fieldErrors.phone && <div className="avm-field-error">{fieldErrors.phone}</div>}
       </div>
 
       <div className="col-md-12">
         <label className="form-label">Email Address</label>
         <input
           type="email"
-          className="form-control"
+          className={`form-control ${fieldErrors.email ? "is-invalid" : ""}`}
           value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, email: e.target.value });
+            clearFieldError("email");
+          }}
           placeholder="branch@example.com"
         />
+        {fieldErrors.email && <div className="avm-field-error">{fieldErrors.email}</div>}
         <small className="text-muted d-block mt-1">
           Used for official communication
         </small>
@@ -485,64 +519,39 @@ export default function BranchPage() {
           </div>
         </div>
 
-        {/* ── Branches Table ── */}
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Branches List</h5>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Head Office</th>
-                    <th>Location</th>
-                    <th>Contact</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">Loading...</td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">No branches found</td>
-                    </tr>
-                  ) : (
-                    rows.map((branch) => {
-                      const headOffice = headOffices.find(h => h.id === branch.headOfficeId);
-                      return (
-                        <tr key={branch.id}>
-                          <td className="fw-semibold">{branch.name}</td>
-                          <td>{headOffice?.name || "-"}</td>
-                          <td>{branch.location || "-"}</td>
-                          <td>{branch.phone || "-"}</td>
-                          <td>
-                            <span className={`badge ${branch.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                              {branch.status === "ACTIVE" ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(branch)}>
-                              <IconEdit size={14} />
-                            </button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(branch.id)}>
-                              <IconTrash size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── Branches Table with CommonTable ── */}
+        <CommonTable
+          columns={[
+            { key: "name", label: "NAME", sortable: true },
+            {
+              key: "headOfficeId",
+              label: "HEAD OFFICE",
+              sortable: true,
+              render: (val, row) => {
+                const ho = headOffices.find(h => h.id === row.headOfficeId);
+                return ho?.name || "-";
+              },
+            },
+            { key: "location", label: "LOCATION", sortable: true },
+            { key: "phone", label: "CONTACT", sortable: true },
+            { key: "status", label: "STATUS", sortable: true },
+          ]}
+          data={rows}
+          entityName="branch"
+          searchPlaceholder="Search branch..."
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={(b) => confirmDelete(b.id)}
+          onBulkDelete={async (ids) => {
+            for (const id of ids) {
+              try { await deleteBranch(id); } catch (e) {}
+            }
+            setNotice(`${ids.length} branches deleted successfully`);
+            await loadData();
+          }}
+          canEdit={true}
+          canDelete={true}
+        />
 
         {/* ── Add / Edit Branch Modal using WizardPopup ─────────────────────────── */}
         <WizardPopup

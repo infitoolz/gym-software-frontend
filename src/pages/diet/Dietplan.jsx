@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import {
   IconHome, IconEdit, IconTrash, IconPlus, IconStar, IconClock,
   IconChefHat, IconHeartbeat, IconTools, IconList, IconPhoto,
-  IconX
+  IconX, IconEye, IconInfoCircle
 } from '@tabler/icons-react';
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
 import api from "../../utils/api";
 import { resolveDietImage } from "../../utils/dietImages";
+import CommonTable from "../../components/CommonTable";
 
 // ----------------------------------------------
 //  Constants & Helpers
@@ -23,7 +24,7 @@ const EMPTY_DIET = {
   difficulty: "Medium",
   totalSteps: 1,
   healthScore: 85,
-  calories: 0,
+  calories: "",
   protein: 0,
   carbs: 0,
   fats: 0,
@@ -41,9 +42,31 @@ const EMPTY_DIET = {
   mainImage: "",
   galleryImages: [],
   status: "ACTIVE",
+  dietType: "",
+  mealType: "",
+  servingSize: "",
+  dietNotes: "",
 };
 
 const DIFFICULTY_OPTIONS = ["Easy", "Medium", "Hard"];
+const DIET_TYPE_OPTIONS = [
+  "Vegetarian",
+  "Non-Vegetarian",
+  "Vegan",
+  "Keto",
+  "High Protein",
+  "Low Carb",
+  "Other",
+];
+const MEAL_TYPE_OPTIONS = [
+  "Breakfast",
+  "Morning Snack",
+  "Lunch",
+  "Evening Snack",
+  "Dinner",
+  "Post Workout",
+];
+
 const STEP_FIELDS = [
   { key: "basic", label: "Basic Info" },
   { key: "timing", label: "Timing & Difficulty" },
@@ -51,6 +74,7 @@ const STEP_FIELDS = [
   { key: "ingredients", label: "Ingredients & Tools" },
   { key: "directions", label: "Directions" },
   { key: "images", label: "Images" },
+  { key: "diet_menu", label: "Diet Menu" },
 ];
 
 const textToArray = (text) => text.split(/\r?\n/).filter(s => s.trim().length > 0);
@@ -64,20 +88,24 @@ function normalizeDietPlan(plan) {
     id: plan.id,
     name: plan.name || plan.title || "Untitled menu item",
     description: plan.description || "",
-    prepTime: numberOrZero(plan.prepTime),
-    cookTime: numberOrZero(plan.cookTime),
-    totalSteps: Math.max(numberOrZero(plan.totalSteps), 1),
-    healthScore: numberOrZero(plan.healthScore),
-    calories: numberOrZero(plan.calories),
+    prepTime: numberOrZero(plan.prepTime ?? plan.prep_time),
+    cookTime: numberOrZero(plan.cookTime ?? plan.cook_time),
+    totalSteps: Math.max(numberOrZero(plan.totalSteps ?? plan.total_steps), 1),
+    healthScore: numberOrZero(plan.healthScore ?? plan.health_score),
+    calories: plan.calories !== undefined && plan.calories !== null && plan.calories !== "" ? plan.calories : "",
     protein: numberOrZero(plan.protein),
     carbs: numberOrZero(plan.carbs),
     fats: numberOrZero(plan.fats),
     ingredients: plan.ingredients || [],
     directions: plan.directions || [],
     tools: plan.tools || [],
-    mainImage: plan.mainImage || plan.image || "",
-    galleryImages: plan.galleryImages || [],
+    mainImage: plan.mainImage || plan.main_image || plan.image || "",
+    galleryImages: plan.galleryImages || plan.gallery_images || [],
     status: plan.status || "ACTIVE",
+    dietType: plan.dietType || plan.diet_type || "",
+    mealType: plan.mealType || plan.meal_type || "",
+    servingSize: plan.servingSize || plan.serving_size || "",
+    dietNotes: plan.dietNotes || plan.diet_notes || "",
   };
 }
 
@@ -103,7 +131,17 @@ export default function DietPlanPage() {
   const [form, setForm] = useState(EMPTY_DIET);
   const [modalTab, setModalTab] = useState("basic");
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
   const [ingredientText, setIngredientText] = useState("");
   const [directionText, setDirectionText] = useState("");
   const [toolText, setToolText] = useState("");
@@ -169,7 +207,13 @@ export default function DietPlanPage() {
     const res = await api.post("/uploads/diet-images", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return res.data?.data?.path || res.data?.path || "";
+    return (
+      res.data?.data?.url ||
+      res.data?.data?.path ||
+      res.data?.url ||
+      res.data?.path ||
+      ""
+    );
   };
 
   useEffect(() => {
@@ -204,6 +248,7 @@ export default function DietPlanPage() {
     setToolText("");
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -215,6 +260,11 @@ export default function DietPlanPage() {
       directions: plan.directions || [],
       tools: plan.tools || [],
       galleryImages: plan.galleryImages || [],
+      dietType: plan.dietType || plan.diet_type || "",
+      mealType: plan.mealType || plan.meal_type || "",
+      servingSize: plan.servingSize || plan.serving_size || "",
+      dietNotes: plan.dietNotes || plan.diet_notes || "",
+      calories: plan.calories !== undefined && plan.calories !== null && plan.calories !== "" ? plan.calories : "",
     });
     setIngredientText(arrayToText(plan.ingredients || []));
     setDirectionText(arrayToText(plan.directions || []));
@@ -222,6 +272,7 @@ export default function DietPlanPage() {
     setSelectedId(plan.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -229,6 +280,7 @@ export default function DietPlanPage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -236,8 +288,27 @@ export default function DietPlanPage() {
     setModalError("");
     // Basic validation before moving forward
     if (modalTab === "basic" && !form.name?.trim()) {
-      setModalError("Diet menu item name is required");
+      setFieldErrors((prev) => ({ ...prev, name: "Diet menu item name is required" }));
       return;
+    }
+    if (modalTab === "diet_menu") {
+      const errs = {};
+      if (!form.dietType?.trim()) {
+        errs.dietType = "Diet type is required";
+      }
+      if (
+        form.calories === "" ||
+        form.calories === null ||
+        form.calories === undefined ||
+        isNaN(Number(form.calories)) ||
+        Number(form.calories) <= 0
+      ) {
+        errs.calories = "Calorie (kcal) is required and must be greater than 0";
+      }
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errs }));
+        return;
+      }
     }
     if (modalStepIndex < modalStepCount - 1) {
       setModalTab(STEP_FIELDS[modalStepIndex + 1].key);
@@ -252,20 +323,37 @@ export default function DietPlanPage() {
   };
 
   const validateForm = () => {
-    if (!form.name?.trim()) return "Diet menu item name is required";
-    if (form.prepTime < 0) return "Prep time cannot be negative";
-    if (form.cookTime < 0) return "Cook time cannot be negative";
-    if (form.totalSteps < 1) return "Total steps must be at least 1";
-    if (form.healthScore < 0 || form.healthScore > 100) return "Health score must be between 0 and 100";
-    return null;
+    const errors = {};
+    if (!form.name?.trim()) errors.name = "Diet menu item name is required";
+    if (form.prepTime < 0) errors.prepTime = "Prep time cannot be negative";
+    if (form.cookTime < 0) errors.cookTime = "Cook time cannot be negative";
+    if (form.totalSteps < 1) errors.totalSteps = "Total steps must be at least 1";
+    if (form.healthScore < 0 || form.healthScore > 100) errors.healthScore = "Health score must be between 0 and 100";
+    if (!form.dietType?.trim()) errors.dietType = "Diet type is required";
+    if (
+      form.calories === "" ||
+      form.calories === null ||
+      form.calories === undefined ||
+      isNaN(Number(form.calories)) ||
+      Number(form.calories) <= 0
+    ) {
+      errors.calories = "Calorie (kcal) is required and must be greater than 0";
+    }
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
-    const errMsg = validateForm();
-    if (errMsg) {
-      setModalError(errMsg);
-      setModalTab("basic");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name) {
+        setModalTab("basic");
+      } else if (errors.dietType || errors.calories) {
+        setModalTab("diet_menu");
+      } else if (errors.prepTime || errors.cookTime || errors.totalSteps || errors.healthScore) {
+        setModalTab("timing");
+      }
       return;
     }
 
@@ -278,17 +366,17 @@ export default function DietPlanPage() {
       difficulty: form.difficulty,
       totalSteps: Number(form.totalSteps),
       healthScore: Number(form.healthScore),
-      calories: Number(form.calories),
-      protein: Number(form.protein),
-      carbs: Number(form.carbs),
-      fats: Number(form.fats),
-      cholesterol: Number(form.cholesterol),
-      sodium: Number(form.sodium),
-      potassium: Number(form.potassium),
-      vitaminA: Number(form.vitaminA),
-      vitaminC: Number(form.vitaminC),
-      calcium: Number(form.calcium),
-      iron: Number(form.iron),
+      calories: Number(form.calories) || 0,
+      protein: Number(form.protein) || 0,
+      carbs: Number(form.carbs) || 0,
+      fats: Number(form.fats) || 0,
+      cholesterol: Number(form.cholesterol) || 0,
+      sodium: Number(form.sodium) || 0,
+      potassium: Number(form.potassium) || 0,
+      vitaminA: Number(form.vitaminA) || 0,
+      vitaminC: Number(form.vitaminC) || 0,
+      calcium: Number(form.calcium) || 0,
+      iron: Number(form.iron) || 0,
       ingredients: textToArray(ingredientText),
       directions: textToArray(directionText),
       tools: textToArray(toolText),
@@ -296,6 +384,14 @@ export default function DietPlanPage() {
       mainImage: form.mainImage,
       galleryImages: form.galleryImages || [],
       status: form.status,
+      dietType: form.dietType?.trim() || "",
+      diet_type: form.dietType?.trim() || "",
+      mealType: form.mealType?.trim() || "",
+      meal_type: form.mealType?.trim() || "",
+      servingSize: form.servingSize?.trim() || "",
+      serving_size: form.servingSize?.trim() || "",
+      dietNotes: form.dietNotes?.trim() || "",
+      diet_notes: form.dietNotes?.trim() || "",
     };
 
     setSaving(true);
@@ -325,6 +421,80 @@ export default function DietPlanPage() {
       setSaving(false);
     }
   };
+
+  const handleBulkDelete = async (ids) => {
+    for (const id of ids) {
+      try {
+        await deleteDietPlan(id);
+      } catch (e) {}
+    }
+    setNotice(`${ids.length} menu item(s) deleted successfully`);
+    await loadDietPlans();
+  };
+
+  const columns = useMemo(() => [
+    {
+      key: "name",
+      label: "MENU ITEM",
+      sortable: true,
+      render: (val, plan) => (
+        <div className="d-flex align-items-center gap-2">
+          {plan.mainImage ? (
+            <img src={resolveDietImage(plan.mainImage)} alt="" style={{ width: 42, height: 42, borderRadius: 8, objectFit: "cover" }} />
+          ) : (
+            <div className="rounded-2 d-flex align-items-center justify-content-center" style={{ width: 42, height: 42, background: "rgba(255,255,255,0.06)" }}>
+              <IconChefHat size={18} />
+            </div>
+          )}
+          <div>
+            <div className="fw-semibold text-white">{plan.name}</div>
+            <small className="text-muted">{plan.description ? plan.description.slice(0, 60) + "..." : ""}</small>
+          </div>
+        </div>
+      ),
+      cardRender: (val, plan) => plan.name,
+    },
+    {
+      key: "difficulty",
+      label: "DIFFICULTY",
+      sortable: true,
+      render: (val, plan) => plan.difficulty || "-",
+    },
+    {
+      key: "time",
+      label: "TIME",
+      sortable: true,
+      render: (val, plan) => `${(plan.prepTime || 0) + (plan.cookTime || 0)} min`,
+    },
+    {
+      key: "calories",
+      label: "CALORIES",
+      sortable: true,
+      render: (val, plan) => plan.calories || 0,
+    },
+    {
+      key: "protein",
+      label: "PROTEIN",
+      sortable: true,
+      render: (val, plan) => `${plan.protein || 0}g`,
+    },
+    {
+      key: "healthScore",
+      label: "HEALTH SCORE",
+      sortable: true,
+      render: (val, plan) => `${plan.healthScore || 0}/100`,
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      sortable: true,
+      render: (val, plan) => (
+        <span className={`badge ${plan.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
+          {plan.status || "ACTIVE"}
+        </span>
+      ),
+    },
+  ], []);
 
   // ----------------------------------------------
   //  Image Upload Handlers
@@ -394,9 +564,16 @@ export default function DietPlanPage() {
       </div>
       <div className="col-md-12">
         <label className="form-label">Plan Name *</label>
-        <input className="form-control" value={form.name}
-               onChange={e => setForm({...form, name: e.target.value})}
-               placeholder="e.g., Morning Energy Bowl" />
+        <input
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
+          value={form.name}
+          onChange={(e) => {
+            setForm({...form, name: e.target.value});
+            clearFieldError("name");
+          }}
+          placeholder="e.g., Morning Energy Bowl"
+        />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
       <div className="col-md-12">
         <label className="form-label">Description</label>
@@ -456,7 +633,7 @@ export default function DietPlanPage() {
   const renderNutrition = () => (
     <div className="row g-3">
       <div className="col-12"><p className="avm-section-title">Nutrition Facts (per serving)</p></div>
-      <div className="col-md-4"><label>Calories</label><input type="number" className="form-control" value={form.calories} onChange={e => setForm({...form, calories: e.target.value})} /></div>
+      <div className="col-md-4"><label>Calories</label><input type="number" min="0" className="form-control" placeholder="e.g., 350" value={form.calories ?? ""} onChange={e => setForm({...form, calories: e.target.value === "" ? "" : Number(e.target.value)})} /></div>
       <div className="col-md-4"><label>Protein (g)</label><input type="number" className="form-control" value={form.protein} onChange={e => setForm({...form, protein: e.target.value})} /></div>
       <div className="col-md-4"><label>Carbs (g)</label><input type="number" className="form-control" value={form.carbs} onChange={e => setForm({...form, carbs: e.target.value})} /></div>
       <div className="col-md-4"><label>Fats (g)</label><input type="number" className="form-control" value={form.fats} onChange={e => setForm({...form, fats: e.target.value})} /></div>
@@ -549,6 +726,112 @@ export default function DietPlanPage() {
               <button type="button" className="btn btn-sm btn-danger position-absolute top-0 end-0 rounded-circle p-0" style={{ width: "20px", height: "20px", lineHeight: "1" }} onClick={() => removeGalleryImage(idx)}><IconX size={12} /></button>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDietMenu = () => (
+    <div className="row g-3">
+      <div className="col-12">
+        <p className="avm-section-title">DIET MENU INFORMATION</p>
+      </div>
+
+      <div className="col-md-6">
+        <label className="form-label">
+          Diet Type <span className="text-danger">*</span>
+        </label>
+        <select
+          className={`form-select ${fieldErrors.dietType ? "is-invalid" : ""}`}
+          value={form.dietType || ""}
+          onChange={(e) => {
+            setForm({ ...form, dietType: e.target.value });
+            clearFieldError("dietType");
+          }}
+        >
+          <option value="">Select diet type</option>
+          {DIET_TYPE_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        {fieldErrors.dietType && <div className="avm-field-error">{fieldErrors.dietType}</div>}
+      </div>
+
+      <div className="col-md-6">
+        <label className="form-label">
+          Calorie (kcal) <span className="text-danger">*</span>
+        </label>
+        <input
+          type="number"
+          min="0"
+          className={`form-control ${fieldErrors.calories ? "is-invalid" : ""}`}
+          placeholder="e.g., 350"
+          value={form.calories ?? ""}
+          onChange={(e) => {
+            clearFieldError("calories");
+            const val = e.target.value;
+            if (val === "") {
+              setForm({ ...form, calories: "" });
+            } else {
+              const num = parseInt(val, 10);
+              if (!isNaN(num) && num >= 0) {
+                setForm({ ...form, calories: num });
+              }
+            }
+          }}
+          onKeyDown={(e) => {
+            if (["e", "E", "+", "-", "."].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+        />
+        {fieldErrors.calories && <div className="avm-field-error">{fieldErrors.calories}</div>}
+      </div>
+
+      <div className="col-md-6">
+        <label className="form-label">Meal Type</label>
+        <select
+          className="form-select"
+          value={form.mealType || ""}
+          onChange={(e) => setForm({ ...form, mealType: e.target.value })}
+        >
+          <option value="">Select meal type</option>
+          {MEAL_TYPE_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="col-md-6">
+        <label className="form-label">Serving Size</label>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="e.g., 1 serving / 1 bowl"
+          value={form.servingSize || ""}
+          onChange={(e) => setForm({ ...form, servingSize: e.target.value })}
+        />
+      </div>
+
+      <div className="col-12">
+        <label className="form-label">Diet Notes</label>
+        <textarea
+          className="form-control"
+          rows={3}
+          placeholder="e.g., Suitable for weight loss, high protein, low carb, etc."
+          value={form.dietNotes || ""}
+          onChange={(e) => setForm({ ...form, dietNotes: e.target.value })}
+        />
+      </div>
+
+      <div className="col-12">
+        <div className="diet-menu-info-message d-flex align-items-center gap-2 p-2 px-3 rounded">
+          <IconInfoCircle size={18} className="flex-shrink-0" />
+          <span>This diet menu will be included in your meal plan and shown to users based on their diet preferences.</span>
         </div>
       </div>
     </div>
@@ -682,19 +965,24 @@ export default function DietPlanPage() {
           )}
         </div>
 
-        {/* View toggle */}
-        <div className="d-flex gap-2 mb-3">
-          <button className={`btn ${viewMode === "grid" ? "btn-primary" : "btn-light"}`} onClick={() => setViewMode("grid")}>Grid View</button>
-          <button className={`btn ${viewMode === "table" ? "btn-primary" : "btn-light"}`} onClick={() => setViewMode("table")}>Table View</button>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-4">Loading...</div>
-        ) : plans.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          viewMode === "grid" ? renderGrid() : renderTable()
-        )}
+        {/* ── Diet Menu Common Table ── */}
+        <CommonTable
+          columns={columns}
+          data={plans}
+          entityName="diet menu item"
+          searchPlaceholder="Search diet menu..."
+          loading={loading}
+          onEdit={!isMember ? openEdit : null}
+          onDelete={!isMember ? (plan) => confirmDelete(plan.id) : null}
+          onBulkDelete={!isMember ? handleBulkDelete : null}
+          customActions={(plan) => (
+            <Link className="ct-action-btn ct-btn-view" to={`/diet-detail/${plan.id}`} title="View Details">
+              <IconEye size={14} />
+            </Link>
+          )}
+          canEdit={!isMember}
+          canDelete={!isMember}
+        />
       </div>
 
       {/* Add/Edit Modal */}
@@ -708,7 +996,7 @@ export default function DietPlanPage() {
         onNext={goToNextStep}
         onSubmit={handleSubmit}
         submitLabel={saving ? "Saving..." : "Save"}
-        modalWidth="700px"
+        modalWidth="760px"
         disabled={saving}
       >
         {modalError && <div className="alert alert-danger">{modalError}</div>}
@@ -718,6 +1006,7 @@ export default function DietPlanPage() {
         {modalTab === "ingredients" && renderIngredientsTools()}
         {modalTab === "directions" && renderDirections()}
         {modalTab === "images" && renderImages()}
+        {modalTab === "diet_menu" && renderDietMenu()}
       </WizardPopup>
 
       {/* Delete Confirmation Modal */}

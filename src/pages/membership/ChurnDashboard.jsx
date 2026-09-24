@@ -89,11 +89,13 @@ const ChurnDashboard = () => {
 
       try {
         Swal.fire({ title: 'Sending...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-        // We could pass platform to the API, but for now we'll just append it to the message or assume backend knows
-        await engageAtRiskMember(member.id, user.userId, finalMessage);
-        Swal.fire('Sent!', `Message successfully sent to the member via ${platform === 'whatsapp' ? 'WhatsApp' : 'Email'}.`, 'success');
+        const res = await engageAtRiskMember(member.id, user?.userId || user?.id, finalMessage, platform);
+        if (platform === 'whatsapp' && res?.whatsappUrl) {
+          window.open(res.whatsappUrl, '_blank');
+        }
+        Swal.fire('Sent!', `Message successfully sent to ${member.firstName || 'the member'} via ${platform === 'whatsapp' ? 'WhatsApp' : 'Email'}.`, 'success');
       } catch (err) {
-        Swal.fire('Error', err.response?.data?.message || 'Failed to send message.', 'error');
+        Swal.fire('Error', err.response?.data?.message || err?.message || 'Failed to send message.', 'error');
       }
     }
   };

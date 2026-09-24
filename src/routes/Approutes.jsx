@@ -51,6 +51,7 @@ const RolePermissions = lazy(() => import("../pages/permissions/RolePermissions"
 const LeadsCRM = lazy(() => import("../pages/crm/LeadsCRM"));
 const BillingDashboard = lazy(() => import("../pages/billing/BillingDashboard"));
 const InventoryCRUD = lazy(() => import("../pages/inventory/InventoryCRUD"));
+const AssetPublicScan = lazy(() => import("../pages/inventory/AssetPublicScan"));
 const ReportsDashboard = lazy(() => import("../pages/reports/ReportsDashboard"));
 const RenewalManagement = lazy(() => import("../pages/membership/RenewalManagement"));
 const ChurnDashboard = lazy(() => import("../pages/membership/ChurnDashboard"));
@@ -112,6 +113,7 @@ export default function AppRoutes() {
         <Route path="/onboding-step" element={<Onbodingstep />} />
         <Route path="/error-page" element={<Errorpage />} />
         <Route path="/feedback/:id" element={<LeadFeedback />} />
+        <Route path="/asset/:id" element={<AssetPublicScan />} />
         <Route path="/corporate-login" element={<CorporateLogin />} />
         <Route path="/sales-login"     element={<SalesLogin />} />
 
@@ -124,6 +126,7 @@ export default function AppRoutes() {
           <Route path="challenges" element={<CorporateChallenges />} />
           <Route path="billing" element={<CorporateBilling />} />
           <Route path="reports" element={<CorporateReports />} />
+          <Route path="profile" element={<Profile />} />
         </Route>
 
         {/* Protected Routes */}

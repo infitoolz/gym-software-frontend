@@ -69,12 +69,12 @@ export default function Membership() {
     return () => clearTimeout(t);
   }, [notice]);
 
-  const applicable = membership?.applicable;
+  const applicable = membership?.applicable ?? (membership?.plan !== "STAFF" && String(user?.role || "").toUpperCase() === "USER");
   const currentPlanId = membership?.planId ?? null;
   const currentCode = String(membership?.plan || "").toUpperCase();
 
   const isCurrent = (plan) =>
-    (currentPlanId != null && plan.id === currentPlanId) ||
+    (currentPlanId != null && String(plan.id) === String(currentPlanId)) ||
     (currentPlanId == null && plan.code?.toUpperCase() === currentCode);
 
   const handleSubscribe = async (plan) => {

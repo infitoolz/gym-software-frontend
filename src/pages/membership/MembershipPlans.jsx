@@ -10,6 +10,7 @@ import {
   updateMembershipPlan,
   deleteMembershipPlan,
 } from "../../api/membershipPlansApi";
+import CommonTable from "../../components/CommonTable";
 
 const PAGE_KEY = "membership-plans";
 
@@ -38,7 +39,17 @@ export default function MembershipPlans() {
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const canCreate = hasPermission(PAGE_KEY, "create");
   const canEdit = hasPermission(PAGE_KEY, "edit");
@@ -74,6 +85,7 @@ export default function MembershipPlans() {
     setIsEdit(false);
     setSelectedId(null);
     setModalError("");
+    setFieldErrors({});
     setShowModal(true);
   };
 
@@ -93,13 +105,19 @@ export default function MembershipPlans() {
     setSelectedId(row.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setShowModal(true);
   };
 
   const handleSubmit = async () => {
     setModalError("");
-    if (!form.code?.trim()) return setModalError("Plan code is required");
-    if (!form.name?.trim()) return setModalError("Plan name is required");
+    const errors = {};
+    if (!form.code?.trim()) errors.code = "Plan code is required";
+    if (!form.name?.trim()) errors.name = "Plan name is required";
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -146,10 +164,91 @@ export default function MembershipPlans() {
     }
   };
 
+  const handleBulkDelete = async (ids) => {
+    for (const id of ids) {
+      try {
+        await deleteMembershipPlan(id);
+      } catch (e) {}
+    }
+    setNotice(`${ids.length} membership plan(s) deleted successfully`);
+    await loadData();
+  };
+
   const sortedRows = useMemo(
     () => [...rows].sort((a, b) => (a.price ?? 0) - (b.price ?? 0)),
     [rows],
   );
+
+  const columns = useMemo(() => [
+    {
+      key: "name",
+      label: "PLAN",
+      sortable: true,
+      render: (val, row) => (
+        <div>
+          <div className="fw-semibold text-white">{row.name}</div>
+          {row.description && <small className="text-muted">{row.description}</small>}
+        </div>
+      ),
+      cardRender: (val, row) => row.name,
+    },
+    {
+      key: "code",
+      label: "CODE",
+      sortable: true,
+      render: (val, row) => <span className="badge bg-secondary">{row.code}</span>,
+    },
+    {
+      key: "price",
+      label: "PRICE",
+      sortable: true,
+      render: (val, row) => (row.price > 0 ? `₹${Number(row.price).toLocaleString("en-IN")}` : "Free"),
+    },
+    {
+      key: "durationDays",
+      label: "DURATION",
+      sortable: true,
+      render: (val, row) => (
+        <div>
+          <div>{row.durationDays > 0 ? `${row.durationDays} days` : "Lifetime"}</div>
+          <small className="text-muted">
+            {row.unlimitedAccess || !row.maxSessionMinutes ? "No visit limit" : `${row.maxSessionMinutes} min/visit`}
+          </small>
+        </div>
+      ),
+    },
+    {
+      key: "access",
+      label: "ACCESS",
+      sortable: true,
+      render: (val, row) => (
+        <div className="d-flex flex-wrap gap-1 align-items-center">
+          {row.unlimitedAccess ? (
+            <span className="badge bg-success d-inline-flex align-items-center gap-1">
+              <IconInfinity size={13} /> Unlimited
+            </span>
+          ) : (
+            <span className="badge bg-info d-inline-flex align-items-center gap-1">
+              <IconClock size={13} /> Time-restricted
+            </span>
+          )}
+          {row.trainerChat && (
+            <span className="badge bg-primary">Trainer chat</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      label: "STATUS",
+      sortable: true,
+      render: (val, row) => (
+        <span className={`badge ${row.active ? "bg-success" : "bg-danger"}`}>
+          {row.active ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+  ], []);
 
   if (!hasPermission(PAGE_KEY)) {
     return (
@@ -188,85 +287,30 @@ export default function MembershipPlans() {
           assign to each member (on the Attendance page).
         </p>
 
-        <div className="card">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center py-4">Loading...</div>
-            ) : (
-              <div className="table-responsive">
-                <table className="table table-hover mb-0 align-middle">
-                  <thead>
-                    <tr>
-                      <th>Plan</th>
-                      <th>Code</th>
-                      <th>Price</th>
-                      <th>Duration</th>
-                      <th>Access</th>
-                      <th>Status</th>
-                      <th className="text-end">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRows.length === 0 ? (
-                      <tr><td colSpan={7} className="text-center py-4">No membership plans yet.</td></tr>
-                    ) : (
-                      sortedRows.map((row) => (
-                        <tr key={row.id}>
-                          <td>
-                            <div className="fw-semibold">{row.name}</div>
-                            {row.description && <small className="text-muted">{row.description}</small>}
-                          </td>
-                          <td><span className="badge bg-light text-dark">{row.code}</span></td>
-                          <td>{row.price > 0 ? `₹${row.price}` : "Free"}</td>
-                          <td>
-                            {row.durationDays > 0 ? `${row.durationDays} days` : "Lifetime"}
-                            <div className="small text-muted">
-                              {row.unlimitedAccess || !row.maxSessionMinutes ? "No visit limit" : `${row.maxSessionMinutes} min/visit`}
-                            </div>
-                          </td>
-                          <td>
-                            {row.unlimitedAccess ? (
-                              <span className="badge bg-success d-inline-flex align-items-center gap-1">
-                                <IconInfinity size={14} /> Unlimited
-                              </span>
-                            ) : (
-                              <span className="badge bg-info d-inline-flex align-items-center gap-1">
-                                <IconClock size={14} /> Time-restricted
-                              </span>
-                            )}
-                            {row.trainerChat && (
-                              <span className="badge bg-light-primary text-primary ms-1">Trainer chat</span>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`badge ${row.active ? "bg-success" : "bg-secondary"}`}>
-                              {row.active ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            {canEdit && (
-                              <button type="button" className="btn btn-sm btn-outline-primary me-2" onClick={() => openEdit(row)}>
-                                <IconEdit size={14} />
-                              </button>
-                            )}
-                            {canDelete && (
-                              <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => setDeleteTarget(row)}>
-                                <IconTrash size={14} />
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* ── Membership Plans Common Table ── */}
+        <CommonTable
+          columns={columns}
+          data={sortedRows}
+          entityName="membership plan"
+          searchPlaceholder="Search membership plan..."
+          loading={loading}
+          onEdit={canEdit ? openEdit : null}
+          onDelete={canDelete ? (row) => setDeleteTarget(row) : null}
+          onBulkDelete={canDelete ? handleBulkDelete : null}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       </div>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal
+        show={showModal}
+        onHide={() => {
+          setShowModal(false);
+          setFieldErrors({});
+          setModalError("");
+        }}
+        centered
+      >
         <Modal.Header closeButton>
           <Modal.Title>{isEdit ? "Edit Plan" : "Add Plan"}</Modal.Title>
         </Modal.Header>
@@ -274,18 +318,32 @@ export default function MembershipPlans() {
           {modalError && <div className="alert alert-danger">{modalError}</div>}
           <div className="row g-3">
             <div className="col-md-6">
-              <label className="form-label">Code</label>
+              <label className="form-label">Code *</label>
               <Form.Control
+                className={fieldErrors.code ? "is-invalid" : ""}
                 value={form.code}
-                onChange={(e) => setField("code", e.target.value)}
+                onChange={(e) => {
+                  setField("code", e.target.value);
+                  clearFieldError("code");
+                }}
                 placeholder="e.g. PREMIUM"
                 disabled={isEdit}
               />
+              {fieldErrors.code && <div className="avm-field-error">{fieldErrors.code}</div>}
               {isEdit && <small className="text-muted">Code is fixed after creation. Edit the Name to change the label.</small>}
             </div>
             <div className="col-md-6">
-              <label className="form-label">Name</label>
-              <Form.Control value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="e.g. Premium" />
+              <label className="form-label">Name *</label>
+              <Form.Control
+                className={fieldErrors.name ? "is-invalid" : ""}
+                value={form.name}
+                onChange={(e) => {
+                  setField("name", e.target.value);
+                  clearFieldError("name");
+                }}
+                placeholder="e.g. Premium"
+              />
+              {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
             </div>
             <div className="col-12">
               <label className="form-label">Description</label>

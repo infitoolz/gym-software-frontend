@@ -11,6 +11,7 @@ import {
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -44,7 +45,17 @@ export default function DesignationPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (name) => {
+    setFieldErrors((prev) => {
+      if (!prev[name]) return prev;
+      const updated = { ...prev };
+      delete updated[name];
+      return updated;
+    });
+  };
 
   const modalStepIndex = useMemo(() => {
     const index = DESIGNATION_STEPS.findIndex((item) => item.key === modalTab);
@@ -104,6 +115,7 @@ export default function DesignationPage() {
     setForm(EMPTY_FORM);
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -119,6 +131,7 @@ export default function DesignationPage() {
     setSelectedId(desig?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -126,6 +139,7 @@ export default function DesignationPage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
@@ -134,12 +148,22 @@ export default function DesignationPage() {
     
     // Validate current step before proceeding
     if (modalTab === "basic") {
+      const errs = {};
       if (!form.name?.trim()) {
-        setModalError("Designation name is required");
-        return;
+        errs.name = "Designation name is required";
       }
       if (!form.departmentId) {
-        setModalError("Department is required");
+        errs.departmentId = "Department is required";
+      }
+      if (Object.keys(errs).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...errs }));
+        return;
+      }
+    }
+
+    if (modalTab === "compensation") {
+      if (form.salary < 0) {
+        setFieldErrors((prev) => ({ ...prev, salary: "Salary cannot be negative" }));
         return;
       }
     }
@@ -159,25 +183,30 @@ export default function DesignationPage() {
   // ── Form submit ───────────────────────────────────────────────────────────────
 
   const validateForm = () => {
+    const errors = {};
     if (!form.name?.trim()) {
-      return "Designation name is required";
+      errors.name = "Designation name is required";
     }
     if (!form.departmentId) {
-      return "Department is required";
+      errors.departmentId = "Department is required";
     }
     if (form.salary < 0) {
-      return "Salary cannot be negative";
+      errors.salary = "Salary cannot be negative";
     }
-    return null;
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
-      setModalTab("basic");
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      if (errors.name || errors.departmentId) {
+        setModalTab("basic");
+      } else if (errors.salary) {
+        setModalTab("compensation");
+      }
       return;
     }
 
@@ -231,6 +260,57 @@ export default function DesignationPage() {
     }
   };
 
+  const handleBulkDelete = async (selectedIds) => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} designation(s)?`)) return;
+    try {
+      await Promise.all(selectedIds.map((id) => deleteDesignation(id)));
+      setNotice(`${selectedIds.length} designation(s) deleted successfully`);
+      await loadData();
+    } catch (e) {
+      setError(extractApiErrorMessage(e, "Failed to delete selected designations"));
+    }
+  };
+
+  const columns = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      sortable: true,
+      render: (val, desig) => <span className="fw-semibold text-white">{desig.name}</span>,
+    },
+    {
+      key: "department",
+      label: "Department",
+      sortable: true,
+      render: (val, desig) => {
+        const dept = departments.find((d) => d.id === desig.departmentId);
+        return dept?.name || "-";
+      },
+    },
+    {
+      key: "level",
+      label: "Level",
+      sortable: true,
+      render: (val, desig) => (desig.level ? <span className="badge bg-info">{desig.level}</span> : "-"),
+    },
+    {
+      key: "salary",
+      label: "Salary",
+      sortable: true,
+      render: (val, desig) => `₹ ${Number(desig.salary || 0).toLocaleString("en-IN")}`,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (val, desig) => (
+        <span className={`badge ${desig.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
+          {desig.status === "ACTIVE" ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+  ], [departments]);
+
   // ── Statistics ─────────────────────────────────────────────────────────────────
 
   const totalDesignations = rows.length;
@@ -247,19 +327,26 @@ export default function DesignationPage() {
       <div className="col-md-12">
         <label className="form-label">Designation Name *</label>
         <input
-          className="form-control"
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, name: e.target.value });
+            clearFieldError("name");
+          }}
           placeholder="e.g. Senior Software Engineer"
         />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
 
       <div className="col-md-12">
         <label className="form-label">Department *</label>
         <select
-          className="form-select"
+          className={`form-select ${fieldErrors.departmentId ? "is-invalid" : ""}`}
           value={form.departmentId}
-          onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, departmentId: e.target.value });
+            clearFieldError("departmentId");
+          }}
           disabled={deptLoading}
         >
           <option value="">Select Department</option>
@@ -269,6 +356,7 @@ export default function DesignationPage() {
             </option>
           ))}
         </select>
+        {fieldErrors.departmentId && <div className="avm-field-error">{fieldErrors.departmentId}</div>}
       </div>
 
       <div className="col-md-6">
@@ -295,13 +383,17 @@ export default function DesignationPage() {
         <label className="form-label">Salary (₹ per annum)</label>
         <input
           type="number"
-          className="form-control"
+          className={`form-control ${fieldErrors.salary ? "is-invalid" : ""}`}
           value={form.salary}
-          onChange={(e) => setForm({ ...form, salary: e.target.value })}
+          onChange={(e) => {
+            setForm({ ...form, salary: e.target.value });
+            clearFieldError("salary");
+          }}
           min="0"
           step="1000"
           placeholder="0"
         />
+        {fieldErrors.salary && <div className="avm-field-error">{fieldErrors.salary}</div>}
         <small className="text-muted d-block mt-1">
           Enter the annual salary for this designation
         </small>
@@ -408,66 +500,17 @@ export default function DesignationPage() {
           </div>
         </div>
 
-        {/* ── Designations Table ── */}
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Designations List</h5>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Level</th>
-                    <th>Salary</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">Loading...</td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">No designations found</td>
-                    </tr>
-                  ) : (
-                    rows.map((desig) => {
-                      const dept = departments.find((d) => d.id === desig.departmentId);
-                      return (
-                        <tr key={desig.id}>
-                          <td className="fw-semibold">{desig.name}</td>
-                          <td>{dept?.name || "-"}</td>
-                          <td>
-                            <span className="badge bg-info">{desig.level}</span>
-                          </td>
-                          <td>₹ {Number(desig.salary || 0).toLocaleString("en-IN")}</td>
-                          <td>
-                            <span className={`badge ${desig.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                              {desig.status === "ACTIVE" ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(desig)}>
-                              <IconEdit size={14} />
-                            </button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(desig.id)}>
-                              <IconTrash size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── Designations Common Table ── */}
+        <CommonTable
+          columns={columns}
+          data={rows}
+          entityName="designations"
+          searchPlaceholder="Search designation..."
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={(desig) => confirmDelete(desig.id)}
+          onBulkDelete={handleBulkDelete}
+        />
 
         {/* ── Add / Edit Designation Modal using WizardPopup ─────────────────────── */}
         <WizardPopup

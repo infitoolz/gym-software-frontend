@@ -397,3 +397,47 @@ img.img-fluid {
         border-color: var(--bs-primary) !important;
     }
 }
+
+/* ---------------------------------------------------------
+   Global layout spacing & anti-nesting reset
+   --------------------------------------------------------- */
+@media screen and (min-width: 1200px) {
+    .themebody-wrap {
+        margin-top: 76px !important;
+        margin-left: var(--sidebar-width) !important;
+        transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+}
+
+@media screen and (max-width: 1199.98px) {
+    .themebody-wrap {
+        margin-top: 76px !important;
+        margin-left: 0 !important;
+    }
+}
+
+/* Eliminate duplicate/nested wrapper margins and paddings everywhere */
+.themebody-wrap .themebody-wrap,
+.theme-body .themebody-wrap,
+.page-wrapper .themebody-wrap {
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+}
+
+.theme-body .theme-body,
+.page-wrapper .theme-body {
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Ensure footer inside page wrappers does not double up sidebar margin */
+.themebody-wrap .codex-footer,
+.theme-body .codex-footer,
+.page-wrapper .codex-footer {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+

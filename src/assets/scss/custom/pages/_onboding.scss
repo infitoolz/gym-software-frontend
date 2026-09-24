@@ -1,72 +1,595 @@
-.onbodying-main {
-    .form-step {
-        display: none;
-        flex-direction: column;
-    }
-    .form-step.active {
-        display: flex;
-    }    
-    .step-preve,
-    .step-skip {
-        cursor: pointer;
-    }
-    .createtraining-card {
-        border-radius: 30px;
-        padding: 40px;
-        background-color: $white;
-        text-align: center;
-    }
+/* ==========================================================================
+   FitNexa Member Onboarding Styling (Split Showcase & Stepper)
+   ========================================================================== */
 
-    .nav-tabs{
-        width: fit-content;
-        margin: auto;        
-        border-bottom: none;
-        margin-bottom: 30px;       
-        .nav-link{
-            color: currentColor;
-            border-radius: 10px;
-            border: none;
-            padding: 10px 38px;
-        }
-    }
-}
+.onboarding-split-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #f8fafc;
+  overflow-x: hidden;
 
-
-.onbodying-bg {
-    background-color: rgba($theme-primary, 0.3);
-}
-
-.onboding-imgwrap {
-    border-radius: 10px;
+  /* --------------------------------------------------------------------------
+     1. Left Showcase / Brand Hero Panel
+     -------------------------------------------------------------------------- */
+  .onboarding-showcase-panel {
+    flex: 1.05;
+    min-height: 100vh;
+    background: linear-gradient(145deg, #070d19 0%, #0f172a 50%, #1e3a8a 100%);
+    position: relative;
     overflow: hidden;
-    background-color: rgba($theme-primary, 0.3);
-}
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 56px;
+    color: #ffffff;
 
-.onboding-list {
-    li {
-        label {
-            border-radius: 10px;
-            padding: 15px;
-            width: 100%;
-            background-color: $white;
-            border: 2px solid $white;
-            font-size: 18px;
-            img {
-                width: 35px;
-                height: auto;
-                margin-right: 15px;
-            }
-        }
-        input {
-            &:checked {
-                ~label {
-                    border-color: $theme-primary;
-                    background-color: lighten($theme-primary, 55%);
-                }
-            }
-        }
-        &:nth-child(n+2) {
-            margin-top: 15px;
-        }
+    /* Ambient luminous glow orbs */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 1;
+
+      &.orb-1 {
+        top: -60px;
+        left: -40px;
+        width: 360px;
+        height: 360px;
+        background: radial-gradient(circle, rgba(0, 102, 255, 0.35) 0%, transparent 70%);
+      }
+
+      &.orb-2 {
+        bottom: 10%;
+        right: -60px;
+        width: 320px;
+        height: 320px;
+        background: radial-gradient(circle, rgba(0, 210, 244, 0.25) 0%, transparent 70%);
+      }
     }
+
+    /* Background fitness hero image with subtle dark cinematic overlay */
+    .showcase-bg-image {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.22;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .showcase-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 20%, rgba(0, 102, 255, 0.15) 0%, transparent 70%),
+                  linear-gradient(to bottom, rgba(7, 13, 25, 0.8) 0%, rgba(15, 23, 42, 0.94) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .onboarding-showcase-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+
+      .brand-logo-white {
+        height: 38px;
+        max-width: 160px;
+        object-fit: contain;
+      }
+
+      .brand-tag {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 4px 10px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 20px;
+        color: rgba(255, 255, 255, 0.9);
+      }
+    }
+
+    .onboarding-showcase-body {
+      position: relative;
+      z-index: 2;
+      max-width: 520px;
+      margin: auto 0;
+      padding: 24px 0;
+
+      .onboarding-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        background: rgba(0, 102, 255, 0.22);
+        border: 1px solid rgba(0, 210, 244, 0.35);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #67e8f9;
+        margin-bottom: 20px;
+      }
+
+      .onboarding-hero-title {
+        font-size: 2.1rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.25;
+        margin-bottom: 14px;
+
+        .text-gradient-cyan {
+          background: linear-gradient(135deg, #00d2f4 0%, #60a5fa 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+      }
+
+      .onboarding-hero-desc {
+        font-size: 0.92rem;
+        color: #94a3b8;
+        line-height: 1.6;
+        margin-bottom: 28px;
+      }
+
+      /* Step progress tracker on left */
+      .onboarding-stepper-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .stepper-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          opacity: 0.45;
+          transition: all 0.25s ease;
+
+          &.active {
+            opacity: 1;
+            transform: translateX(4px);
+
+            .stepper-circle {
+              background: #0066ff;
+              border-color: #00d2f4;
+              color: #ffffff;
+              box-shadow: 0 0 16px rgba(0, 210, 244, 0.4);
+            }
+
+            .stepper-label {
+              color: #ffffff;
+              font-weight: 700;
+            }
+          }
+
+          &.completed {
+            opacity: 0.85;
+
+            .stepper-circle {
+              background: #10b981;
+              border-color: #34d399;
+              color: #ffffff;
+            }
+
+            .stepper-label {
+              color: #cbd5e1;
+            }
+          }
+
+          .stepper-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.25s ease;
+          }
+
+          .stepper-label {
+            font-size: 0.88rem;
+            color: #94a3b8;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+
+    .onboarding-showcase-footer {
+      position: relative;
+      z-index: 2;
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+  }
+
+  /* --------------------------------------------------------------------------
+     2. Right Interactive Form Panel
+     -------------------------------------------------------------------------- */
+  .onboarding-form-panel {
+    flex: 1;
+    min-height: 100vh;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    position: relative;
+
+    .onboarding-card-main {
+      width: 100%;
+      max-width: 520px;
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid rgba(226, 232, 240, 0.95);
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.06);
+      padding: 38px 36px;
+      position: relative;
+      z-index: 1;
+
+      /* Mobile Brand Logo */
+      .onboarding-mobile-logo {
+        text-align: center;
+        margin-bottom: 20px;
+
+        img {
+          height: 38px;
+          object-fit: contain;
+        }
+      }
+
+      .onboarding-card-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+
+        .nav-btn-back {
+          width: 36px;
+          height: 36px;
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          color: #475569;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+          }
+
+          &:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+          }
+        }
+
+        .nav-step-badge {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #0066ff;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+
+        .nav-btn-skip {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: #64748b;
+          cursor: pointer;
+          border: none;
+          background: transparent;
+          padding: 6px 12px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+
+          &:hover {
+            color: #0066ff;
+            background: rgba(0, 102, 255, 0.05);
+          }
+        }
+      }
+
+      /* Animated Top Progress Bar */
+      .onboarding-progress-track {
+        height: 6px;
+        width: 100%;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 26px;
+
+        .onboarding-progress-bar {
+          height: 100%;
+          background: linear-gradient(90deg, #0066ff 0%, #00d2f4 100%);
+          border-radius: 999px;
+          transition: width 0.35s ease;
+        }
+      }
+
+      .onboarding-title-area {
+        margin-bottom: 24px;
+        text-align: left;
+
+        .onboarding-step-title {
+          font-size: 1.55rem;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          color: #0f172a;
+          margin-bottom: 6px;
+        }
+
+        .onboarding-step-subtitle {
+          font-size: 0.88rem;
+          color: #64748b;
+          line-height: 1.5;
+          margin-bottom: 0;
+        }
+      }
+
+      /* Option cards */
+      .onboarding-option-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 28px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .onboarding-option-card {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 15px 18px;
+          border-radius: 16px;
+          border: 2px solid #e2e8f0;
+          background: #ffffff;
+          cursor: pointer;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+          &:hover {
+            border-color: #93c5fd;
+            background: #f8fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0, 102, 255, 0.08);
+          }
+
+          &.selected {
+            border-color: #0066ff;
+            background: rgba(0, 102, 255, 0.04);
+            box-shadow: 0 4px 18px rgba(0, 102, 255, 0.12);
+
+            .option-indicator {
+              background: #0066ff;
+              border-color: #0066ff;
+              color: #ffffff;
+            }
+          }
+
+          .option-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+
+            .option-icon-wrap {
+              width: 42px;
+              height: 42px;
+              border-radius: 12px;
+              background: #f1f5f9;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+
+              img {
+                width: 26px;
+                height: 26px;
+                object-fit: contain;
+              }
+            }
+
+            .option-label {
+              font-size: 0.98rem;
+              font-weight: 700;
+              color: #0f172a;
+              margin: 0;
+            }
+
+            .option-hint {
+              font-size: 0.8rem;
+              color: #64748b;
+              margin-top: 2px;
+            }
+          }
+
+          .option-indicator {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: transparent;
+            transition: all 0.2s ease;
+          }
+        }
+      }
+
+      /* DatePicker styling */
+      .onboarding-datepicker-wrapper {
+        margin-bottom: 28px;
+
+        .react-datepicker-wrapper {
+          width: 100%;
+        }
+
+        .react-datepicker__input-container input {
+          width: 100%;
+          padding: 14px 18px;
+          border-radius: 14px;
+          border: 2px solid #e2e8f0;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.2s ease;
+
+          &:focus {
+            border-color: #0066ff;
+            box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12);
+          }
+        }
+      }
+
+      /* Height Tabs */
+      .onboarding-height-container {
+        margin-bottom: 28px;
+
+        .nav-tabs {
+          border-bottom: none;
+          display: flex;
+          gap: 8px;
+          background: #f1f5f9;
+          padding: 4px;
+          border-radius: 12px;
+          margin-bottom: 24px;
+
+          .nav-item {
+            flex: 1;
+
+            .nav-link {
+              width: 100%;
+              text-align: center;
+              border: none;
+              border-radius: 10px;
+              padding: 10px;
+              font-weight: 700;
+              font-size: 0.9rem;
+              color: #64748b;
+              background: transparent;
+              transition: all 0.2s ease;
+
+              &.active {
+                background: #ffffff;
+                color: #0066ff;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+              }
+            }
+          }
+        }
+
+        .height-input-box {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          max-width: 240px;
+          margin: 0 auto;
+
+          input {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            padding: 12px;
+            border-radius: 14px;
+            border: 2px solid #e2e8f0;
+            color: #0f172a;
+
+            &:focus {
+              border-color: #0066ff;
+              box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.12);
+            }
+          }
+
+          .height-unit-tag {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #64748b;
+          }
+        }
+      }
+
+      /* Radial Chart Card */
+      .onboarding-chart-card {
+        padding: 20px 0;
+        text-align: center;
+
+        p {
+          font-size: 0.95rem;
+          color: #475569;
+          margin-top: 14px;
+          line-height: 1.5;
+        }
+      }
+
+      /* Submit button */
+      .btn-onboarding-continue {
+        width: 100%;
+        padding: 15px 24px;
+        background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+        border: none;
+        border-radius: 14px;
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 6px 20px rgba(0, 102, 255, 0.28);
+        transition: all 0.22s ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0, 102, 255, 0.38);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        &:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 991.98px) {
+    .onboarding-showcase-panel {
+      display: none !important;
+    }
+
+    .onboarding-form-panel {
+      padding: 24px 16px;
+
+      .onboarding-card-main {
+        padding: 28px 20px;
+      }
+    }
+  }
 }

@@ -77,9 +77,26 @@ export async function getAtRiskMembers(requesterId) {
   return Array.isArray(data) ? data : [];
 }
 
-export async function engageAtRiskMember(customerId, requesterId, message) {
-  const response = await api.post(`/users/customers/${customerId}/engage`, { message }, {
+export async function engageAtRiskMember(customerId, requesterId, message, platform) {
+  const response = await api.post(`/users/customers/${customerId}/engage`, { message, platform }, {
     params: { requesterId }
   });
   return unwrapOne(response);
 }
+
+/**
+ * Admin: Trigger automated renewal reminder scan and email dispatch immediately
+ */
+export async function triggerRenewalReminders() {
+  const response = await api.post("/membership/renewals/trigger-reminders");
+  return response?.data;
+}
+
+/**
+ * Admin: Send an immediate renewal reminder email and in-app alert to a specific member
+ */
+export async function sendMemberRenewalReminder(userId) {
+  const response = await api.post(`/membership/renewals/send-reminder/${userId}`);
+  return response?.data;
+}
+

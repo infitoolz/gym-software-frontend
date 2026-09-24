@@ -66,15 +66,25 @@ export function sanitizePhoneDigits(value, maxLength, allowedLengths = []) {
   return digits.slice(0, length);
 }
 
-export function validatePhoneNumber(value, countryCode) {
+export function isValidIndianMobile(value) {
+  const digits = String(value || "").replace(/\D/g, "");
+  return digits.length === 10 && /^[6-9]\d{9}$/.test(digits);
+}
+
+export function validatePhoneNumber(value, countryCode = "+91") {
+  const code = ensureCountryCodeValue(countryCode);
   const digits = sanitizePhoneDigits(value);
   if (!digits) {
     return "Phone number is required";
   }
 
-  const allowed = getCountryAllowedLengths(countryCode);
+  const allowed = getCountryAllowedLengths(code);
   if (!allowed.includes(digits.length)) {
     return `Phone number must be ${allowed.join(" or ")} digits long`;
+  }
+
+  if (code === "+91" && !/^[6-9]/.test(digits)) {
+    return "Indian mobile number must start with 6, 7, 8, or 9";
   }
 
   return null;

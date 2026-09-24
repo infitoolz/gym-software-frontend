@@ -1,7 +1,6 @@
 import React from "react";
-import { Outlet, Navigate, Link } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Container } from "react-bootstrap";
 import CorporateSidebar from "./CorporateSidebar";
 import Header from "./Header";
 import useIsMobile from "../hooks/useIsMobile";
@@ -11,12 +10,12 @@ import MobileBottomNav from "./MobileBottomNav";
 export default function CorporateLayout() {
   const { user, isAuthenticated, loading, permissionsLoading } = useAuth();
   const isMobile = useIsMobile();
-  const { isCompact, toggleSidebar } = useSidebarContext();
+  const { isOpen, toggleSidebar } = useSidebarContext();
 
   // Wait for auth to initialize before making routing decisions
   if (loading || permissionsLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -24,33 +23,43 @@ export default function CorporateLayout() {
     );
   }
 
-  // If not logged in, redirect them.
+  // If not logged in, redirect to corporate login
   if (!isAuthenticated) {
     return <Navigate to="/corporate-login" replace />;
   }
-  if (user?.role !== "CORPORATE_HR") {
-    return (
-      <div className="alert alert-danger m-5">
-        Debug: You are not CORPORATE_HR. Your role is: {user?.role || "undefined"}
-      </div>
-    );
+
+  // Authorized roles: CORPORATE_HR, ADMIN, SUPER_ADMIN
+  const role = String(user?.role || "").toUpperCase();
+  const isAuthorized = role === "CORPORATE_HR" || role === "ADMIN" || role === "SUPER_ADMIN";
+  if (!isAuthorized) {
+    return <Navigate to="/error-page" replace />;
   }
 
   return (
     <div className="codex-main">
-        <CorporateSidebar />
-        {!isCompact && (
-            <div
-                className="sidebar-backdrop"
-                onClick={toggleSidebar}
-                aria-hidden="true"
-            />
-        )}
-        <Header />
-        <div className="codex-content">
-            <Outlet />
-        </div>
-        {isMobile ? <MobileBottomNav /> : null}
+      <CorporateSidebar />
+      {isOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 99,
+            cursor: "pointer",
+          }}
+        />
+      )}
+      <Header />
+      <div className="codex-content">
+        <Outlet />
+      </div>
+      {isMobile ? <MobileBottomNav /> : null}
     </div>
   );
 }

@@ -15,7 +15,7 @@ import {
   IconInbox, IconUserPlus, IconPhone, IconBriefcase, IconRobot,
   IconFileAnalytics, IconBuilding, IconAutomation, IconCreditCard,
   IconShieldCheck, IconClipboardList, IconTimeline, IconMapPin,
-  IconStar, IconChevronRight, IconBolt, IconAward,
+  IconStar, IconChevronRight, IconChevronDown, IconBolt, IconAward,
   IconUsersGroup, IconCalendarStats, IconMoodSmile,
   IconAddressBook, IconGitBranch, IconDoorEnter
 } from "@tabler/icons-react";
@@ -23,14 +23,14 @@ import {
 const menuPaths = {
   Dashboards:           { index: 0,  paths: ["/"] },
   Leads:                { index: 14, paths: ["/leads", "/leads/dashboard", "/leads/ai", "/leads/inbox", "/leads/walkin", "/leads/trials", "/leads/followup", "/leads/pipeline", "/leads/campaigns", "/leads/team", "/leads/referral", "/leads/corporate", "/leads/automation", "/leads/reports", "/leads/settings"] },
-  Members:              { index: 11, paths: ["/users", "/renewals"] },
+  Members:              { index: 11, paths: ["/users", "/renewals", "/churn"] },
   Attendance:           { index: 10, paths: ["/attendance"] },
   Workout:              { index: 2,  paths: ["/workout-type", "/body-part", "/exercise-master", "/workout-plan", "/workout-detail", "/create-workout", "/workout-summary"] },
   DietPlan:             { index: 3,  paths: ["/dietplan", "/diet-detail"] },
   Billing:              { index: 15, paths: ["/billing", "/membership-plans"] },
   Inventory:            { index: 16, paths: ["/inventory"] },
   Reports:              { index: 17, paths: ["/reports"] },
-  Settings:             { index: 1,  paths: ["/employees", "/headoffice", "/branches", "/departments", "/designations", "/teams", "/role-permissions"] },
+  Settings:             { index: 1,  paths: ["/employees", "/headoffice", "/branches", "/departments", "/designations", "/teams", "/role-permissions", "/trainer-duty-schedule", "/user-workout-schedule", "/trainer-performance"] },
   Goals:                { index: 5,  paths: ["/goals"] },
   Progress:             { index: 6,  paths: ["/progress"] },
   Profile:              { index: 7,  paths: ["/profile"] },
@@ -42,39 +42,51 @@ const menuPaths = {
 
 // ── Menu section color themes ─────────────────────────────────────────────────
 const SECTION_COLORS = {
-  0:  { from: "#6366f1", to: "#8b5cf6" },   // Dashboard — indigo/violet
+  0:  { from: "#0066ff", to: "#00d2f4" },   // Dashboard — Fitnexa brand gradient
   14: { from: "#f59e0b", to: "#ef4444" },   // Leads     — amber/red
   11: { from: "#10b981", to: "#059669" },   // Members   — emerald
-  10: { from: "#3b82f6", to: "#6366f1" },   // Attendance — blue/indigo
+  10: { from: "#0066ff", to: "#0088ff" },   // Attendance — cobalt/sky
   2:  { from: "#f97316", to: "#ef4444" },   // Workout   — orange/red
   3:  { from: "#22c55e", to: "#10b981" },   // Diet      — green
-  15: { from: "#8b5cf6", to: "#ec4899" },   // Billing   — purple/pink
-  16: { from: "#06b6d4", to: "#3b82f6" },   // Inventory — cyan/blue
+  5:  { from: "#00A99D", to: "#059669" },   // Goals     — teal/emerald
+  12: { from: "#ec4899", to: "#f43f5e" },   // Wellness Chat — pink/rose
+  15: { from: "#0066ff", to: "#00d2f4" },   // Billing   — cobalt/cyan
+  16: { from: "#0088ff", to: "#00d2f4" },   // Inventory — sky/cyan
   17: { from: "#f59e0b", to: "#f97316" },   // Reports   — amber/orange
-  18: { from: "#0ea5e9", to: "#6366f1" },   // Corporate — sky/indigo
-  1:  { from: "#64748b", to: "#475569" },   // Settings  — slate
+  18: { from: "#0052cc", to: "#00d2f4" },   // Corporate — deep blue/cyan
+  1:  { from: "#102030", to: "#0066ff" },   // Settings  — midnight/cobalt
 };
 
 export default function Sidebar() {
   const location  = useLocation();
   const [activeIndex, setActiveIndex] = useState(null);
+  const [openMenus, setOpenMenus] = useState({});
   const { permissionMap, user } = useAuth();
-  const { isOpen, closeSidebar } = useSidebarContext();
+  const { isCollapsed, isOpen, closeSidebar } = useSidebarContext();
   const role         = String(user?.role || "").toUpperCase();
   const isSuperAdmin = role === "SUPER_ADMIN";
   const isAdmin      = role === "ADMIN";
   const isManager    = role === "MANAGER";
-  const isStaff      = isSuperAdmin || isAdmin || isManager;
+  const isTrainer    = role === "TRAINER";
+  const isStaff      = isSuperAdmin || isAdmin || isManager || isTrainer;
   const isCorporateHr = role === "CORPORATE_HR";
   const isMember     = role === "USER";
-  const canUseWellnessChat =
-    isMember || role === "TRAINER" || role === "ADMIN" || role === "SUPER_ADMIN" || role === "MANAGER";
-  const [isPremium, setIsPremium] = useState(true);
+  const [isPremium, setIsPremium] = useState(!isMember);
 
   // Flyout state
   const [flyout, setFlyout] = useState(null); // { index, title, items, color }
   const sidebarRef = useRef(null);
   const flyoutRef  = useRef(null);
+
+  const toggleAccordion = (index, isCurrentlyOpen = false) => {
+    setOpenMenus((prev) => {
+      const openState = prev[index] !== undefined ? prev[index] : isCurrentlyOpen;
+      return {
+        ...prev,
+        [index]: !openState,
+      };
+    });
+  };
 
   useEffect(() => {
     if (!isMember) return undefined;
@@ -95,13 +107,24 @@ export default function Sidebar() {
 
   useEffect(() => {
     const currentPath = location.pathname;
-    const cat = Object.keys(menuPaths).find((k) => menuPaths[k].paths.includes(currentPath));
-    setActiveIndex(cat ? menuPaths[cat].index : null);
+    const cat = Object.keys(menuPaths).find((k) =>
+      menuPaths[k].paths.some(
+        (p) => currentPath === p || currentPath.startsWith(p + "?") || currentPath.startsWith(p + "/")
+      )
+    );
+    if (cat) {
+      const idx = menuPaths[cat].index;
+      setActiveIndex(idx);
+      // Automatically ensure current route parent accordion is open
+      setOpenMenus((prev) => ({ ...prev, [idx]: true }));
+    } else {
+      setActiveIndex(null);
+    }
   }, [location.pathname]);
 
   useEffect(() => { setFlyout(null); }, [location.pathname]);
 
-  const canView = (pageKey) => canAccess(permissionMap, pageKey, "view");
+  const canView = (pageKey) => isSuperAdmin || canAccess(permissionMap, pageKey, "view");
 
   // ── Visible item lists ────────────────────────────────────────────────────────
   const visibleSettingsItems = [
@@ -139,13 +162,13 @@ export default function Sidebar() {
   const showWorkout   = visibleWorkoutItems.length > 0;
   const showDiet      = visibleDietItems.length > 0;
   const showCalendar  = visibleScheduleItems.length > 0;
-  const showGoals     = canView("goals");
+  const showGoals     = isSuperAdmin || isAdmin || canView("goals");
   const showProgress  = canView("progress");
   const showAttendance = canView("attendance");
   const showMembershipPlans = canView("membership-plans");
-  const showUsers     = canView("users");
-  const showMembership = showMembershipPlans || showUsers;
-  const showWellnessChat = canView("wellness-chat") && canUseWellnessChat;
+  const showUsers           = canView("users");
+  const showMembership      = showMembershipPlans || showUsers;
+  const showWellnessChat = isStaff || (isMember && isPremium);
   const showProfile   = canView("profile");
 
   // ── Pre-built submenu item lists with icons ───────────────────────────────────
@@ -230,35 +253,123 @@ export default function Sidebar() {
   }, [flyout]);
 
   // ── Rail item components ──────────────────────────────────────────────────────
-  const DirectItem = ({ index, title, icon, to }) => (
-    <li
-      className={`sidebar-rail-item ${activeIndex === index ? "active" : ""}`}
-      title={title}
-      onClick={() => { setActiveIndex(index); closeFlyout(); }}
-    >
-      <Link to={to}>
-        <span className="rail-icon">{icon}</span>
-      </Link>
-    </li>
-  );
+  const DirectItem = ({ index, title, icon, to }) => {
+    const isActive = activeIndex === index || location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
+    return (
+      <li
+        className={`sidebar-rail-item ${isActive ? "active" : ""}`}
+        title={title}
+        onClick={() => {
+          setActiveIndex(index);
+          closeFlyout();
+          if (window.innerWidth < 768) closeSidebar();
+        }}
+      >
+        <Link to={to} className="d-flex align-items-center w-100 text-decoration-none">
+          <span className="rail-icon">{icon}</span>
+          <span className="rail-label">{title}</span>
+        </Link>
+      </li>
+    );
+  };
 
-  const FlyoutItem = ({ index, title, icon, items }) => (
-    <li
-      className={`sidebar-rail-item ${activeIndex === index ? "active" : ""} ${flyout?.index === index ? "flyout-open" : ""}`}
-      title={title}
-      onClick={(e) => openFlyout(e, index, title, items)}
-    >
-      <span className="rail-icon">{icon}</span>
-      <span className="rail-chevron"><IconChevronRight size={10} /></span>
-    </li>
-  );
+  const SubmenuItem = ({ index, title, icon, items }) => {
+    const isParentActive =
+      activeIndex === index ||
+      items.some(
+        (i) =>
+          location.pathname === i.path ||
+          location.pathname.startsWith(i.path + "?") ||
+          location.pathname.startsWith(i.path + "/")
+      );
+    const isAccordionOpen =
+      openMenus[index] !== undefined ? Boolean(openMenus[index]) : isParentActive;
+
+    const handleClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (isCollapsed) {
+        openFlyout(e, index, title, items);
+      } else {
+        toggleAccordion(index, isAccordionOpen);
+      }
+    };
+
+    return (
+      <li className="sidebar-group-item">
+        <div
+          className={`sidebar-rail-item ${isParentActive ? "active" : ""} ${isAccordionOpen ? "accordion-open" : ""} ${flyout?.index === index ? "flyout-open" : ""}`}
+          title={title}
+          onClick={handleClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              handleClick(e);
+            }
+          }}
+        >
+          <span className="rail-icon">{icon}</span>
+          <span className="rail-label">{title}</span>
+          <span className="rail-chevron">
+            {isCollapsed ? (
+              <IconChevronRight size={14} />
+            ) : (
+              <IconChevronDown
+                size={14}
+                style={{
+                  transform: isAccordionOpen ? "rotate(0deg)" : "rotate(-90deg)",
+                  transition: "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              />
+            )}
+          </span>
+        </div>
+
+        {/* Inline Accordion for Expanded Mode */}
+        {!isCollapsed && isAccordionOpen && (
+          <ul className="sidebar-accordion-menu show">
+            {items.map((subItem) => {
+              const isSubActive =
+                location.pathname === subItem.path ||
+                location.pathname.startsWith(subItem.path + "?") ||
+                location.pathname.startsWith(subItem.path + "/");
+              return (
+                <li key={subItem.key || subItem.path}>
+                  <Link
+                    to={subItem.path}
+                    className={`sidebar-subitem ${isSubActive ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveIndex(index);
+                      if (window.innerWidth < 768) closeSidebar();
+                    }}
+                  >
+                    <span className="subitem-bullet" />
+                    {subItem.icon && (
+                      <span className="subitem-icon me-2" style={{ color: subItem.color || "inherit" }}>
+                        {subItem.icon}
+                      </span>
+                    )}
+                    <span className="subitem-text">{subItem.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </li>
+    );
+  };
 
   return (
     <>
-      {/* ── Narrow Icon Rail ────────────────────────────────────────────────── */}
-      <aside className={`sidebar-rail ${isOpen ? 'mobile-open' : ''}`} ref={sidebarRef}>
+      {/* ── Expandable/Collapsible Dark Navy Sidebar ──────────────────────────── */}
+      <aside className={`sidebar-rail ${isCollapsed ? 'is-collapsed' : 'is-expanded'} ${isOpen ? 'mobile-open' : ''}`} ref={sidebarRef}>
         <div className="rail-logo">
-          <Link to="/"><img src={logo} alt="FitNexus" /></Link>
+          <Link to="/" className="d-flex align-items-center justify-content-center text-decoration-none w-100 h-100" onClick={() => { if (window.innerWidth < 768) closeSidebar(); }}>
+            <img src={logo} alt="FitNexa Gym Management" className="rail-logo-img" />
+          </Link>
         </div>
 
         <nav className="rail-nav custom-scroll">
@@ -276,22 +387,25 @@ export default function Sidebar() {
               <>
                 <DirectItem index={0}  title="Dashboard"         icon={<IconLayoutDashboard />} to="/" />
                 {canView("leads") && (
-                  <FlyoutItem index={14} title="Leads CRM"       icon={<IconUserStar />}        items={leadsItems} />
+                  <SubmenuItem index={14} title="Leads CRM"       icon={<IconUserStar />}        items={leadsItems} />
                 )}
                 {canView("users") && (
-                  <FlyoutItem index={11} title="Members"         icon={<IconUsers />}           items={membersItems} />
+                  <SubmenuItem index={11} title="Members"         icon={<IconUsers />}           items={membersItems} />
                 )}
                 {canView("attendance") && (
                   <DirectItem index={10} title="Attendance"      icon={<IconFingerprint />}     to="/attendance" />
                 )}
                 {showWorkout && (
-                  <FlyoutItem index={2}  title="Workout"         icon={<IconBarbell />}         items={visibleWorkoutItems} />
+                  <SubmenuItem index={2}  title="Workout"         icon={<IconBarbell />}         items={visibleWorkoutItems} />
                 )}
                 {showDiet && (
-                  <FlyoutItem index={3}  title="Diet"            icon={<IconCalendar />}        items={visibleDietItems} />
+                  <SubmenuItem index={3}  title="Diet"            icon={<IconCalendar />}        items={visibleDietItems} />
+                )}
+                {showGoals && (
+                  <DirectItem index={5}  title="Goals"           icon={<IconTargetArrow />}     to="/goals" />
                 )}
                 {(canView("billing") || canView("membership-plans")) && (
-                  <FlyoutItem index={15} title="Billing"         icon={<IconReceipt2 />}        items={billingItems} />
+                  <SubmenuItem index={15} title="Billing"         icon={<IconReceipt2 />}        items={billingItems} />
                 )}
                 {canView("inventory") && (
                   <DirectItem index={16} title="Inventory"       icon={<IconBox />}             to="/inventory" />
@@ -300,32 +414,37 @@ export default function Sidebar() {
                   <DirectItem index={17} title="Reports"         icon={<IconReportAnalytics />} to="/reports" />
                 )}
                 {canView("corporate-dashboard") && (
-                  <FlyoutItem index={18} title="Corporate"       icon={<IconBuildingCommunity />} items={corporateItems} />
+                  <SubmenuItem index={18} title="Corporate"       icon={<IconBuildingCommunity />} items={corporateItems} />
+                )}
+                {showWellnessChat && (
+                  <DirectItem index={12} title="Wellness Chat"   icon={<IconMessageHeart />}    to="/wellness-chat" />
                 )}
                 {showSettings && (
-                  <FlyoutItem index={1}  title="Settings"        icon={<IconSettings />}        items={settingsItems} />
+                  <SubmenuItem index={1}  title="Settings"        icon={<IconSettings />}        items={settingsItems} />
                 )}
               </>
             ) : isCorporateHr ? (
               <>
                 <DirectItem index={0}  title="Dashboard"         icon={<IconLayoutDashboard />} to="/hr-portal" />
-                <DirectItem index={11} title="Employees"         icon={<IconUsers />}           to="/corporate/employees" />
-                <DirectItem index={12} title="BMI Tracking"      icon={<IconHeartRateMonitor />}to="/corporate/bmi" />
-                <DirectItem index={13} title="Challenges"        icon={<IconTrophy />}          to="/corporate/challenges" />
-                <DirectItem index={15} title="Billing"           icon={<IconReceipt2 />}        to="/corporate/billing" />
-                <DirectItem index={17} title="Reports"           icon={<IconReportAnalytics />} to="/corporate/reports" />
+                <DirectItem index={11} title="Employees"         icon={<IconUsers />}           to="/hr-portal/employees" />
+                <DirectItem index={10} title="Attendance Logs"   icon={<IconCalendarEvent />}   to="/hr-portal/attendance" />
+                <DirectItem index={12} title="BMI Tracking"      icon={<IconHeartRateMonitor />}to="/hr-portal/bmi" />
+                <DirectItem index={13} title="Challenges"        icon={<IconTrophy />}          to="/hr-portal/challenges" />
+                <DirectItem index={15} title="Billing"           icon={<IconReceipt2 />}        to="/hr-portal/billing" />
+                <DirectItem index={17} title="Reports"           icon={<IconReportAnalytics />} to="/hr-portal/reports" />
+                <DirectItem index={7}  title="Settings"          icon={<IconSettings />}        to="/hr-portal/profile" />
               </>
             ) : (
               <>
                 <DirectItem index={0}  title="Overview"          icon={<IconLayoutDashboard />} to="/" />
                 {showWorkout && (
-                  <FlyoutItem index={2}  title="Workout"         icon={<IconBarbell />}         items={visibleWorkoutItems} />
+                  <SubmenuItem index={2}  title="Workout"         icon={<IconBarbell />}         items={visibleWorkoutItems} />
                 )}
                 {showDiet && (
-                  <FlyoutItem index={3}  title="Nutrition Plans" icon={<IconCalendar />}        items={visibleDietItems} />
+                  <SubmenuItem index={3}  title="Nutrition Plans" icon={<IconCalendar />}        items={visibleDietItems} />
                 )}
                 {showCalendar && (
-                  <FlyoutItem index={4}  title="Schedule"        icon={<IconCalendarEvent />}   items={visibleScheduleItems} />
+                  <SubmenuItem index={4}  title="Schedule"        icon={<IconCalendarEvent />}   items={visibleScheduleItems} />
                 )}
                 {showGoals && (
                   <DirectItem index={5}  title="Goals"           icon={<IconTargetArrow />}     to="/goals" />
@@ -337,7 +456,7 @@ export default function Sidebar() {
                   <DirectItem index={10} title="Attendance"      icon={<IconFingerprint />}     to="/attendance" />
                 )}
                 {showMembership && (
-                  <FlyoutItem index={11} title="Membership"      icon={<IconId />}              items={membershipItems} />
+                  <SubmenuItem index={11} title="Membership"      icon={<IconId />}              items={membershipItems} />
                 )}
                 {showWellnessChat && (
                   <DirectItem index={12} title="Wellness Chat"   icon={<IconMessageHeart />}    to="/wellness-chat" />
@@ -358,7 +477,10 @@ export default function Sidebar() {
 
         {isMember && !isPremium && (
           <div className="rail-upgrade">
-            <Link to="/membership" title="Upgrade to Premium"><IconCrown /></Link>
+            <Link to="/membership" title="Upgrade to Premium" onClick={() => { if (window.innerWidth < 768) closeSidebar(); }}>
+              <IconCrown />
+              <span>Upgrade to Premium</span>
+            </Link>
           </div>
         )}
       </aside>
@@ -374,6 +496,8 @@ export default function Sidebar() {
             style={{
               "--flyout-from": flyout.color.from,
               "--flyout-to":   flyout.color.to,
+              left: isCollapsed ? "70px" : "255px",
+              zIndex: 1050,
             }}
           >
             {/* Gradient header */}
@@ -401,7 +525,10 @@ export default function Sidebar() {
                     <Link
                       to={item.path}
                       className={`flyout-item ${isActive ? "active" : ""}`}
-                      onClick={closeFlyout}
+                      onClick={() => {
+                        closeFlyout();
+                        if (window.innerWidth < 768) closeSidebar();
+                      }}
                     >
                       {item.icon && (
                         <span

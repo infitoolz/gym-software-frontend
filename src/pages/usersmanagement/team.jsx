@@ -13,6 +13,7 @@ import { getTrainers } from "../../api/userAdminApi";
 import { extractApiErrorMessage } from "../../utils/errorMessage";
 import { useAuth } from "../../context/AuthContext";
 import WizardPopup from "../../components/WizardPopup";
+import CommonTable from "../../components/CommonTable";
 
 const EMPTY_FORM = {
   name: "",
@@ -100,7 +101,17 @@ export default function TeamPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [modalError, setModalError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [modalTab, setModalTab] = useState("basic");
+
+  const clearFieldError = (field) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   const modalStepIndex = useMemo(() => {
     const index = TEAM_STEPS.findIndex((item) => item.key === modalTab);
@@ -189,6 +200,7 @@ export default function TeamPage() {
     setForm(EMPTY_FORM);
     setIsEdit(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -214,6 +226,7 @@ export default function TeamPage() {
     setSelectedId(team?.id);
     setIsEdit(true);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
     setShowModal(true);
   };
@@ -221,22 +234,24 @@ export default function TeamPage() {
   const closeModal = () => {
     setShowModal(false);
     setModalError("");
+    setFieldErrors({});
     setModalTab("basic");
   };
 
   const goToNextModalStep = () => {
     setModalError("");
-    
-    // Validate current step before proceeding
+    const errors = {};
     if (modalTab === "basic") {
       if (!form.name?.trim()) {
-        setModalError("Team name is required");
-        return;
+        errors.name = "Team name is required";
       }
       if (!form.departmentId) {
-        setModalError("Department is required");
-        return;
+        errors.departmentId = "Department is required";
       }
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors((prev) => ({ ...prev, ...errors }));
+      return;
     }
     
     if (modalStepIndex < modalStepCount - 1) {
@@ -254,21 +269,18 @@ export default function TeamPage() {
   // ── Form submit ───────────────────────────────────────────────────────────────
 
   const validateForm = () => {
-    if (!form.name?.trim()) {
-      return "Team name is required";
-    }
-    if (!form.departmentId) {
-      return "Department is required";
-    }
-    return null;
+    const errors = {};
+    if (!form.name?.trim()) errors.name = "Team name is required";
+    if (!form.departmentId) errors.departmentId = "Department is required";
+    return errors;
   };
 
   const handleSubmit = async () => {
     setModalError("");
 
-    const validationMessage = validateForm();
-    if (validationMessage) {
-      setModalError(validationMessage);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       setModalTab("basic");
       return;
     }
@@ -323,6 +335,67 @@ export default function TeamPage() {
     }
   };
 
+  const handleBulkDelete = async (selectedIds) => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} team(s)?`)) return;
+    try {
+      await Promise.all(selectedIds.map((id) => deleteTeam(id)));
+      setNotice(`${selectedIds.length} team(s) deleted successfully`);
+      await loadData();
+    } catch (e) {
+      setError(extractApiErrorMessage(e, "Failed to delete selected teams"));
+    }
+  };
+
+  const columns = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      sortable: true,
+      render: (val, team) => <span className="fw-semibold text-white">{team.name}</span>,
+    },
+    {
+      key: "department",
+      label: "Department",
+      sortable: true,
+      render: (val, team) => {
+        const dept = departments.find(d => d.id === team.departmentId);
+        return dept?.name || "-";
+      },
+    },
+    {
+      key: "teamLead",
+      label: "Team Lead",
+      sortable: true,
+      render: (val, team) => {
+        const leadToken = splitTeamLeadToken(getTeamLeadValue(team));
+        const matchedTrainer =
+          trainers.find((trainer) => String(trainer.id) === leadToken.id) ||
+          trainers.find((trainer) => {
+            const label = getTrainerDisplayLabel(trainer);
+            return label.trim() === leadToken.name;
+          }) ||
+          null;
+        return getTrainerDisplayLabel(matchedTrainer) || leadToken.name || "-";
+      },
+    },
+    {
+      key: "members",
+      label: "Members",
+      sortable: true,
+      render: (val, team) => <span className="badge bg-primary">{team.memberCount || 0}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (val, team) => (
+        <span className={`badge ${team.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
+          {team.status === "ACTIVE" ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+  ], [departments, trainers]);
+
   // ── Statistics ─────────────────────────────────────────────────────────────────
 
   const totalTeams = rows.length;
@@ -338,21 +411,28 @@ export default function TeamPage() {
       </div>
 
       <div className="col-md-12">
-        <label className="form-label">Team Name *</label>
+        <label className="form-label">Team Name <span className="req">*</span></label>
         <input
-          className="form-control"
+          className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`}
           value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          onChange={(e) => {
+            clearFieldError("name");
+            setForm({ ...form, name: e.target.value });
+          }}
           placeholder="Enter team name"
         />
+        {fieldErrors.name && <div className="avm-field-error">{fieldErrors.name}</div>}
       </div>
 
       <div className="col-md-12">
-        <label className="form-label">Department *</label>
+        <label className="form-label">Department <span className="req">*</span></label>
         <select
-          className="form-select"
+          className={`form-select ${fieldErrors.departmentId ? "is-invalid" : ""}`}
           value={form.departmentId}
-          onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
+          onChange={(e) => {
+            clearFieldError("departmentId");
+            setForm({ ...form, departmentId: e.target.value });
+          }}
           disabled={deptLoading}
         >
           <option value="">Select Department</option>
@@ -360,6 +440,7 @@ export default function TeamPage() {
             <option key={d.id} value={d.id}>{d.name}</option>
           ))}
         </select>
+        {fieldErrors.departmentId && <div className="avm-field-error">{fieldErrors.departmentId}</div>}
       </div>
 
       <div className="col-md-12">
@@ -508,78 +589,17 @@ export default function TeamPage() {
           </div>
         </div>
 
-        {/* ── Teams Table ── */}
-        <div className="card">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <h5 className="mb-0">Teams List</h5>
-          </div>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table table-striped table-hover mb-0">
-                <thead className="thead-light">
-                  <tr>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th>Team Lead</th>
-                    <th>Members</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">Loading...</td>
-                  </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-4">No teams found</td>
-                    </tr>
-                  ) : (
-                    rows.map((team) => {
-                      const dept = departments.find(d => d.id === team.departmentId);
-                      const leadToken = splitTeamLeadToken(getTeamLeadValue(team));
-                      const matchedTrainer =
-                        trainers.find((trainer) => String(trainer.id) === leadToken.id) ||
-                        trainers.find((trainer) => {
-                          const label = getTrainerDisplayLabel(trainer);
-                          return label.trim() === leadToken.name;
-                        }) ||
-                        null;
-                      const leadLabel =
-                        getTrainerDisplayLabel(matchedTrainer) ||
-                        leadToken.name ||
-                        "-";
-                      return (
-                        <tr key={team.id}>
-                          <td className="fw-semibold">{team.name}</td>
-                          <td>{dept?.name || "-"}</td>
-                          <td>{leadLabel}</td>
-                          <td>
-                            <span className="badge bg-primary">{team.memberCount}</span>
-                          </td>
-                          <td>
-                            <span className={`badge ${team.status === "ACTIVE" ? "bg-success" : "bg-danger"}`}>
-                              {team.status === "ACTIVE" ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td>
-                            <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openEdit(team)}>
-                              <IconEdit size={14} />
-                            </button>
-                            <button className="btn btn-sm btn-outline-danger" onClick={() => confirmDelete(team.id)}>
-                              <IconTrash size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+        {/* ── Teams Common Table ── */}
+        <CommonTable
+          columns={columns}
+          data={rows}
+          entityName="teams"
+          searchPlaceholder="Search team..."
+          loading={loading}
+          onEdit={openEdit}
+          onDelete={(team) => confirmDelete(team.id)}
+          onBulkDelete={handleBulkDelete}
+        />
 
         {/* ── Add / Edit Team Modal using WizardPopup ─────────────────────────── */}
         <WizardPopup

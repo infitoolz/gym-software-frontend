@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import ReactApexChart from "react-apexcharts";
 import Swal from "sweetalert2";
+import PhoneInputWithFlag from "../../components/PhoneInputWithFlag";
 
 /* ─── Constants ─────────────────────────────────────────────── */
 const INDUSTRIES = [
@@ -156,7 +157,22 @@ function CompanyModal({ show, company, onClose, onSave }) {
             <div style={{ fontSize:11, fontWeight:700, color:"#94a3b8", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:14 }}>👤 HR Contact</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
               <div><label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", display:"block", marginBottom:4 }}>HR Name *</label><input className="form-control" style={{ borderRadius:10 }} value={form.hrName} onChange={e => set("hrName",e.target.value)} placeholder="Kavya Nair"/></div>
-              <div><label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", display:"block", marginBottom:4 }}>Phone *</label><input className="form-control" style={{ borderRadius:10 }} value={form.hrPhone} onChange={e => set("hrPhone",e.target.value)} placeholder="9876543210"/></div>
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", margin:0 }}>Phone *</label>
+                  {form.hrPhone && (
+                    <span style={{ fontSize: 11, color: form.hrPhone.length === 10 ? "#16a34a" : "#94a3b8", fontWeight: 600 }}>
+                      {form.hrPhone.length}/10
+                    </span>
+                  )}
+                </div>
+                <PhoneInputWithFlag
+                  value={form.hrPhone}
+                  onChange={e => set("hrPhone", e.target.value)}
+                  placeholder="9876543210"
+                  size="sm"
+                />
+              </div>
               <div><label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", display:"block", marginBottom:4 }}>Email</label><input className="form-control" style={{ borderRadius:10 }} type="email" value={form.hrEmail} onChange={e => set("hrEmail",e.target.value)} placeholder="hr@company.in"/></div>
               <div><label style={{ fontSize:12.5, fontWeight:600, color:"#64748b", display:"block", marginBottom:4 }}>Address / City</label><input className="form-control" style={{ borderRadius:10 }} value={form.address} onChange={e => set("address",e.target.value)} placeholder="Bengaluru"/></div>
             </div>
@@ -166,7 +182,14 @@ function CompanyModal({ show, company, onClose, onSave }) {
             <textarea className="form-control" rows={2} style={{ borderRadius:10, resize:"none" }} value={form.notes} onChange={e => set("notes",e.target.value)} placeholder="Key observations, requirements…"/>
           </div>
           <div style={{ display:"flex", gap:10 }}>
-            <button onClick={() => { if (!form.name || !form.hrName) { Swal.fire("Required","Company Name & HR Name required","warning"); return; } onSave(form); onClose(); }} style={{ flex:1, padding:"12px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer" }}>
+            <button onClick={() => {
+              if (!form.name || !form.hrName) { Swal.fire("Required","Company Name & HR Name required","warning"); return; }
+              const phoneDigits = String(form.hrPhone || "").replace(/\D/g, "");
+              if (!phoneDigits) { Swal.fire("Required", "Phone number is required", "warning"); return; }
+              if (phoneDigits.length !== 10) { Swal.fire("Invalid Phone", "Phone number must be exactly 10 digits", "warning"); return; }
+              if (!/^[6-9]/.test(phoneDigits)) { Swal.fire("Invalid Phone", "Mobile number must start with 6, 7, 8, or 9", "warning"); return; }
+              onSave(form); onClose();
+            }} style={{ flex:1, padding:"12px", borderRadius:12, border:"none", background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer" }}>
               {company ? "💾 Update" : "✅ Add Company"}
             </button>
             <button onClick={onClose} style={{ padding:"12px 18px", borderRadius:12, border:"1.5px solid #e2e8f0", background:"#fff", color:"#64748b", fontWeight:600, fontSize:14, cursor:"pointer" }}>Cancel</button>

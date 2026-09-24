@@ -130,8 +130,8 @@ export default function AdminOverview() {
     options: {
       chart: { toolbar: { show: false }, zoom: { enabled: false } },
       stroke: { curve: 'smooth', width: 2 },
-      colors: ['#6366f1'],
-      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.4, opacityTo: 0 } },
+      colors: ['#0066ff'],
+      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.35, opacityTo: 0 } },
       xaxis: { categories: attendanceTrend.map(d => d.label), labels: { style: { fontSize: '11px' } } },
       yaxis: { labels: { style: { fontSize: '11px' } }, min: 0 },
       grid: { borderColor: '#eef2f2' },
@@ -144,8 +144,8 @@ export default function AdminOverview() {
     options: {
       chart: { toolbar: { show: false }, zoom: { enabled: false } },
       stroke: { curve: 'smooth', width: 2 },
-      colors: ['#198754'],
-      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.4, opacityTo: 0 } },
+      colors: ['#00d2f4'],
+      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.35, opacityTo: 0 } },
       xaxis: { categories: revenueTrend.map(d => d.month), labels: { style: { fontSize: '11px' } } },
       yaxis: { labels: { formatter: (v) => `₹${(v / 1000).toFixed(0)}k`, style: { fontSize: '11px' } } },
       grid: { borderColor: '#eef2f2' },
@@ -158,7 +158,7 @@ export default function AdminOverview() {
   const leadChart = useMemo(() => ({
     options: {
       labels: leadConversion.labels,
-      colors: ['#6c757d', '#ffc107', '#0d6efd', '#198754'],
+      colors: ['#102030', '#0052cc', '#0088ff', '#00d2f4'],
       legend: { position: 'bottom', fontSize: '12px' },
       dataLabels: { enabled: true, formatter: (v) => `${v.toFixed(0)}%` },
       stroke: { width: 0 },
@@ -171,8 +171,8 @@ export default function AdminOverview() {
     options: {
       chart: { toolbar: { show: false }, zoom: { enabled: false } },
       stroke: { curve: 'smooth', width: 2 },
-      colors: ['#d63384'],
-      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.3, opacityTo: 0 } },
+      colors: ['#0066ff'],
+      fill: { gradient: { shadeIntensity: 0.2, opacityFrom: 0.35, opacityTo: 0 } },
       xaxis: { categories: memberGrowth.map(d => d.month), labels: { style: { fontSize: '11px' } } },
       yaxis: { labels: { style: { fontSize: '11px' } }, min: 0 },
       grid: { borderColor: '#eef2f2' },
@@ -219,7 +219,7 @@ export default function AdminOverview() {
              ═══════════════════════════════════════════════════════════════ */}
           <Row className="g-3 mb-4">
             <Col sm={6} xl={3}>
-              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #198754 0%, #157347 100%)' }}>
+              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #0052cc 0%, #0066ff 100%)' }}>
                 <Card.Body className="p-4 text-white">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0 text-white-50 text-uppercase fw-bold small">Revenue Today</h6>
@@ -231,7 +231,7 @@ export default function AdminOverview() {
               </Card>
             </Col>
             <Col sm={6} xl={3}>
-              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%)' }}>
+              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #0070f8 0%, #00c8f0 100%)' }}>
                 <Card.Body className="p-4 text-white">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0 text-white-50 text-uppercase fw-bold small">Monthly Revenue</h6>
@@ -243,11 +243,11 @@ export default function AdminOverview() {
               </Card>
             </Col>
             <Col sm={6} xl={3}>
-              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #6f42c1 0%, #553098 100%)' }}>
+              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #102030 0%, #1e3a5f 100%)' }}>
                 <Card.Body className="p-4 text-white">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0 text-white-50 text-uppercase fw-bold small">Active Members</h6>
-                    <IconUserCheck size={24} className="text-white-50" />
+                    <IconUserCheck size={24} style={{ color: '#00d2f4' }} />
                   </div>
                   <h2 className="fw-bold mb-1">{activeMembers.toLocaleString()}</h2>
                   <p className="mb-0 text-white-50 small">{activePct}% of {totalMembers.toLocaleString()} total members</p>
@@ -255,7 +255,7 @@ export default function AdminOverview() {
               </Card>
             </Col>
             <Col sm={6} xl={3}>
-              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #ffc107 0%, #d39e00 100%)' }}>
+              <Card className="border-0 shadow-sm h-100" style={{ background: 'linear-gradient(135deg, #0284c7 0%, #00d2f4 100%)' }}>
                 <Card.Body className="p-4 text-white">
                   <div className="d-flex justify-content-between align-items-center mb-2">
                     <h6 className="mb-0 text-white-50 text-uppercase fw-bold small">Renewals Due</h6>
@@ -341,9 +341,9 @@ export default function AdminOverview() {
                 <Card.Body className="pt-2">
                   <div className="d-flex flex-column gap-2" style={{ maxHeight: 260, overflowY: 'auto' }}>
                     {topTrainers.map((t, i) => (
-                      <div key={t.name} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ background: i % 2 === 0 ? 'rgba(99,102,241,0.05)' : 'transparent' }}>
+                      <div key={t.name} className="d-flex align-items-center justify-content-between p-2 rounded-3" style={{ background: i % 2 === 0 ? 'rgba(0,102,255,0.05)' : 'transparent' }}>
                         <div className="d-flex align-items-center gap-2">
-                          <div className="d-flex align-items-center justify-content-center rounded-circle bg-light" style={{ width: 36, height: 36, fontSize: 14, fontWeight: 700, color: '#6366f1' }}>
+                          <div className="d-flex align-items-center justify-content-center rounded-circle bg-light" style={{ width: 36, height: 36, fontSize: 14, fontWeight: 700, color: '#0066ff' }}>
                             {t.name.charAt(0)}
                           </div>
                           <div>

@@ -6,7 +6,6 @@
 const THEME_KEY = "theme";
 const NOTIF_KEY = "pref_notifications";
 const PINLOCK_KEY = "pref_pinlock";
-const PIN_KEY = "pref_pin";
 const UNLOCK_KEY = "pin_unlocked"; // sessionStorage — re-locks on a new browser session
 
 export const PREFERENCES_EVENT = "preferenceschange";
@@ -43,37 +42,29 @@ export function setNotificationsEnabled(enabled) {
 }
 
 /* ---------------- PIN lock ----------------
-   A lightweight client-side lock (UX gate, not strong security). The PIN is
-   hashed before storage so it isn't kept in plaintext. */
-function hashPin(pin) {
-  let h = 0;
-  const s = `fitnexus:${pin}`;
-  for (let i = 0; i < s.length; i += 1) {
-    h = (h * 31 + s.charCodeAt(i)) | 0;
-  }
-  return String(h);
-}
+   Server-backed screen lock.
+   - PIN is stored hashed on the backend server.
+   - Status (enabled/disabled) is mirrored in localStorage.
+   - Active unlock state is stored in sessionStorage (relocks when browser restarts).
+*/
 
 export function isPinLockEnabled() {
-  return localStorage.getItem(PINLOCK_KEY) === "true" && Boolean(localStorage.getItem(PIN_KEY));
+  return localStorage.getItem(PINLOCK_KEY) === "true";
 }
 
-export function setPin(pin) {
-  localStorage.setItem(PIN_KEY, hashPin(pin));
-  localStorage.setItem(PINLOCK_KEY, "true");
-  sessionStorage.setItem(UNLOCK_KEY, "true"); // setting a PIN leaves the app unlocked now
+export function setPinLockEnabled(enabled) {
+  if (enabled) {
+    localStorage.setItem(PINLOCK_KEY, "true");
+    sessionStorage.setItem(UNLOCK_KEY, "true");
+  } else {
+    localStorage.removeItem(PINLOCK_KEY);
+    sessionStorage.removeItem(UNLOCK_KEY);
+  }
   notifyChange();
-}
-
-export function verifyPin(pin) {
-  return localStorage.getItem(PIN_KEY) === hashPin(pin);
 }
 
 export function disablePinLock() {
-  localStorage.removeItem(PINLOCK_KEY);
-  localStorage.removeItem(PIN_KEY);
-  sessionStorage.removeItem(UNLOCK_KEY);
-  notifyChange();
+  setPinLockEnabled(false);
 }
 
 export function isUnlockedThisSession() {
@@ -82,4 +73,8 @@ export function isUnlockedThisSession() {
 
 export function markUnlocked() {
   sessionStorage.setItem(UNLOCK_KEY, "true");
+}
+
+export function lockCurrentSession() {
+  sessionStorage.removeItem(UNLOCK_KEY);
 }

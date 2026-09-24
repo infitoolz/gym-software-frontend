@@ -406,8 +406,7 @@ export default function SalesPipeline() {
   /* funnelOptions/funnelSeries removed — replaced with CssFunnel below */
 
   return (
-    <div className="themebody-wrap">
-      <div className="theme-body">
+    <div className="sales-pipeline-page">
       {/* ── Header ─────────────────────────────────────── */}
       <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>
@@ -577,7 +576,6 @@ export default function SalesPipeline() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
